@@ -10,7 +10,6 @@ class PasswordAttempt:
 	
 	def __init__(self, userid: int, password: str, salt: str=None):
 		self.userid = userid
-		self.password = password
 		self._password = password # Change from Jonah's version to make it work
 		self.salt = salt
 	
