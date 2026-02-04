@@ -3,4 +3,7 @@ __pycache__
 __pycache__/
 *.pyc
 .DS_Store
-users.json
+users.json/
+.direnv
+.vscode/
+pyvenv.cfg
