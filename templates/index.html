@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Rate My Housing{% if name != "Guest" %}, {{ name }}{% endif %}!</h1>
+
+    {% if name == "Guest" %}
+    <p>
+        <a href="/login">Login</a> |
+        <a href="/create">Create Account</a>
+    </p>
+    {% else %}
+    <p>
+        <a href="/dashboard">Go to Dashboard</a> |
+        <a href="/logout">Logout</a>
+    </p>
+    {% endif %}
+
+    <hr>
+
+    <p>Navigate using the links above.</p>
+</body>
+</html>
