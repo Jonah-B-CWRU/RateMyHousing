@@ -11,7 +11,9 @@ import firebase_admin
 class Comments:
     CommentId: str
     ConnectedCommentID: str
+    UserID: str
     ListingID: str
+    Content: str
     def as_dict(self) -> dict:
         return asdict(self)
 
@@ -110,6 +112,13 @@ class database_manager:
             result = self._push_data(password.as_dict(),"Passwords")
             print(result)
 	
-    # def add_comment(self, comment:Comments):
-        # if self.connected:
-            # result = self._push_data(comment.as_dict(),"Comments")
+    def add_comment(self, comment:Comments):
+        if self.connected:
+            result = self._push_data(comment.as_dict(),"Comments")
+            print(result)
+    
+    def get_comments(self) -> list[dict[str,any]]:
+        if self.connected:
+            return self._get_data("Comments")
+        else:
+            raise IOError("Not Connected")
