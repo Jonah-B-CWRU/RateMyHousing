@@ -29,7 +29,7 @@ def add_user(username: str, password: str) -> tuple[bool,str]:
         return False, "Username already exists" # uniqueness of username
     
     if any(user["Email"] == username for user in data): #******************* change this to email when thats implemented
-        return False, "Email already exists" # uniqueness of username
+        return False, "Email already exists" # uniqueness of Email
 
     user_id = secrets.token_hex(8)
 

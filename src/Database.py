@@ -5,9 +5,8 @@ from google.cloud.firestore_v1.document import DocumentReference
 from dataclasses import dataclass, asdict
 from google.protobuf import timestamp_pb2
 import firebase_admin
-import json
 
-# all structure's for easy use
+# all dataclasses's for easy use
 @dataclass
 class Comments:
     CommentId: str
