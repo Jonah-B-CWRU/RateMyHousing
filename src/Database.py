@@ -11,7 +11,6 @@ import firebase_admin
 class Comments:
     CommentId: str
     ConnectedCommentID: str
-    Comment:str
     ListingID: str
     Content: str
     def as_dict(self) -> dict:
