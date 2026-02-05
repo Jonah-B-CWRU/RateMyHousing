@@ -11,12 +11,13 @@ import firebase_admin
 class Comments:
     CommentId: str
     ConnectedCommentID: str
+    Comment:str
     ListingID: str
     def as_dict(self) -> dict:
         return asdict(self)
 
 @dataclass
-class Landlords:
+class Landlord:
     LLID: str
     Name: str
     Email: str
@@ -70,8 +71,6 @@ class database_manager:
             fire_app = firebase_admin.initialize_app(cred)
             self.connected = True
             self.fire_store = firestore.client(fire_app)
-        else: 
-            print("Already connected")
     
     def _get_data(self, col:str) -> list[dict[str,Any]]:
         collection = self.fire_store.collection(col)
@@ -110,6 +109,47 @@ class database_manager:
             result = self._push_data(password.as_dict(),"Passwords")
             print(result)
 	
-    # def add_comment(self, comment:Comments):
-        # if self.connected:
-            # result = self._push_data(comment.as_dict(),"Comments")
+    # Comments
+    def get_comments(self):
+        if self.connected:
+            return self._get_data("Comments")
+        else:
+            raise IOError("Not Connected")
+
+    def add_comment(self, comment:Comments):
+        if self.connected:
+            result = self._push_data(comment.as_dict(),"Comments")
+
+    # Listing
+    def get_listings(self):
+        if self.connected:
+            return self._get_data("Listing")
+        else:
+            raise IOError("Not Connected")
+
+    def add_listing(self, landlord:Landlord):
+        if self.connected:
+            result = self._push_data(landlord.as_dict(),"Listing")
+
+    # Landloard
+    def get_landlords(self):
+        if self.connected:
+            return self._get_data("Listing")
+        else:
+            raise IOError("Not Connected")
+
+    def add_landlord(self, listing:Listing):
+        if self.connected:
+            result = self._push_data(listing.as_dict(),"Landlord")
+
+    # Rating
+    def get_ratings(self):
+        if self.connected:
+            return self._get_data("Rating")
+        else:
+            raise IOError("Not Connected")
+
+    def add_rating(self, rating:Rating):
+        if self.connected:
+            result = self._push_data(rating.as_dict(),"Rating")
+
