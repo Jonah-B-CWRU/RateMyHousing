@@ -8,7 +8,7 @@ from src.LoginProcessor import PasswordAttempt
 import secrets
 
 # custom stuff
-from src.Database import database_manager, User, Password
+from src.Database import database_manager, User, Password, Comments
 
 
 app = FastAPI()
@@ -132,6 +132,21 @@ def comment(request: Request):
             }
         )
     return templates.TemplateResponse("comment.html", {"request": request, "name": username})
-# @app.post("/comment")
-# def login_post(request: Request, comment: str = Form(...)):
-    # 
+@app.post("/comment")
+def login_post(request: Request, comment: str = Form(...)):
+    # print(comment)
+    data_man.add_comment(Comments(
+        secrets.token_hex(8),
+        "",
+        request.cookies.get("username"),
+        "",
+        comment
+        ))
+    return templates.TemplateResponse(
+        "redirect.html",
+            {
+                "request": request,
+                "message": "Comment posted.",
+                "target_url": "/dashboard"
+            }
+    )
