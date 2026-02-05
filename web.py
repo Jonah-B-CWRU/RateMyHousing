@@ -66,7 +66,8 @@ def index(request: Request):
     data_man.connect_to_database()
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "name": (request.cookies.get("username") if request.cookies.get("username") != None else "none"),
+        # "name": (request.cookies.get("username") if request.cookies.get("username") != None else "none"),
+        "name": "Guest",
         "title": "Home",
         "comments": data_man.get_comments()
         })
