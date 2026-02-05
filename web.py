@@ -133,10 +133,10 @@ def comment(request: Request):
         )
     return templates.TemplateResponse("comment.html", {"request": request, "name": username})
 @app.post("/comment")
-def login_post(request: Request, comment: str = Form(...)):
+def comment_post(request: Request, comment: str = Form(...)):
     # print(comment)
     data_man.add_comment(Comments(
-        "",
+        secrets.token_hex(8),
         "",
         "",
         comment
