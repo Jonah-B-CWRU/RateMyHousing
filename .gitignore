@@ -7,3 +7,4 @@ users.json/
 .direnv
 .vscode/
 pyvenv.cfg
+Secrets.json

@@ -4,77 +4,61 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 import json
-from LoginProcessor import PasswordAttempt
+from src.LoginProcessor import PasswordAttempt
 import secrets
 
+# custom stuff
+from src.Database import database_manager, User, Password
+
+
 app = FastAPI()
+data_man = database_manager()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-USERS_FILE = Path("users.json")
-
-
-def load_users_json():
-    if USERS_FILE.exists():
-        try:
-            data = json.loads(USERS_FILE.read_text())
-        except json.JSONDecodeError:
-            data = {"users": [], "passwords": []}
-    else:
-        data = {"users": [], "passwords": []}
-
-    if "users" not in data:
-        data["users"] = []
-    if "passwords" not in data:
-        data["passwords"] = []
-
-    return data
-
-def save_users_json(data):
-    USERS_FILE.write_text(json.dumps(data, indent=4))
-
-def add_user(username: str, password: str):
+def add_user(username: str, password: str) -> tuple[bool,str]:
     if not username.endswith("@case.edu"):
         return False, "Username must end with @case.edu"
 
-    data = load_users_json()
-    if any(u["username"] == username for u in data["users"]):
+    data_man.connect_to_database()
+    data = data_man.get_users()
+
+    # check for both username and email
+    if any(user["Username"] == username for user in data):
         return False, "Username already exists" # uniqueness of username
+    
+    if any(user["Email"] == username for user in data): #******************* change this to email when thats implemented
+        return False, "Email already exists" # uniqueness of username
 
     user_id = secrets.token_hex(8)
 
     p = PasswordAttempt(user_id, password)
-    p.genSalt()
-    p.genHash()
 
-    data["users"].append({
-        "user_id": user_id,
-        "username": username,
-        "email": username,
-        "landlord_account": None
-    })
-    data["passwords"].append({
-        "user_id": user_id,
-        "hash": p.hash,
-        "salt": p.salt
-    })
-    save_users_json(data)
+    new_user = User(user_id,username,"",username)
+    new_password = Password(p.hash,p.salt,user_id)
+
+    data_man.add_user(new_user)
+    data_man.add_passwords(new_password)
+
     return True, "User created successfully"
 
 def verify_login(username: str, password: str):
-    data = load_users_json()
-    user = next((u for u in data["users"] if u["username"] == username), None)
+    data_man.connect_to_database()
+
+    user_data = data_man.get_users()
+    pass_data = data_man.get_passwords()
+    user = next((u for u in user_data if u["Username"] == username), None)
     if not user:
         return False
 
-    pwd_entry = next((p for p in data["passwords"] if p["user_id"] == user["user_id"]), None)
+    pwd_entry = next((p for p in pass_data if p["UserID"] == user["UserID"]), None)
     if not pwd_entry:
         return False
 
-    p = PasswordAttempt(user["user_id"], password, salt=pwd_entry["salt"])
+    p = PasswordAttempt(user["UserID"], password, salt=pwd_entry["Salt"])
     p.genHash()
-    return p.hash == pwd_entry["hash"]
+    return p.hash == pwd_entry["Hash"]
 
 # Home Page
 @app.get("/")

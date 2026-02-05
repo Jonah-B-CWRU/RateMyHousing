@@ -18,6 +18,11 @@
         uvicorn
         jinja2
         python-multipart
+
+        # firebase intigration
+        firebase-admin
+        google-cloud-firestore
+        protobuf
       ];
 
       # Create a custom Python environment
