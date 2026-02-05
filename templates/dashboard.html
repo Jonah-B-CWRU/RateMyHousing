@@ -2,20 +2,102 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Rate My Housing</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #4a5fd9 0%, #5a3d99 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin: 0 0 10px 0;
+            font-size: 32px;
+        }
+        
+        .welcome {
+            text-align: center;
+            color: #666;
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-links a {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #4a5fd9 0%, #5a3d99 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .nav-links a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 95, 217, 0.4);
+        }
+        
+        .logout-link {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
+        }
+        
+        .logout-link:hover {
+            box-shadow: 0 5px 15px rgba(220, 38, 38, 0.4) !important;
+        }
+        
+        hr {
+            border: none;
+            border-top: 2px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .content {
+            text-align: center;
+            color: #666;
+            font-size: 16px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Dashboard</h1>
-    <p>Welcome, {{ name }}!</p>
-
-    <p>
-        <a href="/">Home</a> |
-        <a href="/logout">Logout</a>
-    </p>
-
-    <hr>
-
-    <p>This page is only accessible to logged-in users.</p>
+    <div class="container">
+        <h1>🏠 Dashboard</h1>
+        <p class="welcome">Welcome, <strong>{{ name }}</strong>!</p>
+        
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/logout" class="logout-link">Logout</a>
+        </div>
+        
+        <hr>
+        
+        <div class="content">
+            <p>This page is only accessible to logged-in users.</p>
+        </div>
+    </div>
 </body>
 </html>
