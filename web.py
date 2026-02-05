@@ -118,3 +118,20 @@ def logout():
     response = RedirectResponse(url="/")
     response.delete_cookie("username")
     return response
+
+@app.get("/comment")
+def comment(request: Request):
+    username = request.cookies.get("username")
+    if not username:
+        return templates.TemplateResponse(
+            "redirect.html",
+            {
+                "request": request,
+                "message": "You must log in to access the dashboard.",
+                "target_url": "/"
+            }
+        )
+    return templates.TemplateResponse("comment.html", {"request": request, "name": username})
+# @app.post("/comment")
+# def login_post(request: Request, comment: str = Form(...)):
+    # 

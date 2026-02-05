@@ -109,3 +109,7 @@ class database_manager:
         if self.connected:
             result = self._push_data(password.as_dict(),"Passwords")
             print(result)
+	
+    # def add_comment(self, comment:Comments):
+        # if self.connected:
+            # result = self._push_data(comment.as_dict(),"Comments")
