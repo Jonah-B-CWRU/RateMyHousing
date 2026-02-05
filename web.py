@@ -136,9 +136,8 @@ def comment(request: Request):
 def login_post(request: Request, comment: str = Form(...)):
     # print(comment)
     data_man.add_comment(Comments(
-        secrets.token_hex(8),
         "",
-        request.cookies.get("username"),
+        "",
         "",
         comment
         ))
