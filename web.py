@@ -63,8 +63,6 @@ def verify_login(username: str, password: str):
 # Home Page
 @app.get("/")
 def index(request: Request):
-    data_man.connect_to_database()
-    print(data_man.get_comments)
     return templates.TemplateResponse("index.html", {
         "request": request,
         "name": (request.cookies.get("username") if request.cookies.get("username") != None else "none"),
