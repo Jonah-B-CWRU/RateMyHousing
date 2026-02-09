@@ -22,13 +22,12 @@ def add_user(username: str, password: str) -> tuple[bool,str]:
         return False, "Username must end with @case.edu"
 
     data_man.connect_to_database()
-    data = data_man.get_users()
 
     # check for both username and email
-    if any(user["Username"] == username for user in data):
+    if data_man.check_for_username(username):
         return False, "Username already exists" # uniqueness of username
     
-    if any(user["Email"] == username for user in data): #******************* change this to email when thats implemented
+    if data_man.check_for_email(username): #******************* change this to email when thats implemented
         return False, "Email already exists" # uniqueness of Email
 
     user_id = secrets.token_hex(8)
@@ -45,20 +44,15 @@ def add_user(username: str, password: str) -> tuple[bool,str]:
 
 def verify_login(username: str, password: str):
     data_man.connect_to_database()
+    try:
+        user_data = data_man.get_user_with_username(username) # this function can fail
+        pass_data = data_man.get_pass_from_user(user_data)
 
-    user_data = data_man.get_users()
-    pass_data = data_man.get_passwords()
-    user = next((u for u in user_data if u["Username"] == username), None)
-    if not user:
+        p = PasswordAttempt(user_data.UserID, password, salt=pass_data.Salt)
+        return p.hash == pass_data.Hash
+    except TypeError as e:
+        print(f"caught error {e}")
         return False
-
-    pwd_entry = next((p for p in pass_data if p["UserID"] == user["UserID"]), None)
-    if not pwd_entry:
-        return False
-
-    p = PasswordAttempt(user["UserID"], password, salt=pwd_entry["Salt"])
-    p.genHash()
-    return p.hash == pwd_entry["Hash"]
 
 # Home Page
 @app.get("/")
@@ -143,6 +137,7 @@ def comment_post(request: Request, comment: str = Form(...)):
     # print(comment)
     data_man.add_comment(Comments(
         secrets.token_hex(8),
+        "",
         "",
         "",
         comment

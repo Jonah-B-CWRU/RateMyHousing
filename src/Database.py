@@ -13,6 +13,7 @@ class Comments:
     CommentId: str
     ConnectedCommentID: str
     ListingID: str
+    UserID:str
     Content: str
     def as_dict(self) -> dict:
         return asdict(self)
@@ -164,56 +165,110 @@ class database_manager:
                 total_data.append(data)
         return total_data
     
-    def _get_document_using_id(self,collection_to_search:str, Id_source:User|Rating|Landlord|Password|Comments|Listing)-> list[dict]:
+    def _get_document_using_id(self,collection_to_search:str, Id_type:User|Rating|Landlord|Password|Comments|Listing, Id_to_look_for:str)-> list[dict]:
         """
         Searches the specified collection for all documents with the corresponding ID.
         
         Parameters:
             collection_to_search (str): The name of the collection to search within.
-            Id_source (User|Rating|Landlord|Password|Comments|Listing): The document containing the ID to search for.
+            Id_type (User|Rating|Landlord|Password|Comments|Listing): The document containing the ID to search for.
+            Id_to_look_for (str): exact text of cid to look for
 
         Returns:
             list: A list of documents that match the specified ID.
         """
         if self.connected:
             collection = self.fire_store.collection(collection_to_search)
-            match type(Id_source):
+            match Id_type:
                 case User():
-                    user:User = Id_source
-                    id = user.UserID
-                    query = collection.where("UserID",id)
+                    query = collection.where("UserID", "==", Id_to_look_for)
                     return self._unwrap_query(query)
+                    
                 case Password():
-                    password:Password = Id_source
-                    id = password.UserID
-                    query = collection.where("UserID",id)
+                    query = collection.where("UserID", "==", Id_to_look_for)
                     return self._unwrap_query(query)
+                    
                 case Rating():
-                    rating:Rating = Id_source
-                    id = rating.RatingID
-                    query = collection.where("RatingID",id)
+                    query = collection.where("RatingID", "==", Id_to_look_for)
                     return self._unwrap_query(query)
+                    
                 case Landlord():
-                    landlord:Landlord = Id_source
-                    id = landlord.LLID
-                    query = collection.where("LLID",id)
+                    query = collection.where("LLID", "==", Id_to_look_for)
                     return self._unwrap_query(query)
+                    
                 case Comments():
-                    comments:Comments = Id_source
-                    id = comments.CommentId
-                    query = collection.where("CommentId",id)
+                    query = collection.where("CommentId", "==", Id_to_look_for)
                     return self._unwrap_query(query)
+                    
                 case Listing():
-                    listing:Listing = Id_source
-                    id = listing.ListingID
-                    query = collection.where("ListingID",id)
+                    query = collection.where("ListingID", "==", Id_to_look_for)
                     return self._unwrap_query(query)
+                    
                 case _:
-                    raise TypeError("Id_source Not Valid Type")
+                    raise TypeError(f"Id_source Not Valid Type: {Id_type}, {type(Id_type)}")
+        raise IOError("Not Connected to Database")
+    
+
+    def get_user_with_username(self, username:str) -> User:
+        if self.connected:
+            collection = self.fire_store.collection("Users")
+            query = collection.where("Username","==",username)
+            user = self._unwrap_query(query)
+            if len(user) == 1:
+                user = user[0]
+                return User(user["UserID"],user["Username"],user["ConnectedLL"],user["Email"])
+            else:
+                raise TypeError(f"no user with the username: {username}")
         raise IOError("Not Connected to Database")
 
     def get_pass_from_user(self, user:User) -> Password:
         if self.connected:
-            
-            pass
+            password_list = self._get_document_using_id("Passwords",User(),user.UserID)
+            if len(password_list) == 1:
+                p = password_list[0]
+                return Password(p["Hash"],p["Salt"],p["UserID"])
+            else:
+                raise TypeError(f"no password with userid: {user.UserID}")
+        raise IOError("Not Connected to Database")
+
+    def check_for_username(self, username:str) -> bool:
+        if self.connected:
+            collection = self.fire_store.collection("Users")
+            query = collection.where("Username","==",username)
+            user = self._unwrap_query(query)
+            if len(user) >= 1:
+                return True
+            else:
+                return False
+        raise IOError("Not Connected to Database")
+   
+    def check_for_email(self, email:str) -> bool:
+        if self.connected:
+            collection = self.fire_store.collection("Users")
+            query = collection.where("Email","==",email)
+            user = self._unwrap_query(query)
+            if len(user) >= 1:
+                return True
+            else:
+                return False
+        raise IOError("Not Connected to Database")
+    
+    def get_user_from_rating(self,rating:Rating) -> User:
+        if self.connected:
+            users = self._get_document_using_id("User",User(),rating.UserID)
+            if len(users) == 1:
+                u = users[0]
+                return User(u["UserID"],u["Username"],u["ConnectedLL"],u["Email"])
+            else:
+                raise TypeError(f"no username with userid: {rating.UserID}")
+        raise IOError("Not Connected to Database")
+    
+    def get_user_from_comments(self,comment:Comments) -> User:
+        if self.connected:
+            users = self._get_document_using_id("User",User(),comment.UserID)
+            if len(users) == 1:
+                u = users[0]
+                return User(u["UserID"],u["Username"],u["ConnectedLL"],u["Email"])
+            else:
+                raise TypeError(f"no username with userid: {comment.UserID}")
         raise IOError("Not Connected to Database")
