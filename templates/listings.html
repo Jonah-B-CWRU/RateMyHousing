@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listings - Rate My Housing</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f0f0f0; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 15px; }
+        h1 { text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background: #4a5fd9; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        a { text-decoration: none; color: #4a5fd9; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Listings for {{ name }}</h1>
+        {% if listings %}
+            <table>
+                <tr>
+                    <th>Listing ID</th>
+                    <th>Location</th>
+                    <th>Beds</th>
+                    <th>Baths</th>
+                    <th>Sqft</th>
+                    <th>Price</th>
+                </tr>
+                {% for listing in listings %}
+                <tr>
+                    <td>{{ listing.ListingID }}</td>
+                    <td>{{ listing.ListingLocation }}</td>
+                    <td>{{ listing.Beds if listing.Beds is defined else "N/A" }}</td>
+                    <td>{{ listing.Baths if listing.Baths is defined else "N/A" }}</td>
+                    <td>{{ listing.Sqft if listing.Sqft is defined else "N/A" }}</td>
+                    <td>{{ listing.Price if listing.Price is defined else "N/A" }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <p>No listings found for your landlord.</p>
+        {% endif %}
+        <p><a href="/dashboard">Back to Dashboard</a></p>
+    </div>
+</body>
+</html>

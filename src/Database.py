@@ -31,6 +31,11 @@ class Listing:
     ListingID: str = ""
     LLID: str = ""
     ListingLocation: str = ""
+    Beds: int = 0
+    Baths: int = 0
+    Sqft: int = 0
+    Price: float = 0.0
+
     def as_dict(self) -> dict:
         return asdict(self)
 
@@ -130,9 +135,9 @@ class database_manager:
         else:
             raise IOError("Not Connected")
 
-    def add_listing(self, landlord:Landlord):
+    def add_listing(self, listing:Listing):
         if self.connected:
-            result = self._push_data(landlord.as_dict(),"Listing")
+            result = self._push_data(listing.as_dict(),"Listing")
 
     # Landloard
     def get_landlords(self):
@@ -141,9 +146,9 @@ class database_manager:
         else:
             raise IOError("Not Connected")
 
-    def add_landlord(self, listing:Listing):
+    def add_landlord(self, landlord:Landlord):
         if self.connected:
-            result = self._push_data(listing.as_dict(),"Landlord")
+            result = self._push_data(landlord.as_dict(),"Landlord")
 
     # Rating
     def get_ratings(self):

@@ -8,7 +8,7 @@ from src.LoginProcessor import PasswordAttempt
 import secrets
 
 # custom stuff
-from src.Database import database_manager, User, Password, Comments
+from src.Database import database_manager, User, Password, Comments, Listing, Landlord
 
 
 app = FastAPI()
@@ -34,7 +34,7 @@ def add_user(username: str, password: str) -> tuple[bool,str]:
 
     p = PasswordAttempt(user_id, password)
 
-    new_user = User(user_id,username,"",username)
+    new_user = User(user_id,username,"testing",username) # hard coded so that it recognizes an LLID
     new_password = Password(p.hash,p.salt,user_id)
 
     data_man.add_user(new_user)
@@ -134,7 +134,6 @@ def comment(request: Request):
     return templates.TemplateResponse("comment.html", {"request": request, "name": username})
 @app.post("/comment")
 def comment_post(request: Request, comment: str = Form(...)):
-    # print(comment)
     data_man.add_comment(Comments(
         secrets.token_hex(8),
         "",
@@ -149,4 +148,73 @@ def comment_post(request: Request, comment: str = Form(...)):
                 "message": "Comment posted.",
                 "target_url": "/dashboard"
             }
+    )
+
+@app.get("/create_listing")
+def create_listing_form(request: Request):
+    username = request.cookies.get("username")
+    if not username:
+        return templates.TemplateResponse(
+            "redirect.html",
+            {"request": request, "message": "You must log in to create a listing.", "target_url": "/login"}
+        )
+    return templates.TemplateResponse("create_listing.html", {"request": request, "error": None})
+
+@app.post("/create_listing")
+def create_listing_post(
+    request: Request,
+    location: str = Form(...),
+    beds: int = Form(...),
+    baths: int = Form(...),
+    sqft: int = Form(...),
+    price: float = Form(...)
+):
+    username = request.cookies.get("username")
+    if not username:
+        return templates.TemplateResponse(
+            "redirect.html",
+            {"request": request, "message": "You must log in to create a listing.", "target_url": "/login"}
+        )
+
+    data_man.connect_to_database()
+    user = data_man.get_user_with_username(username)
+
+    import secrets
+    listing_id = secrets.token_hex(8)
+    new_listing = Listing(
+        ListingID=listing_id,
+        LLID=user.ConnectedLL,
+        ListingLocation=location,
+        Beds=beds,
+        Baths=baths,
+        Sqft=sqft,
+        Price=price
+    )
+    data_man.add_listing(new_listing)
+
+    return templates.TemplateResponse(
+        "redirect.html",
+        {"request": request, "message": "Listing created successfully!", "target_url": "/dashboard"}
+    )
+
+@app.get("/listings")
+def view_listings(request: Request):
+    username = request.cookies.get("username")
+    if not username:
+        return templates.TemplateResponse(
+            "redirect.html",
+            {"request": request, "message": "You must log in to view listings.", "target_url": "/"}
+        )
+
+    data_man.connect_to_database()
+    try:
+        user = data_man.get_user_with_username(username)
+        ll = data_man.get_lanloard_from_user(user)
+        listings = data_man.get_connected_listings_with_landlord(ll)
+    except Exception:
+        listings = []
+
+    return templates.TemplateResponse(
+        "listings.html",
+        {"request": request, "listings": listings, "name": username}
     )
