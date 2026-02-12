@@ -5,14 +5,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Listing - Rate My Housing</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #4a5fd9, #5a3d99); display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
-        .container { background:white; padding:40px; border-radius:20px; max-width:500px; width:100%; box-shadow:0 10px 40px rgba(0,0,0,0.3); }
-        label { display:block; margin-bottom:8px; font-weight:600; }
-        input { width:100%; padding:12px; margin-bottom:20px; border-radius:8px; border:2px solid #e0e0e0; }
-        button { width:100%; padding:14px; border:none; border-radius:8px; background:linear-gradient(135deg, #4a5fd9, #5a3d99); color:white; font-weight:600; cursor:pointer; }
-        button:hover { transform:translateY(-2px); box-shadow:0 5px 15px rgba(74,95,217,0.4); }
-        .error { color:#d32f2f; background:#ffebee; padding:12px; border-radius:8px; margin-bottom:20px; }
-        .success { color:#166534; background:#dcfce7; padding:12px; border-radius:8px; margin-bottom:20px; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: linear-gradient(135deg, #4a5fd9, #5a3d99); 
+            display:flex; 
+            justify-content:center; 
+            align-items:center; 
+            height:100vh; 
+            margin:0; 
+        }
+
+        .container { 
+            background:white; 
+            padding:40px; 
+            border-radius:20px; 
+            max-width:500px; 
+            width:100%; 
+            box-shadow:0 10px 40px rgba(0,0,0,0.3); 
+        }
+
+        label { 
+            display:block; 
+            margin-bottom:8px; 
+            font-weight:600; 
+        }
+
+        input { 
+            width:100%; 
+            padding:12px; 
+            margin-bottom:20px; 
+            border-radius:8px; 
+            border:2px solid #e0e0e0; 
+        }
+
+        button { 
+            width:100%; 
+            padding:14px; 
+            border:none; 
+            border-radius:8px; 
+            background:linear-gradient(135deg, #4a5fd9, #5a3d99); 
+            color:white; 
+            font-weight:600; 
+            cursor:pointer; 
+        }
+
+        button:hover { 
+            transform:translateY(-2px); 
+            box-shadow:0 5px 15px rgba(74,95,217,0.4); 
+        }
+
+        .error { 
+            color:#d32f2f; 
+            background:#ffebee; 
+            padding:12px; 
+            border-radius:8px; 
+            margin-bottom:20px; 
+        }
+
+        .success { 
+            color:#166534; 
+            background:#dcfce7; 
+            padding:12px; 
+            border-radius:8px; 
+            margin-bottom:20px; 
+        }
     </style>
 </head>
 <body>
@@ -28,23 +84,21 @@
         {% endif %}
 
         <form method="post">
-            <label>Location</label>
+            <label>Landlord ID (LLID)</label>
+            <input type="text" name="llid" required>
+
+            <label>Listing Location</label>
             <input type="text" name="location" required>
 
-            <label>Beds</label>
-            <input type="number" name="beds" min="0" required>
-
-            <label>Baths</label>
-            <input type="number" name="baths" min="0" required>
-
-            <label>Square Footage</label>
-            <input type="number" name="sqft" min="0" required>
-
-            <label>Price ($)</label>
-            <input type="number" name="price" min="0" step="0.01" required>
-
             <button type="submit">Create Listing</button>
+
+            <a href="/dashboard">
+                <button type="button" style="margin-top:15px; background:#777;">
+                    Back to Dashboard
+                </button>
+            </a>
         </form>
+
     </div>
 </body>
 </html>

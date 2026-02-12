@@ -18,30 +18,26 @@
 <body>
     <div class="container">
         <h1>Listings for {{ name }}</h1>
+
         {% if listings %}
             <table>
                 <tr>
                     <th>Listing ID</th>
+                    <th>Landlord ID</th>
                     <th>Location</th>
-                    <th>Beds</th>
-                    <th>Baths</th>
-                    <th>Sqft</th>
-                    <th>Price</th>
                 </tr>
                 {% for listing in listings %}
                 <tr>
                     <td>{{ listing.ListingID }}</td>
+                    <td>{{ listing.LLID }}</td>
                     <td>{{ listing.ListingLocation }}</td>
-                    <td>{{ listing.Beds if listing.Beds is defined else "N/A" }}</td>
-                    <td>{{ listing.Baths if listing.Baths is defined else "N/A" }}</td>
-                    <td>{{ listing.Sqft if listing.Sqft is defined else "N/A" }}</td>
-                    <td>{{ listing.Price if listing.Price is defined else "N/A" }}</td>
                 </tr>
                 {% endfor %}
             </table>
         {% else %}
             <p>No listings found for your landlord.</p>
         {% endif %}
+
         <p><a href="/dashboard">Back to Dashboard</a></p>
     </div>
 </body>

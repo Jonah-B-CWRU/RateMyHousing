@@ -27,17 +27,15 @@ class Landlord:
         return asdict(self)
 
 @dataclass
+@dataclass
 class Listing:
     ListingID: str = ""
     LLID: str = ""
     ListingLocation: str = ""
-    Beds: int = 0
-    Baths: int = 0
-    Sqft: int = 0
-    Price: float = 0.0
 
     def as_dict(self) -> dict:
         return asdict(self)
+
 
 @dataclass
 class Rating:
@@ -134,6 +132,26 @@ class database_manager:
             return self._get_data("Listing")
         else:
             raise IOError("Not Connected")
+    
+    def get_all_listings(self) -> list[Listing]:
+        if self.connected:
+            collection = self.fire_store.collection("Listing")
+            docs = collection.stream()
+
+            out: list[Listing] = []
+            for doc in docs:
+                l = doc.to_dict()
+                out.append(
+                    Listing(
+                        l.get("ListingID", ""),
+                        l.get("LLID", ""),
+                        l.get("ListingLocation", "")
+                    )
+                )
+            return out
+
+        raise IOError("Not Connected to Database")
+
 
     def add_listing(self, listing:Listing):
         if self.connected:

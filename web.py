@@ -6,6 +6,7 @@ from pathlib import Path
 import json
 from src.LoginProcessor import PasswordAttempt
 import secrets
+#import uuid
 
 # custom stuff
 from src.Database import database_manager, User, Password, Comments, Listing, Landlord
@@ -34,7 +35,7 @@ def add_user(username: str, password: str) -> tuple[bool,str]:
 
     p = PasswordAttempt(user_id, password)
 
-    new_user = User(user_id,username,"testing",username) # hard coded so that it recognizes an LLID
+    new_user = User(user_id,username,"",username)
     new_password = Password(p.hash,p.salt,user_id)
 
     data_man.add_user(new_user)
@@ -159,62 +160,43 @@ def create_listing_form(request: Request):
             {"request": request, "message": "You must log in to create a listing.", "target_url": "/login"}
         )
     return templates.TemplateResponse("create_listing.html", {"request": request, "error": None})
-
 @app.post("/create_listing")
-def create_listing_post(
+def create_listing(
     request: Request,
-    location: str = Form(...),
-    beds: int = Form(...),
-    baths: int = Form(...),
-    sqft: int = Form(...),
-    price: float = Form(...)
+    llid: str = Form(...),
+    location: str = Form(...)
 ):
-    username = request.cookies.get("username")
-    if not username:
-        return templates.TemplateResponse(
-            "redirect.html",
-            {"request": request, "message": "You must log in to create a listing.", "target_url": "/login"}
-        )
-
     data_man.connect_to_database()
-    user = data_man.get_user_with_username(username)
 
-    import secrets
     listing_id = secrets.token_hex(8)
+
     new_listing = Listing(
-        ListingID=listing_id,
-        LLID=user.ConnectedLL,
-        ListingLocation=location,
-        Beds=beds,
-        Baths=baths,
-        Sqft=sqft,
-        Price=price
+        listing_id,
+        llid,
+        location
     )
+
     data_man.add_listing(new_listing)
 
     return templates.TemplateResponse(
-        "redirect.html",
-        {"request": request, "message": "Listing created successfully!", "target_url": "/dashboard"}
+        "create_listing.html",
+        {
+            "request": request,
+            "success": "Listing created successfully!"
+        }
     )
 
 @app.get("/listings")
 def view_listings(request: Request):
-    username = request.cookies.get("username")
-    if not username:
-        return templates.TemplateResponse(
-            "redirect.html",
-            {"request": request, "message": "You must log in to view listings.", "target_url": "/"}
-        )
-
     data_man.connect_to_database()
-    try:
-        user = data_man.get_user_with_username(username)
-        ll = data_man.get_lanloard_from_user(user)
-        listings = data_man.get_connected_listings_with_landlord(ll)
-    except Exception:
-        listings = []
+
+    listings = data_man.get_all_listings()
 
     return templates.TemplateResponse(
         "listings.html",
-        {"request": request, "listings": listings, "name": username}
+        {
+            "request": request,
+            "listings": listings,
+            "name": "All Listings"
+        }
     )
