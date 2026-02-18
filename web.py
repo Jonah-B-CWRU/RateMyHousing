@@ -9,7 +9,7 @@ import secrets
 #import uuid
 
 # custom stuff
-from src.Database import database_manager, User, Password, Comments, Listing, Landlord
+from src.Database import database_manager, User, Password, Comments, Listing, Landlord, Rating
 
 
 app = FastAPI()
@@ -160,11 +160,18 @@ def create_listing_form(request: Request):
             {"request": request, "message": "You must log in to create a listing.", "target_url": "/login"}
         )
     return templates.TemplateResponse("create_listing.html", {"request": request, "error": None})
+
+
 @app.post("/create_listing")
 def create_listing(
     request: Request,
     llid: str = Form(...),
-    location: str = Form(...)
+    address: str = Form(...),
+    beds: int = Form(...),
+    baths: int = Form(...),
+    sqft: int = Form(...),
+    price: float = Form(...),
+    description: str = Form("")
 ):
     data_man.connect_to_database()
 
@@ -173,8 +180,14 @@ def create_listing(
     new_listing = Listing(
         listing_id,
         llid,
-        location
+        address,
+        beds,
+        baths,
+        sqft,
+        price,
+        description
     )
+
 
     data_man.add_listing(new_listing)
 
@@ -186,17 +199,67 @@ def create_listing(
         }
     )
 
+
 @app.get("/listings")
 def view_listings(request: Request):
     data_man.connect_to_database()
 
     listings = data_man.get_all_listings()
 
+    listing_data = []
+
+    for listing in listings:
+        ratings = data_man.get_ratings_from_listing(listing)
+
+        count = len(ratings)
+        avg = round(sum(r.Rating for r in ratings) / count, 2) if count > 0 else 0
+
+        listing_data.append({
+            "listing": listing,
+            "avg_rating": avg,
+            "review_count": count
+        })
+
     return templates.TemplateResponse(
         "listings.html",
         {
             "request": request,
-            "listings": listings,
+            "listings": listing_data,
             "name": "All Listings"
         }
     )
+
+
+
+@app.post("/add_review")
+def add_review(
+    request: Request,
+    listing_id: str = Form(...),
+    rating: int = Form(...)
+):
+    username = request.cookies.get("username")
+    if not username:
+        return templates.TemplateResponse(
+            "redirect.html",
+            {
+                "request": request,
+                "message": "You must log in to leave a review.",
+                "target_url": "/login"
+            }
+        )
+
+    data_man.connect_to_database()
+
+    user = data_man.get_user_with_username(username)
+
+    review = Rating(
+        secrets.token_hex(8),
+        user.UserID,
+        listing_id,
+        rating
+    )
+
+    data_man.add_rating(review)
+
+    return RedirectResponse(url="/listings", status_code=302)
+

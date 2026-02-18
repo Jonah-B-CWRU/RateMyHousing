@@ -11,7 +11,7 @@
             display:flex; 
             justify-content:center; 
             align-items:center; 
-            height:100vh; 
+            min-height:100vh; 
             margin:0; 
         }
 
@@ -26,16 +26,21 @@
 
         label { 
             display:block; 
-            margin-bottom:8px; 
+            margin-bottom:6px; 
             font-weight:600; 
         }
 
-        input { 
+        input, textarea { 
             width:100%; 
             padding:12px; 
             margin-bottom:20px; 
             border-radius:8px; 
             border:2px solid #e0e0e0; 
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
         }
 
         button { 
@@ -52,6 +57,11 @@
         button:hover { 
             transform:translateY(-2px); 
             box-shadow:0 5px 15px rgba(74,95,217,0.4); 
+        }
+
+        .secondary {
+            background:#777;
+            margin-top:15px;
         }
 
         .error { 
@@ -87,18 +97,32 @@
             <label>Landlord ID (LLID)</label>
             <input type="text" name="llid" required>
 
-            <label>Listing Location</label>
-            <input type="text" name="location" required>
+            <label>Address</label>
+            <input type="text" name="address" required>
+
+            <label>Number of Beds</label>
+            <input type="number" name="beds" min="0" required>
+
+            <label>Number of Baths</label>
+            <input type="number" name="baths" min="0" required>
+
+            <label>Square Footage</label>
+            <input type="number" name="sqft" min="0" required>
+
+            <label>Price ($)</label>
+            <input type="number" name="price" step="0.01" min="0" required>
+
+            <label>Description (Optional)</label>
+            <textarea name="description"></textarea>
 
             <button type="submit">Create Listing</button>
-
-            <a href="/dashboard">
-                <button type="button" style="margin-top:15px; background:#777;">
-                    Back to Dashboard
-                </button>
-            </a>
         </form>
 
+        <a href="/dashboard">
+            <button type="button" class="secondary">
+                Back to Dashboard
+            </button>
+        </a>
     </div>
 </body>
 </html>
