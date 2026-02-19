@@ -17,7 +17,6 @@ class Comments:
     Content: str = ""
     def as_dict(self) -> dict:
         return asdict(self)
-
 @dataclass
 class Landlord:
     LLID: str = ""
@@ -93,7 +92,52 @@ class database_manager:
         collection = self.fire_store.collection(col)
         return collection.add(data)
     
-
+    def get_object_by_id(self, id:str, object_type:User|Rating|Landlord|Password|Comments|Listing) -> User|Rating|Landlord|Password|Comments|Listing:
+        if self.connected:
+            match object_type:
+                case User():
+                    collection = self.fire_store.collection("Users")
+                    documents = collection.where("UserID", "==", id).get()
+                    if len(documents) == 1:
+                        user:dict[str, Any]  = documents[0].to_dict() # type: ignore
+                        return User(user["UserID"],user["Username"],user["ConnectedLL"],user["Email"])
+                    raise TypeError(f"No one User with UserID: {id}, there is {len(documents)} of them")
+                case Password():
+                    collection = self.fire_store.collection("Passwords")
+                    documents = collection.where("UserID", "==", id).get()
+                    if len(documents) == 1:
+                        p:dict[str, Any] = documents[0].to_dict() # type: ignore
+                        return Password(p["Hash"],p["Salt"],p["UserID"])
+                    raise TypeError(f"No one Password with UserID: {id}, there is {len(documents)} of them")
+                case Comments():
+                    collection = self.fire_store.collection("Comments")
+                    documents = collection.where("CommentID", "==", id).get()
+                    if len(documents) == 1:
+                        c:dict[str, Any]  = documents[0].to_dict() # type: ignore
+                        return Comments(c["CommentId"],c["ConnectedCommentID"],c["ListingID"],c["UserID"],c["Content"])
+                    raise TypeError(f"No one Comment with CommentId: {id}, there is {len(documents)} of them")
+                case Landlord():
+                    collection = self.fire_store.collection("Landlord")
+                    documents = collection.where("LLID", "==", id).get()
+                    if len(documents) == 1:
+                        l:dict[str, Any]  = documents[0].to_dict() # type: ignore
+                        return Landlord(l["LLID"],l["Name"],l["Email"])
+                    raise TypeError(f"No one Landlord with LLID: {id}, there is {len(documents)} of them")
+                case Listing():
+                    collection = self.fire_store.collection("Listing")
+                    documents = collection.where("LLID", "==", id).get()
+                    if len(documents) == 1:
+                        l:dict[str, Any]  = documents[0].to_dict() # type: ignore
+                        return Listing(l["ListingID"],l["LLID"],l["ListingLocation"])
+                    raise TypeError(f"No one Listing with ListingID: {id}, there is {len(documents)} of them")
+                case Rating():
+                    collection = self.fire_store.collection("Listing")
+                    documents = collection.where("RatingID", "==", id).get()
+                    if len(documents) == 1:
+                        r:dict[str, Any]  = documents[0].to_dict() # type: ignore
+                        return Rating(r["RatingID"],r["UserID"],r["ListingID"],r["Rating"])
+                    raise TypeError(f"No one Rating with RatingID: {id}, there is {len(documents)} of them")
+        raise IOError("Not Connected to Database")
 
     def recursive_deletion(self, deleated_object:User|Rating|Landlord|Password|Comments|Listing) -> bool:
         # recursive so it actually implements castcading removal.
@@ -280,7 +324,6 @@ class database_manager:
             return out
 
         raise IOError("Not Connected to Database")
-
 
     def add_listing(self, listing:Listing):
         if self.connected:
