@@ -263,3 +263,24 @@ def add_review(
 
     return RedirectResponse(url="/listings", status_code=302)
 
+@app.get("/listing/{listingid}")
+def view_listinsg(request: Request, listingid: str):
+    data_man.connect_to_database()
+    listing = data_man._get_document_using_id("Listing", Listing(), listingid)[0]
+    comments = data_man.get_comments_from_listing(Listing(ListingID=listingid))
+    
+    ratings = data_man.get_ratings_from_listing(Listing(ListingID=listingid))
+    count = len(ratings)
+    avg = round(sum(r.Rating for r in ratings) / count, 2) if count > 0 else 0
+    
+    listing["avg_rating"] = avg
+    listing["review_count"] = count
+    
+    return templates.TemplateResponse(
+        "listing.html",
+            {
+                "request": request,
+                "listing": listing,
+                "comments": comments
+            }
+    )
