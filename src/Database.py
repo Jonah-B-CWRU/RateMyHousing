@@ -30,7 +30,13 @@ class Landlord:
 class Listing:
     ListingID: str = ""
     LLID: str = ""
-    ListingLocation: str = ""
+    Address: str = ""
+    Beds: int = 0
+    Baths: int = 0
+    SquareFootage: int = 0
+    Price: float = 0.0
+    Description: str = ""
+
     def as_dict(self) -> dict:
         return asdict(self)
 
@@ -228,8 +234,34 @@ class database_manager:
             return self._get_data("Listing")
         else:
             raise IOError("Not Connected")
+    
+    def get_all_listings(self) -> list[Listing]:
+        if self.connected:
+            collection = self.fire_store.collection("Listing")
+            docs = collection.stream()
 
-    def add_listing(self, listing:Listing ):
+            out: list[Listing] = []
+            for doc in docs:
+                l = doc.to_dict()
+                out.append(
+                    Listing(
+                        l.get("ListingID", ""),
+                        l.get("LLID", ""),
+                        l.get("Address", ""),
+                        l.get("Beds", 0),
+                        l.get("Baths", 0),
+                        l.get("SquareFootage", 0),
+                        l.get("Price", 0.0),
+                        l.get("Description", "")
+                    )
+                )
+
+            return out
+
+        raise IOError("Not Connected to Database")
+
+
+    def add_listing(self, listing:Listing):
         if self.connected:
             result = self._push_data(listing.as_dict(),"Listing")
 
@@ -371,7 +403,7 @@ class database_manager:
 
     def get_ratings_from_user(self, user:User) -> list[Rating]:
         if self.connected:
-            ratings = self._get_document_using_id("Ratings", User(),user.UserID)
+            ratings = self._get_document_using_id("Rating", User(),user.UserID)
             out:list[Rating] = []
             for r in ratings:
                 out.append(Rating(r["RatingID"],r["UserID"],r["ListingID"],r["Rating"]))
@@ -461,7 +493,7 @@ class database_manager:
     
     def get_ratings_from_listing(self, listing:Listing) -> list[Rating]:
         if self.connected:
-            ratings = self._get_document_using_id("Ratings", Listing(),listing.ListingID)
+            ratings = self._get_document_using_id("Rating", Listing(),listing.ListingID)
             out:list[Rating] = []
             for r in ratings:
                 out.append(Rating(r["RatingID"],r["UserID"],r["ListingID"],r["Rating"]))

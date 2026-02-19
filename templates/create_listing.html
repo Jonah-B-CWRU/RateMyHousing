@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Listing - Rate My Housing</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: linear-gradient(135deg, #4a5fd9, #5a3d99); 
+            display:flex; 
+            justify-content:center; 
+            align-items:center; 
+            min-height:100vh; 
+            margin:0; 
+        }
+
+        .container { 
+            background:white; 
+            padding:40px; 
+            border-radius:20px; 
+            max-width:500px; 
+            width:100%; 
+            box-shadow:0 10px 40px rgba(0,0,0,0.3); 
+        }
+
+        label { 
+            display:block; 
+            margin-bottom:6px; 
+            font-weight:600; 
+        }
+
+        input, textarea { 
+            width:100%; 
+            padding:12px; 
+            margin-bottom:20px; 
+            border-radius:8px; 
+            border:2px solid #e0e0e0; 
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        button { 
+            width:100%; 
+            padding:14px; 
+            border:none; 
+            border-radius:8px; 
+            background:linear-gradient(135deg, #4a5fd9, #5a3d99); 
+            color:white; 
+            font-weight:600; 
+            cursor:pointer; 
+        }
+
+        button:hover { 
+            transform:translateY(-2px); 
+            box-shadow:0 5px 15px rgba(74,95,217,0.4); 
+        }
+
+        .secondary {
+            background:#777;
+            margin-top:15px;
+        }
+
+        .error { 
+            color:#d32f2f; 
+            background:#ffebee; 
+            padding:12px; 
+            border-radius:8px; 
+            margin-bottom:20px; 
+        }
+
+        .success { 
+            color:#166534; 
+            background:#dcfce7; 
+            padding:12px; 
+            border-radius:8px; 
+            margin-bottom:20px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Create Listing</h1>
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        {% if success %}
+        <div class="success">{{ success }}</div>
+        {% endif %}
+
+        <form method="post">
+            <label>Landlord ID (LLID)</label>
+            <input type="text" name="llid" required>
+
+            <label>Address</label>
+            <input type="text" name="address" required>
+
+            <label>Number of Beds</label>
+            <input type="number" name="beds" min="0" required>
+
+            <label>Number of Baths</label>
+            <input type="number" name="baths" min="0" required>
+
+            <label>Square Footage</label>
+            <input type="number" name="sqft" min="0" required>
+
+            <label>Price ($)</label>
+            <input type="number" name="price" step="0.01" min="0" required>
+
+            <label>Description (Optional)</label>
+            <textarea name="description"></textarea>
+
+            <button type="submit">Create Listing</button>
+        </form>
+
+        <a href="/dashboard">
+            <button type="button" class="secondary">
+                Back to Dashboard
+            </button>
+        </a>
+    </div>
+</body>
+</html>
