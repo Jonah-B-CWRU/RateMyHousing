@@ -110,6 +110,17 @@
                 <button type="submit">Submit</button>
             </form>
         </div>
+        
+        <hr/>
+        {% if comments %}
+            {%for comment in comments%}
+                <b>{{comment.UserID}}</b>: {{comment.Content}}
+            {% endfor %}
+        {% else %}
+            <h2>No comments</h2>
+        {% endif %}
+        
+        
     </div>
         <p><a href="/dashboard">Back to Dashboard</a></p>
     </div>

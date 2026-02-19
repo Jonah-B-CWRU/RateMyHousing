@@ -267,6 +267,7 @@ def add_review(
 def view_listinsg(request: Request, listingid: str):
     data_man.connect_to_database()
     listing = data_man._get_document_using_id("Listing", Listing(), listingid)[0]
+    comments = data_man.get_comments_from_listing(Listing(ListingID=listingid))
     
     ratings = data_man.get_ratings_from_listing(Listing(ListingID=listingid))
     count = len(ratings)
@@ -279,6 +280,7 @@ def view_listinsg(request: Request, listingid: str):
         "listing.html",
             {
                 "request": request,
-                "listing": listing
+                "listing": listing,
+                "comments": comments
             }
     )
