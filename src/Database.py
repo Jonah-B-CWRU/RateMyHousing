@@ -75,7 +75,6 @@ class database_manager:
     # Connect to database
     def connect_to_database(self):
         if not self.connected:
-            data:dict[str,str] = {}
             cred = credentials.Certificate("src/Secrets.json")
             fire_app = firebase_admin.initialize_app(cred)
             self.connected = True
@@ -94,6 +93,8 @@ class database_manager:
         collection = self.fire_store.collection(col)
         return collection.add(data)
     
+
+
     def recursive_deletion(self, deleated_object:User|Rating|Landlord|Password|Comments|Listing) -> bool:
         # recursive so it actually implements castcading removal.
         if self.connected:
@@ -104,27 +105,37 @@ class database_manager:
                     documents = collection.where("UserID", "==", deleated_object.UserID).get()
                     if len(documents) == 1:
                         self.fire_store.recursive_delete(documents[0].reference)
+                    else:
                         return False
 
                     # get connected items
 
                         # passwords
-                    password = self.get_pass_from_user(deleated_object)
-                    self.recursive_deletion(password)
+                    try:
+                        password = self.get_pass_from_user(deleated_object)
+                        self.recursive_deletion(password)
+                    except:
+                        pass
 
                         # comments
-                    comments = self.get_comments_from_user(deleated_object)
-                    for c in comments:
-                        self.recursive_deletion(c)
+                    try:
+                        comments = self.get_comments_from_user(deleated_object)
+                        for c in comments:
+                            self.recursive_deletion(c)
+                    except:
+                        pass
 
                         # ratings
-                    ratings = self.get_ratings_from_user(deleated_object)
-                    for r in ratings:
-                        self.recursive_deletion(r)
+                    try:
+                        ratings = self.get_ratings_from_user(deleated_object)
+                        for r in ratings:
+                            self.recursive_deletion(r)
+                    except:
+                            pass
                     return True
                 case Password():
                     # remove password and leave.
-                    collection = self.fire_store.collection("Password")
+                    collection = self.fire_store.collection("Passwords")
                     documents = collection.where("UserID", "==", deleated_object.UserID).get()
                     if len(documents) == 1:
                         self.fire_store.recursive_delete(documents[0].reference)
@@ -151,14 +162,19 @@ class database_manager:
 
                     # get connected items
                         # Users
-                    users = self.get_connected_users_with_landlord(deleated_object)
-                    for u in users:
-                        self.recursive_deletion(u)
-                    
+                    try:
+                        users = self.get_connected_users_with_landlord(deleated_object)
+                        for u in users:
+                            self.recursive_deletion(u)
+                    except:
+                            pass
                         # listings
-                    listings = self.get_connected_listings_with_landlord(deleated_object)
-                    for l in listings:
-                        self.recursive_deletion(l)
+                    try:
+                        listings = self.get_connected_listings_with_landlord(deleated_object)
+                        for l in listings:
+                            self.recursive_deletion(l)
+                    except:
+                            pass
                     return True
                 case Comments():
                     # remove comment and leave.
@@ -180,14 +196,19 @@ class database_manager:
 
                     # get connected items
                         # comments
-                    comments = self.get_comments_from_listing(deleated_object)
-                    for c in comments:
-                        self.recursive_deletion(c)
-
+                    try:
+                        comments = self.get_comments_from_listing(deleated_object)
+                        for c in comments:
+                            self.recursive_deletion(c)
+                    except:
+                            pass
                         # ratings
-                    ratings = self.get_ratings_from_listing(deleated_object)
-                    for r in ratings:
-                        self.recursive_deletion(r)
+                    try:
+                        ratings = self.get_ratings_from_listing(deleated_object)
+                        for r in ratings:
+                            self.recursive_deletion(r)
+                    except:
+                            pass
                     return True
                 case _:
                     raise TypeError(f"Id_source Not Valid Type: {Id_type}, {type(Id_type)}")
@@ -274,7 +295,7 @@ class database_manager:
 
     def add_landlord(self, landlord:Landlord):
         if self.connected:
-            result = self._push_data(landlord.as_dict(),"Landlord")
+            result = self._push_data(landlord.as_dict(),"Landlords")
 
     # Rating
     def get_ratings(self):
