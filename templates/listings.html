@@ -85,7 +85,7 @@
                     <p><strong>Beds:</strong> {{ listing.Beds }}</p>
                     <p><strong>Baths:</strong> {{ listing.Baths }}</p>
                     <p><strong>Square Footage:</strong> {{ listing.SquareFootage }} sq ft</p>
-                    <p><strong>Price:</strong> ${{ listing.Price }}</p>
+                    <p><strong>Price:</strong> ${{ "%.2f"|format(listing.Price) }}</p>
 
                     {% if listing.Description %}
                         <p><strong>Description:</strong> {{ listing.Description }}</p>
