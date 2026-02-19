@@ -94,6 +94,105 @@ class database_manager:
         collection = self.fire_store.collection(col)
         return collection.add(data)
     
+    def recursive_deletion(self, deleated_object:User|Rating|Landlord|Password|Comments|Listing) -> bool:
+        # recursive so it actually implements castcading removal.
+        if self.connected:
+            match deleated_object:
+                case User():
+                    # remove main object
+                    collection = self.fire_store.collection("Users")
+                    documents = collection.where("UserID", "==", deleated_object.UserID).get()
+                    if len(documents) == 1:
+                        self.fire_store.recursive_delete(documents[0].reference)
+                        return False
+
+                    # get connected items
+
+                        # passwords
+                    password = self.get_pass_from_user(deleated_object)
+                    self.recursive_deletion(password)
+
+                        # comments
+                    comments = self.get_comments_from_user(deleated_object)
+                    for c in comments:
+                        self.recursive_deletion(c)
+
+                        # ratings
+                    ratings = self.get_ratings_from_user(deleated_object)
+                    for r in ratings:
+                        self.recursive_deletion(r)
+                    return True
+                case Password():
+                    # remove password and leave.
+                    collection = self.fire_store.collection("Password")
+                    documents = collection.where("UserID", "==", deleated_object.UserID).get()
+                    if len(documents) == 1:
+                        self.fire_store.recursive_delete(documents[0].reference)
+                    else:
+                        return False
+                    return True               
+                case Rating():
+                    # remove rating and leave.
+                    collection = self.fire_store.collection("Rating")
+                    documents = collection.where("RatingID", "==", deleated_object.RatingID).get()
+                    if len(documents) == 1:
+                        self.fire_store.recursive_delete(documents[0].reference)
+                    else:
+                        return False
+                    return True                
+                case Landlord():
+                    # remove main object
+                    collection = self.fire_store.collection("Landlords")
+                    documents = collection.where("LLID", "==", deleated_object.LLID).get()
+                    if len(documents) == 1:
+                        self.fire_store.recursive_delete(documents[0].reference)
+                    else:
+                        return False
+
+                    # get connected items
+                        # Users
+                    users = self.get_connected_users_with_landlord(deleated_object)
+                    for u in users:
+                        self.recursive_deletion(u)
+                    
+                        # listings
+                    listings = self.get_connected_listings_with_landlord(deleated_object)
+                    for l in listings:
+                        self.recursive_deletion(l)
+                    return True
+                case Comments():
+                    # remove comment and leave.
+                    collection = self.fire_store.collection("Comments")
+                    documents = collection.where("CommentId", "==", deleated_object.CommentId).get()
+                    if len(documents) == 1:
+                        self.fire_store.recursive_delete(documents[0].reference)
+                    else:
+                        return False
+                    return True
+                case Listing():
+                    # remove main object
+                    collection = self.fire_store.collection("Listing")
+                    documents = collection.where("ListingID", "==", deleated_object.ListingID).get()
+                    if len(documents) == 1:
+                        self.fire_store.recursive_delete(documents[0].reference)
+                    else:
+                        return False
+
+                    # get connected items
+                        # comments
+                    comments = self.get_comments_from_listing(deleated_object)
+                    for c in comments:
+                        self.recursive_deletion(c)
+
+                        # ratings
+                    ratings = self.get_ratings_from_listing(deleated_object)
+                    for r in ratings:
+                        self.recursive_deletion(r)
+                    return True
+                case _:
+                    raise TypeError(f"Id_source Not Valid Type: {Id_type}, {type(Id_type)}")
+        raise IOError("Not Connected to Database")
+    
     # users
     def get_users(self) -> list[dict[str,Any]]:
         if self.connected:
@@ -269,6 +368,7 @@ class database_manager:
     # user -> password
     # User <-> lanloard
     # user <-> rating (many)
+    # user <-> comments (many)
     def get_user_with_username(self, username:str) -> User:
         if self.connected:
             collection = self.fire_store.collection("Users")
@@ -310,6 +410,15 @@ class database_manager:
             return out
         raise IOError("Not Connected to Database")
     
+    def get_comments_from_user(self, user:User) -> list[Comments]:
+        if self.connected:
+            coms = self._get_document_using_id("Comments", User(),user.UserID)
+            out:list[Comments] = []
+            for c in coms:
+                out.append(Comments(c["CommentId"],c["ConnectedCommentID"],c["ListingID"],c["UserID"],c["Content"]))
+            return out
+        raise IOError("Not Connected to Database")
+    
     # rating relationships
     # Rating <-> user
     # Rating <-> Listing
@@ -334,7 +443,7 @@ class database_manager:
         raise IOError("Not Connected to Database")
     
     # comments relationships
-    # comment -> user
+    # comment <-> user
     # comment -> comment
     # comment <-> listing
     def get_user_from_comments(self,comment:Comments) -> User:
@@ -391,7 +500,7 @@ class database_manager:
             return out
         raise IOError("Not Connected to Database")
     
-    def get_comments_from_listing(self, listing:Comments) -> list[Comments]:
+    def get_comments_from_listing(self, listing:Listing) -> list[Comments]:
         if self.connected:
             coms = self._get_document_using_id("Comments", Listing(),listing.ListingID)
             out:list[Comments] = []
