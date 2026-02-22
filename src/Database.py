@@ -17,6 +17,7 @@ class Comments:
     Content: str = ""
     def as_dict(self) -> dict:
         return asdict(self)
+
 @dataclass
 class Landlord:
     LLID: str = ""
@@ -62,6 +63,8 @@ class User:
     Username: str = ""
     ConnectedLL: str = ""
     Email: str = ""
+    ismod:bool = False
+    Activated:bool = False
     def as_dict(self) -> dict:
         return asdict(self)
 
@@ -74,7 +77,6 @@ class database_manager:
     # Connect to database
     def connect_to_database(self):
         if not self.connected:
-            data:dict[str,str] = {}
             cred = credentials.Certificate("src/Secrets.json")
             fire_app = firebase_admin.initialize_app(cred)
             self.connected = True
@@ -140,14 +142,14 @@ class database_manager:
                     raise TypeError(f"No one Rating with RatingID: {id}, there is {len(documents)} of them")
         raise IOError("Not Connected to Database")
 
-    def recursive_deletion(self, deleated_object:User|Rating|Landlord|Password|Comments|Listing) -> bool:
+    def recursive_deletion(self, deleted_object:User|Rating|Landlord|Password|Comments|Listing) -> bool:
         # recursive so it actually implements castcading removal.
         if self.connected:
-            match deleated_object:
+            match deleted_object:
                 case User():
                     # remove main object
                     collection = self.fire_store.collection("Users")
-                    documents = collection.where("UserID", "==", deleated_object.UserID).get()
+                    documents = collection.where("UserID", "==", deleted_object.UserID).get()
                     if len(documents) == 1:
                         self.fire_store.recursive_delete(documents[0].reference)
                         return False
@@ -155,23 +157,23 @@ class database_manager:
                     # get connected items
 
                         # passwords
-                    password = self.get_pass_from_user(deleated_object)
+                    password = self.get_pass_from_user(deleted_object)
                     self.recursive_deletion(password)
 
                         # comments
-                    comments = self.get_comments_from_user(deleated_object)
+                    comments = self.get_comments_from_user(deleted_object)
                     for c in comments:
                         self.recursive_deletion(c)
 
                         # ratings
-                    ratings = self.get_ratings_from_user(deleated_object)
+                    ratings = self.get_ratings_from_user(deleted_object)
                     for r in ratings:
                         self.recursive_deletion(r)
                     return True
                 case Password():
                     # remove password and leave.
                     collection = self.fire_store.collection("Password")
-                    documents = collection.where("UserID", "==", deleated_object.UserID).get()
+                    documents = collection.where("UserID", "==", deleted_object.UserID).get()
                     if len(documents) == 1:
                         self.fire_store.recursive_delete(documents[0].reference)
                     else:
@@ -180,7 +182,7 @@ class database_manager:
                 case Rating():
                     # remove rating and leave.
                     collection = self.fire_store.collection("Rating")
-                    documents = collection.where("RatingID", "==", deleated_object.RatingID).get()
+                    documents = collection.where("RatingID", "==", deleted_object.RatingID).get()
                     if len(documents) == 1:
                         self.fire_store.recursive_delete(documents[0].reference)
                     else:
@@ -189,7 +191,7 @@ class database_manager:
                 case Landlord():
                     # remove main object
                     collection = self.fire_store.collection("Landlords")
-                    documents = collection.where("LLID", "==", deleated_object.LLID).get()
+                    documents = collection.where("LLID", "==", deleted_object.LLID).get()
                     if len(documents) == 1:
                         self.fire_store.recursive_delete(documents[0].reference)
                     else:
@@ -197,19 +199,19 @@ class database_manager:
 
                     # get connected items
                         # Users
-                    users = self.get_connected_users_with_landlord(deleated_object)
+                    users = self.get_connected_users_with_landlord(deleted_object)
                     for u in users:
                         self.recursive_deletion(u)
                     
                         # listings
-                    listings = self.get_connected_listings_with_landlord(deleated_object)
+                    listings = self.get_connected_listings_with_landlord(deleted_object)
                     for l in listings:
                         self.recursive_deletion(l)
                     return True
                 case Comments():
                     # remove comment and leave.
                     collection = self.fire_store.collection("Comments")
-                    documents = collection.where("CommentId", "==", deleated_object.CommentId).get()
+                    documents = collection.where("CommentId", "==", deleted_object.CommentId).get()
                     if len(documents) == 1:
                         self.fire_store.recursive_delete(documents[0].reference)
                     else:
@@ -218,7 +220,7 @@ class database_manager:
                 case Listing():
                     # remove main object
                     collection = self.fire_store.collection("Listing")
-                    documents = collection.where("ListingID", "==", deleated_object.ListingID).get()
+                    documents = collection.where("ListingID", "==", deleted_object.ListingID).get()
                     if len(documents) == 1:
                         self.fire_store.recursive_delete(documents[0].reference)
                     else:
@@ -226,12 +228,12 @@ class database_manager:
 
                     # get connected items
                         # comments
-                    comments = self.get_comments_from_listing(deleated_object)
+                    comments = self.get_comments_from_listing(deleted_object)
                     for c in comments:
                         self.recursive_deletion(c)
 
                         # ratings
-                    ratings = self.get_ratings_from_listing(deleated_object)
+                    ratings = self.get_ratings_from_listing(deleted_object)
                     for r in ratings:
                         self.recursive_deletion(r)
                     return True
@@ -264,7 +266,7 @@ class database_manager:
             print(result)
 	
     # Comments
-    def get_comments(self):
+    def get_comments(self) -> list[dict[str,Any]]:
         if self.connected:
             return self._get_data("Comments")
         else:
@@ -275,7 +277,7 @@ class database_manager:
             result = self._push_data(comment.as_dict(),"Comments")
 
     # Listing
-    def get_listings(self):
+    def get_listings(self) -> list[dict[str,Any]]:
         if self.connected:
             return self._get_data("Listing")
         else:
@@ -436,8 +438,10 @@ class database_manager:
                 raise TypeError(f"no password with userid: {user.UserID}")
         raise IOError("Not Connected to Database")
     
-    def get_lanloard_from_user(self, user:User) -> Landlord:
+    def get_landlord_from_user(self, user:User) -> Landlord:
         if self.connected:
+            if user.ConnectedLL ==  "":
+                raise TypeError(f"User has no LLID")
             Landlord_list = self._get_document_using_id("Lanloards", Landlord(),user.ConnectedLL)
             if len(Landlord_list) == 1:
                 l = Landlord_list[0]
@@ -526,7 +530,7 @@ class database_manager:
     # listing -> landlord
     # listing <-> Rating (many)
     # listing <-> Comments (many)
-    def get_lanloard_from_Listing(self, listing:Listing) -> Landlord:
+    def get_landlord_from_Listing(self, listing:Listing) -> Landlord:
         if self.connected:
             Landlord_list = self._get_document_using_id("Lanloards", Landlord(),listing.LLID)
             if len(Landlord_list) == 1:

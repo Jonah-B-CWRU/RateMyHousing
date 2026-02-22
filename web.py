@@ -43,7 +43,7 @@ def add_user(username: str, password: str) -> tuple[bool,str]:
 
     return True, "User created successfully"
 
-def verify_login(username: str, password: str):
+def verify_login(username: str, password: str) -> bool:
     data_man.connect_to_database()
     try:
         user_data = data_man.get_user_with_username(username) # this function can fail
@@ -264,7 +264,7 @@ def add_review(
     return RedirectResponse(url="/listings", status_code=302)
 
 @app.get("/listing/{listingid}")
-def view_listinsg(request: Request, listingid: str):
+def view_one_listing(request: Request, listingid: str):
     data_man.connect_to_database()
     listing = data_man._get_document_using_id("Listing", Listing(), listingid)[0]
     comments = data_man.get_comments_from_listing(Listing(ListingID=listingid))
