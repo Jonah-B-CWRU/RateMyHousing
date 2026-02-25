@@ -38,8 +38,8 @@ def add_user(username: str, password: str) -> tuple[bool,str]:
     new_user = User(user_id,username,"",username)
     new_password = Password(p.hash,p.salt,user_id)
 
-    data_man.add_user(new_user)
-    data_man.add_passwords(new_password)
+    data_man.add_object(new_user)
+    data_man.add_object(new_password)
 
     return True, "User created successfully"
 
@@ -63,7 +63,7 @@ def index(request: Request):
         "request": request,
         "name": (request.cookies.get("username") if request.cookies.get("username") != None else "Guest"),
         "title": "Home",
-        "comments": data_man.get_comments()
+        "comments": data_man.get_all_from(Comments())
         })
 
 # Page to create new user, GET
@@ -135,7 +135,7 @@ def comment(request: Request):
     return templates.TemplateResponse("comment.html", {"request": request, "name": username})
 @app.post("/comment")
 def comment_post(request: Request, comment: str = Form(...)):
-    data_man.add_comment(Comments(
+    data_man.add_object(Comments(
         secrets.token_hex(8),
         "",
         "",
@@ -189,7 +189,7 @@ def create_listing(
     )
 
 
-    data_man.add_listing(new_listing)
+    data_man.add_object(new_listing)
 
     return templates.TemplateResponse(
         "create_listing.html",
@@ -204,7 +204,7 @@ def create_listing(
 def view_listings(request: Request):
     data_man.connect_to_database()
 
-    listings = data_man.get_all_listings()
+    listings:list[Listing] = data_man.get_all_from(Listing()) # type: ignore
 
     listing_data = []
 
@@ -259,7 +259,7 @@ def add_review(
         rating
     )
 
-    data_man.add_rating(review)
+    data_man.add_object(review)
 
     return RedirectResponse(url="/listings", status_code=302)
 
