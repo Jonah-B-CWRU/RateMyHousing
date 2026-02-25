@@ -17,6 +17,15 @@ class Comments:
     Content: str = ""
     def as_dict(self) -> dict:
         return asdict(self)
+    @staticmethod
+    def from_dict(dict: dict[str,Any]) -> Comments:
+        return Comments(
+            dict["CommentId"],
+            dict["ConnectedCommentID"],
+            dict["ListingID"],
+            dict["UserID"],
+            dict["Content"],
+        )
 
 @dataclass
 class Landlord:
@@ -25,6 +34,13 @@ class Landlord:
     Email: str = ""
     def as_dict(self) -> dict:
         return asdict(self)
+    @staticmethod
+    def from_dict(dict: dict[str,Any]) -> Landlord:
+        return Landlord(
+            dict["LLID"],
+            dict["Name"],
+            dict["Email"],
+        )
 
 @dataclass
 class Listing:
@@ -36,9 +52,20 @@ class Listing:
     SquareFootage: int = 0
     Price: float = 0.0
     Description: str = ""
-
     def as_dict(self) -> dict:
         return asdict(self)
+    @staticmethod
+    def from_dict(dict: dict[str,Any]) -> Listing:
+        return Listing(
+            dict["ListingID"],
+            dict["LLID"],
+            dict["Address"],
+            dict["Beds"],
+            dict["Baths"],
+            dict["SquareFootage"],
+            dict["Price"],
+            dict["Description"],
+        )
 
 @dataclass
 class Rating:
@@ -48,6 +75,14 @@ class Rating:
     Rating: int = 0
     def as_dict(self) -> dict:
         return asdict(self)
+    @staticmethod
+    def from_dict(dict: dict[str,Any]) -> Rating:
+        return Rating(
+            dict["RatingID"],
+            dict["UserID"],
+            dict["ListingID"],
+            dict["Rating"]
+        )
 
 @dataclass
 class Password:
@@ -56,6 +91,13 @@ class Password:
     UserID: str = ""
     def as_dict(self) -> dict:
         return asdict(self)
+    @staticmethod
+    def from_dict(dict: dict[str,Any]) -> Password:
+        return Password(
+            dict["Hash"],
+            dict["Salt"],
+            dict["UserID"],
+        )
     
 @dataclass
 class User:
@@ -67,8 +109,29 @@ class User:
     Activated:bool = False
     def as_dict(self) -> dict:
         return asdict(self)
+    @staticmethod
+    def from_dict(dict: dict[str,Any]) -> User:
+        return User(
+            dict["UserID"],
+            dict["Username"],
+            dict["ConnectedLL"],
+            dict["Email"],
+            dict["ismod"],
+            dict["Activated"],
+        )
 
-
+@dataclass
+class Codes:
+    UserID: str = ""
+    Code: str = ""
+    def as_dict(self) -> dict:
+        return asdict(self)
+    @staticmethod
+    def from_dict(dict: dict[str,Any]) -> Codes:
+        return Codes(
+            dict["UserID"],
+            dict["Code"],
+        )
 
 class database_manager:
     connected: bool = False
@@ -96,6 +159,18 @@ class database_manager:
         return collection.add(data)
     
     def get_object_by_id(self, id:str, object_type:User|Rating|Landlord|Password|Comments|Listing) -> User|Rating|Landlord|Password|Comments|Listing:
+        """
+        Docstring for get_object_by_id
+        
+        :param self: data manager
+        :param id: ID filtering for
+        :type id: id
+        :param object_type: the type of object we are looking for
+        :type object_type: User | Rating | Landlord | Password | Comments | Listing
+        :return: the object with the id
+        :rtype: User | Rating | Landlord | Password | Comments | Listing
+        """
+        
         if self.connected:
             match object_type:
                 case User():
@@ -103,42 +178,42 @@ class database_manager:
                     documents = collection.where("UserID", "==", id).get()
                     if len(documents) == 1:
                         user:dict[str, Any]  = documents[0].to_dict() # type: ignore
-                        return User(user["UserID"],user["Username"],user["ConnectedLL"],user["Email"])
+                        return User.from_dict(user)
                     raise TypeError(f"No one User with UserID: {id}, there is {len(documents)} of them")
                 case Password():
                     collection = self.fire_store.collection("Passwords")
                     documents = collection.where("UserID", "==", id).get()
                     if len(documents) == 1:
                         p:dict[str, Any] = documents[0].to_dict() # type: ignore
-                        return Password(p["Hash"],p["Salt"],p["UserID"])
+                        return Password.from_dict(p)
                     raise TypeError(f"No one Password with UserID: {id}, there is {len(documents)} of them")
                 case Comments():
                     collection = self.fire_store.collection("Comments")
                     documents = collection.where("CommentID", "==", id).get()
                     if len(documents) == 1:
                         c:dict[str, Any]  = documents[0].to_dict() # type: ignore
-                        return Comments(c["CommentId"],c["ConnectedCommentID"],c["ListingID"],c["UserID"],c["Content"])
+                        return Comments.from_dict(c)
                     raise TypeError(f"No one Comment with CommentId: {id}, there is {len(documents)} of them")
                 case Landlord():
                     collection = self.fire_store.collection("Landlord")
                     documents = collection.where("LLID", "==", id).get()
                     if len(documents) == 1:
                         l:dict[str, Any]  = documents[0].to_dict() # type: ignore
-                        return Landlord(l["LLID"],l["Name"],l["Email"])
+                        return Landlord.from_dict(l)
                     raise TypeError(f"No one Landlord with LLID: {id}, there is {len(documents)} of them")
                 case Listing():
                     collection = self.fire_store.collection("Listing")
                     documents = collection.where("LLID", "==", id).get()
                     if len(documents) == 1:
                         l:dict[str, Any]  = documents[0].to_dict() # type: ignore
-                        return Listing(l["ListingID"],l["LLID"],l["ListingLocation"])
+                        return Listing.from_dict(l)
                     raise TypeError(f"No one Listing with ListingID: {id}, there is {len(documents)} of them")
                 case Rating():
                     collection = self.fire_store.collection("Listing")
                     documents = collection.where("RatingID", "==", id).get()
                     if len(documents) == 1:
                         r:dict[str, Any]  = documents[0].to_dict() # type: ignore
-                        return Rating(r["RatingID"],r["UserID"],r["ListingID"],r["Rating"])
+                        return Rating.from_dict(r)
                     raise TypeError(f"No one Rating with RatingID: {id}, there is {len(documents)} of them")
         raise IOError("Not Connected to Database")
 
@@ -241,99 +316,56 @@ class database_manager:
                     raise TypeError(f"Id_source Not Valid Type: {Id_type}, {type(Id_type)}")
         raise IOError("Not Connected to Database")
     
-    # users
-    def get_users(self) -> list[dict[str,Any]]:
-        if self.connected:
-            return self._get_data("Users")
-        else:
-            raise IOError("Not Connected")
-    
-    def add_user(self, user:User):
-        if self.connected:
-            result = self._push_data(user.as_dict(),"Users")
-            print(result)
+    def get_all_from(self, data_class:User|Rating|Landlord|Password|Comments|Listing) -> list[Comments|Landlord|Listing|Password|Rating|User]:
+        """
+        Docstring for get_all_from
+        
+        :param self: data manager
+        :param data_class: the data type you want to get
+        :type data_class: User | Rating | Landlord | Password | Comments | Listing
+        :return: all of the table from the data type you asked for
+        :rtype: list[Comments|Landlord|Listing|Password|Rating|User]
+        """
+        collection = ""
+        match data_class:
+            case User():
+                collection = "Users"
+            case Rating():
+                collection = "Rating"
+            case Landlord():
+                collection = "Landlords"
+            case Password():
+                collection = "Passwords"
+            case Comments():
+                collection = "Comments"
+            case Listing():
+                collection = "Listing"
 
-    # Passwords
-    def get_passwords(self) -> list[dict[str,Any]]:
         if self.connected:
-            return self._get_data("Passwords")
-        else:
-            raise IOError("Not Connected")
-    
-    def add_passwords(self, password:Password):
-        if self.connected:
-            result = self._push_data(password.as_dict(),"Passwords")
-            print(result)
-	
-    # Comments
-    def get_comments(self) -> list[dict[str,Any]]:
-        if self.connected:
-            return self._get_data("Comments")
-        else:
-            raise IOError("Not Connected")
-
-    def add_comment(self, comment:Comments):
-        if self.connected:
-            result = self._push_data(comment.as_dict(),"Comments")
-
-    # Listing
-    def get_listings(self) -> list[dict[str,Any]]:
-        if self.connected:
-            return self._get_data("Listing")
-        else:
-            raise IOError("Not Connected")
-    
-    def get_all_listings(self) -> list[Listing]:
-        if self.connected:
-            collection = self.fire_store.collection("Listing")
-            docs = collection.stream()
-
-            out: list[Listing] = []
-            for doc in docs:
-                l = doc.to_dict()
-                out.append(
-                    Listing(
-                        l.get("ListingID", ""),
-                        l.get("LLID", ""),
-                        l.get("Address", ""),
-                        l.get("Beds", 0),
-                        l.get("Baths", 0),
-                        l.get("SquareFootage", 0),
-                        l.get("Price", 0.0),
-                        l.get("Description", "")
-                    )
-                )
-
-            return out
-
-        raise IOError("Not Connected to Database")
-
-    def add_listing(self, listing:Listing):
-        if self.connected:
-            result = self._push_data(listing.as_dict(),"Listing")
-
-    # Landloard
-    def get_landlords(self):
-        if self.connected:
-            return self._get_data("Landlord")
+            datalist = self._get_data(collection)
+            return [data_class.from_dict(i) for i in datalist]
         else:
             raise IOError("Not Connected")
 
-    def add_landlord(self, landlord:Landlord):
+    def add_object(self,object:User|Rating|Landlord|Password|Comments|Listing):
+        collection = ""
+        match object:
+            case User():
+                collection = "Users"
+            case Rating():
+                collection = "Rating"
+            case Landlord():
+                collection = "Landlords"
+            case Password():
+                collection = "Passwords"
+            case Comments():
+                collection = "Comments"
+            case Listing():
+                collection = "Listing"
         if self.connected:
-            result = self._push_data(landlord.as_dict(),"Landlord")
-
-    # Rating
-    def get_ratings(self):
-        if self.connected:
-            return self._get_data("Rating")
+            result = self._push_data(object.as_dict(),collection)
         else:
             raise IOError("Not Connected")
-
-    def add_rating(self, rating:Rating):
-        if self.connected:
-            result = self._push_data(rating.as_dict(),"Rating")
-
 
     # relating stuff
     def _unwrap_query(self, q:Query) -> list[dict]:
@@ -423,7 +455,7 @@ class database_manager:
             user = self._unwrap_query(query)
             if len(user) == 1:
                 user = user[0]
-                return User(user["UserID"],user["Username"],user["ConnectedLL"],user["Email"])
+                return User.from_dict(user)
             else:
                 raise TypeError(f"no user with the username: {username}")
         raise IOError("Not Connected to Database")
@@ -433,7 +465,7 @@ class database_manager:
             password_list = self._get_document_using_id("Passwords",User(),user.UserID)
             if len(password_list) == 1:
                 p = password_list[0]
-                return Password(p["Hash"],p["Salt"],p["UserID"])
+                return Password.from_dict(p)
             else:
                 raise TypeError(f"no password with userid: {user.UserID}")
         raise IOError("Not Connected to Database")
@@ -445,7 +477,7 @@ class database_manager:
             Landlord_list = self._get_document_using_id("Lanloards", Landlord(),user.ConnectedLL)
             if len(Landlord_list) == 1:
                 l = Landlord_list[0]
-                return Landlord(l["LLID"],l["Name"],l["Email"])
+                return Landlord.from_dict(l)
             else:
                 raise TypeError(f"no Lanloard with LLID: {user.ConnectedLL}")
         raise IOError("Not Connected to Database")
@@ -453,19 +485,13 @@ class database_manager:
     def get_ratings_from_user(self, user:User) -> list[Rating]:
         if self.connected:
             ratings = self._get_document_using_id("Rating", User(),user.UserID)
-            out:list[Rating] = []
-            for r in ratings:
-                out.append(Rating(r["RatingID"],r["UserID"],r["ListingID"],r["Rating"]))
-            return out
+            return [Rating.from_dict(r) for r in ratings]
         raise IOError("Not Connected to Database")
     
     def get_comments_from_user(self, user:User) -> list[Comments]:
         if self.connected:
             coms = self._get_document_using_id("Comments", User(),user.UserID)
-            out:list[Comments] = []
-            for c in coms:
-                out.append(Comments(c["CommentId"],c["ConnectedCommentID"],c["ListingID"],c["UserID"],c["Content"]))
-            return out
+            return [Comments.from_dict(c) for c in coms]
         raise IOError("Not Connected to Database")
     
     # rating relationships
@@ -476,7 +502,7 @@ class database_manager:
             users = self._get_document_using_id("User",User(),rating.UserID)
             if len(users) == 1:
                 u = users[0]
-                return User(u["UserID"],u["Username"],u["ConnectedLL"],u["Email"])
+                return User.from_dict(u)
             else:
                 raise TypeError(f"no username with userid: {rating.UserID}")
         raise IOError("Not Connected to Database")
@@ -500,7 +526,7 @@ class database_manager:
             users = self._get_document_using_id("User",User(),comment.UserID)
             if len(users) == 1:
                 u = users[0]
-                return User(u["UserID"],u["Username"],u["ConnectedLL"],u["Email"])
+                return User.from_dict(u)
             else:
                 raise TypeError(f"no username with userid: {comment.UserID}")
         raise IOError("Not Connected to Database")
@@ -510,7 +536,7 @@ class database_manager:
             com = self._get_document_using_id("Comments",Comments(),comment.ConnectedCommentID)
             if len(com) == 1:
                 c = com[0]
-                return Comments(c["CommentId"],c["ConnectedCommentID"],c["ListingID"],c["UserID"],c["Content"])
+                return Comments.from_dict(c)
             else:
                 raise TypeError(f"no comment with comment: {comment.ConnectedCommentID}")
         raise IOError("Not Connected to Database")
@@ -520,7 +546,7 @@ class database_manager:
             listings = self._get_document_using_id("Listing",Listing(),comment.ListingID)
             if len(listings) == 1:
                 l = listings[0]
-                return Listing(l["ListingID"],l["LLID"],l["ListingLocation"])
+                return Listing.from_dict(l)
             else:
                 raise TypeError(f"no listing with ListingID: {comment.ListingID}")
         raise IOError("Not Connected to Database")
@@ -535,7 +561,7 @@ class database_manager:
             Landlord_list = self._get_document_using_id("Lanloards", Landlord(),listing.LLID)
             if len(Landlord_list) == 1:
                 l = Landlord_list[0]
-                return Landlord(l["LLID"],l["Name"],l["Email"])
+                return Landlord.from_dict(l)
             else:
                 raise TypeError(f"no Lanloard with LLID: {listing.LLID}")
         raise IOError("Not Connected to Database")
@@ -543,19 +569,13 @@ class database_manager:
     def get_ratings_from_listing(self, listing:Listing) -> list[Rating]:
         if self.connected:
             ratings = self._get_document_using_id("Rating", Listing(),listing.ListingID)
-            out:list[Rating] = []
-            for r in ratings:
-                out.append(Rating(r["RatingID"],r["UserID"],r["ListingID"],r["Rating"]))
-            return out
+            return [Rating.from_dict(r) for r in ratings]
         raise IOError("Not Connected to Database")
     
     def get_comments_from_listing(self, listing:Listing) -> list[Comments]:
         if self.connected:
             coms = self._get_document_using_id("Comments", Listing(),listing.ListingID)
-            out:list[Comments] = []
-            for c in coms:
-                out.append(Comments(c["CommentId"],c["ConnectedCommentID"],c["ListingID"],c["UserID"],c["Content"]))
-            return out
+            return [Comments.from_dict(c) for c in coms]
         raise IOError("Not Connected to Database")
     
     # landlord rlationships
@@ -564,17 +584,11 @@ class database_manager:
     def get_connected_users_with_landlord(self, landlord:Landlord) -> list[User]:
         if self.connected:
             users = self._get_document_using_id("User", Landlord(),landlord.LLID)
-            out:list[User] = []
-            for u in users:
-                out.append(User(u["UserID"],u["Username"],u["ConnectedLL"],u["Email"]))
-            return out
+            return [User.from_dict(u) for u in users]
         raise IOError("Not Connected to Database")
     
     def get_connected_listings_with_landlord(self, landlord:Landlord) -> list[Listing]:
         if self.connected:
             listings = self._get_document_using_id("Listing", Landlord(),landlord.LLID)
-            out:list[Listing] = []
-            for l in listings:
-                out.append(Listing(l["ListingID"],l["LLID"],l["ListingLocation"]))
-            return out
+            return [Listing.from_dict(l) for l in listings]
         raise IOError("Not Connected to Database")
