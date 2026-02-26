@@ -59,20 +59,40 @@ class Listing:
     Price: float = 0.0
     Description: str = ""
     CreatedAt: str = ""
+    CoordinateLat: float = 0.0
+    CoordinateLong: float = 0.0
     def as_dict(self) -> dict:
         return asdict(self)
     @staticmethod
     def from_dict(dict: dict[str,Any]) -> "Listing":
-        return Listing(
-            dict["ListingID"],
-            dict["LLID"],
-            dict["Address"],
-            dict["Beds"],
-            dict["Baths"],
-            dict["SquareFootage"],
-            dict["Price"],
-            dict["Description"],
-        )
+        try:
+            return Listing(
+                dict["ListingID"],
+                dict["LLID"],
+                dict["Address"],
+                dict["Beds"],
+                dict["Baths"],
+                dict["SquareFootage"],
+                dict["Price"],
+                dict["Description"],
+                # dict["CreatedAt"],
+                CoordinateLat=dict["CoordinateLat"],
+                CoordinateLong=dict["CoordinateLong"],
+            )
+        except:
+            return Listing(
+                dict["ListingID"],
+                dict["LLID"],
+                dict["Address"],
+                dict["Beds"],
+                dict["Baths"],
+                dict["SquareFootage"],
+                dict["Price"],
+                dict["Description"],
+                "",
+                0.0,
+                0.0,
+            )
 
 @dataclass
 class Rating:
