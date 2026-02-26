@@ -1,7 +1,7 @@
-from fastapi import FastAPI, Form, Request
-from fastapi.responses import RedirectResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi import FastAPI, Form, Request # type: ignore
+from fastapi.responses import RedirectResponse # type: ignore
+from fastapi.staticfiles import StaticFiles # type: ignore
+from fastapi.templating import Jinja2Templates # type: ignore
 from pathlib import Path
 import secrets
 from datetime import datetime, timezone

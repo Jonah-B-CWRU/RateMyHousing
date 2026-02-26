@@ -1,11 +1,11 @@
 from typing import Any
-from firebase_admin import firestore, credentials
-from google.cloud.firestore_v1.client import Client as FirestoreClient
-from google.cloud.firestore_v1.document import DocumentReference
-from google.cloud.firestore_v1.query import Query
+from firebase_admin import firestore, credentials # type: ignore
+from google.cloud.firestore_v1.client import Client as FirestoreClient # type: ignore
+from google.cloud.firestore_v1.document import DocumentReference # type: ignore
+from google.cloud.firestore_v1.query import Query # type: ignore
 from dataclasses import dataclass, asdict
-from google.protobuf import timestamp_pb2
-import firebase_admin
+from google.protobuf import timestamp_pb2 # type: ignore
+import firebase_admin # type: ignore
 import secrets
 
 @dataclass
