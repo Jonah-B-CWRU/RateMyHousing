@@ -58,7 +58,7 @@ def verify_login(username: str, password: str) -> bool:
         user_data = data_man.get_user_with_username(username)
         pass_data = data_man.get_pass_from_user(user_data)
         p = PasswordAttempt(user_data.UserID, password, salt=pass_data.Salt)
-        return p.hash == pass_data.Hash
+        return (p.hash == pass_data.Hash) and user_data.Activated
     except TypeError:
         return False
 
