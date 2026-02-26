@@ -337,27 +337,37 @@ class database_manager:
                     documents = collection.where("UserID", "==", deleted_object.UserID).get()
                     if len(documents) == 1:
                         self.fire_store.recursive_delete(documents[0].reference)
+                    else:
                         return False
 
                     # get connected items
 
                         # passwords
-                    password = self.get_pass_from_user(deleted_object)
-                    self.recursive_deletion(password)
+                    try:
+                        password = self.get_pass_from_user(deleted_object)
+                        self.recursive_deletion(password)
+                    except:
+                        pass
 
                         # comments
-                    comments = self.get_comments_from_user(deleted_object)
-                    for c in comments:
-                        self.recursive_deletion(c)
+                    try:
+                        comments = self.get_comments_from_user(deleted_object)
+                        for c in comments:
+                            self.recursive_deletion(c)
+                    except:
+                        pass
 
                         # ratings
-                    ratings = self.get_ratings_from_user(deleted_object)
-                    for r in ratings:
-                        self.recursive_deletion(r)
+                    try:
+                        ratings = self.get_ratings_from_user(deleted_object)
+                        for r in ratings:
+                            self.recursive_deletion(r)
+                    except:
+                            pass
                     return True
                 case Password():
                     # remove password and leave.
-                    collection = self.fire_store.collection("Password")
+                    collection = self.fire_store.collection("Passwords")
                     documents = collection.where("UserID", "==", deleted_object.UserID).get()
                     if len(documents) == 1:
                         self.fire_store.recursive_delete(documents[0].reference)
@@ -384,14 +394,19 @@ class database_manager:
 
                     # get connected items
                         # Users
-                    users = self.get_connected_users_with_landlord(deleted_object)
-                    for u in users:
-                        self.recursive_deletion(u)
-                    
+                    try:
+                        users = self.get_connected_users_with_landlord(deleted_object)
+                        for u in users:
+                            self.recursive_deletion(u)
+                    except:
+                            pass
                         # listings
-                    listings = self.get_connected_listings_with_landlord(deleted_object)
-                    for l in listings:
-                        self.recursive_deletion(l)
+                    try:
+                        listings = self.get_connected_listings_with_landlord(deleted_object)
+                        for l in listings:
+                            self.recursive_deletion(l)
+                    except:
+                            pass
                     return True
                 case Comments():
                     # remove comment and leave.
@@ -413,20 +428,25 @@ class database_manager:
 
                     # get connected items
                         # comments
-                    comments = self.get_comments_from_listing(deleted_object)
-                    for c in comments:
-                        self.recursive_deletion(c)
-
+                    try:
+                        comments = self.get_comments_from_listing(deleted_object)
+                        for c in comments:
+                            self.recursive_deletion(c)
+                    except:
+                            pass
                         # ratings
-                    ratings = self.get_ratings_from_listing(deleted_object)
-                    for r in ratings:
-                        self.recursive_deletion(r)
+                    try:
+                        ratings = self.get_ratings_from_listing(deleted_object)
+                        for r in ratings:
+                            self.recursive_deletion(r)
+                    except:
+                            pass
                         # rating average
                     #average = 
                     return True
                 case Codes():
                     # remove code and leave.
-                    collection = self.fire_store.collection("Comments")
+                    collection = self.fire_store.collection("Codes")
                     documents = collection.where("UserID", "==", deleted_object.UserID).get()
                     if len(documents) == 1:
                         self.fire_store.recursive_delete(documents[0].reference)
@@ -435,7 +455,7 @@ class database_manager:
                     return True
                 case AverageRating():
                     # remove code and leave.
-                    collection = self.fire_store.collection("Comments")
+                    collection = self.fire_store.collection("AverageRating")
                     documents = collection.where("ListingID", "==", deleted_object.ListingID).get()
                     if len(documents) == 1:
                         self.fire_store.recursive_delete(documents[0].reference)
