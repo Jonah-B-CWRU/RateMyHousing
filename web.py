@@ -290,7 +290,7 @@ def view_listing_map(request: Request):
     data_man.connect_to_database()
     listings = data_man.get_listings()
     return templates.TemplateResponse(
-        "listingmap.html",
+        "listing_map.html",
         {
             "request": request,
             "listings": listings
