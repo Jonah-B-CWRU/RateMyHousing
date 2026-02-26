@@ -446,7 +446,7 @@ class database_manager:
                     return True
                 case Codes():
                     # remove code and leave.
-                    collection = self.fire_store.collection("Comments")
+                    collection = self.fire_store.collection("Codes")
                     documents = collection.where("UserID", "==", deleted_object.UserID).get()
                     if len(documents) == 1:
                         self.fire_store.recursive_delete(documents[0].reference)
@@ -455,7 +455,7 @@ class database_manager:
                     return True
                 case AverageRating():
                     # remove code and leave.
-                    collection = self.fire_store.collection("Comments")
+                    collection = self.fire_store.collection("AverageRating")
                     documents = collection.where("ListingID", "==", deleted_object.ListingID).get()
                     if len(documents) == 1:
                         self.fire_store.recursive_delete(documents[0].reference)
