@@ -172,10 +172,11 @@ def create_listing(
 
 @app.get("/listings")
 def view_listings(request: Request):
+    data_man.connect_to_database()
     from datetime import datetime, timezone
     from zoneinfo import ZoneInfo
 
-    listings:list[Listing] = data_man.get_all_from(Listing()) # type: ignore
+    listings:list[Listing] = data_man.get_all_from(Listing())
 
     listing_data = []
 
@@ -200,7 +201,8 @@ def view_listings(request: Request):
                     "Username": user.Username,
                     "CreatedAt": created_str
                 })
-            except TypeError:
+            except TypeError as e:
+                print(f"user failed: {e}")
                 comments_with_users.append({
                     "Content": c.Content,
                     "Username": "Unknown",
@@ -282,7 +284,7 @@ def add_comment(request: Request, listing_id: str = Form(...), comment: str = Fo
 def view_one_listing(request: Request, listingid: str):
     data_man.connect_to_database()
     listing = data_man._get_document_using_id("Listing", Listing(), listingid)[0]
-    comments = [com.as_dict() for com in data_man.get_comments_from_listing(Listing(ListingID=listingid))]
+    comments = data_man.get_comments_from_listing(Listing(ListingID=listingid))
     
     ratings = data_man.get_ratings_from_listing(Listing(ListingID=listingid))
     count = len(ratings)
@@ -291,12 +293,37 @@ def view_one_listing(request: Request, listingid: str):
     listing["avg_rating"] = avg
     listing["review_count"] = count
     
+    comments_with_users = []
+    for c in comments:
+        try:
+            user = data_man.get_user_from_comments(c)
+            # Convert comment timestamp to Eastern Time
+            if c.CreatedAt:
+                utc_dt = datetime.fromisoformat(c.CreatedAt.replace("Z", "")).replace(tzinfo=timezone.utc)
+                eastern_dt = utc_dt.astimezone(ZoneInfo("America/New_York"))
+                created_str = eastern_dt.strftime("%m/%d/%Y, %I:%M %p")
+            else:
+                created_str = ""
+            comments_with_users.append({
+                "Content": c.Content,
+                "Username": user.Username,
+                "CreatedAt": created_str
+            })
+        except TypeError as e:
+            print(f"user failed: {e}")
+            comments_with_users.append({
+                "Content": c.Content,
+                "Username": "Unknown",
+                "CreatedAt": ""
+            })
+    
+        
     return templates.TemplateResponse(
         "listing.html",
             {
                 "request": request,
                 "listing": listing,
-                "comments": comments
+                "comments": comments_with_users
             }
     )
 

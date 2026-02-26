@@ -143,7 +143,12 @@
         <hr/>
         {% if comments %}
             {%for comment in comments%}
-                <b>{{comment.UserID}}</b>: {{comment.Content}}
+                <div class="comment">
+                    <p><strong>{{ comment.Username }}:</strong> {{ comment.Content }}</p>
+                    {% if comment.CreatedAt %}
+                        <p class="timestamp" style="font-size:0.8em; color:#666;">{{ comment.CreatedAt }}</p>
+                    {% endif %}
+                </div>
             {% endfor %}
         {% else %}
             <h2>No comments</h2>

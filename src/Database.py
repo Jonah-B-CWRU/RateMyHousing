@@ -1,4 +1,4 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, fields
 from typing import Any, TypeAlias, TypeVar, cast
 from firebase_admin import firestore, credentials
 from google.cloud.firestore_v1.client import Client as FirestoreClient
@@ -20,18 +20,14 @@ class Comments:
     CreatedAt: str = ""
     def as_dict(self) -> dict:
         return asdict(self)
-    @staticmethod
-    def from_dict(dict: dict[str,Any]) -> "Comments":
-        try:
-            return Comments(
-                dict["CommentId"],
-                dict["ConnectedCommentID"],
-                dict["ListingID"],
-                dict["UserID"],
-                dict["Content"],
-            )
-        except:
-            return Comments()
+    @classmethod
+    def from_dict(cls, dict: dict[str,Any]) -> "Comments":
+        sanitized = {}
+        for field in fields(cls):
+            val = dict.get(field.name)
+            if val is not None:
+                sanitized[field.name] = val
+        return cls(**sanitized)
 
 @dataclass
 class Landlord:
@@ -40,13 +36,14 @@ class Landlord:
     Email: str = ""
     def as_dict(self) -> dict:
         return asdict(self)
-    @staticmethod
-    def from_dict(dict: dict[str,Any]) -> "Landlord":
-        return Landlord(
-            dict["LLID"],
-            dict["Name"],
-            dict["Email"],
-        )
+    @classmethod
+    def from_dict(cls, dict: dict[str,Any]) -> "Landlord":
+        sanitized = {}
+        for field in fields(cls):
+            val = dict.get(field.name)
+            if val is not None:
+                sanitized[field.name] = val
+        return cls(**sanitized)
 
 @dataclass
 class Listing:
@@ -61,18 +58,14 @@ class Listing:
     CreatedAt: str = ""
     def as_dict(self) -> dict:
         return asdict(self)
-    @staticmethod
-    def from_dict(dict: dict[str,Any]) -> "Listing":
-        return Listing(
-            dict["ListingID"],
-            dict["LLID"],
-            dict["Address"],
-            dict["Beds"],
-            dict["Baths"],
-            dict["SquareFootage"],
-            dict["Price"],
-            dict["Description"],
-        )
+    @classmethod
+    def from_dict(cls, dict: dict[str,Any]) -> "Listing":
+        sanitized = {}
+        for field in fields(cls):
+            val = dict.get(field.name)
+            if val is not None:
+                sanitized[field.name] = val
+        return cls(**sanitized)
 
 @dataclass
 class Rating:
@@ -82,14 +75,14 @@ class Rating:
     Rating: int = 0
     def as_dict(self) -> dict:
         return asdict(self)
-    @staticmethod
-    def from_dict(dict: dict[str,Any]) -> "Rating":
-        return Rating(
-            dict["RatingID"],
-            dict["UserID"],
-            dict["ListingID"],
-            dict["Rating"]
-        )
+    @classmethod
+    def from_dict(cls,dict: dict[str,Any]) -> "Rating":
+        sanitized = {}
+        for field in fields(cls):
+            val = dict.get(field.name)
+            if val is not None:
+                sanitized[field.name] = val
+        return cls(**sanitized)
 
 @dataclass
 class Password:
@@ -98,13 +91,14 @@ class Password:
     UserID: str = ""
     def as_dict(self) -> dict:
         return asdict(self)
-    @staticmethod
-    def from_dict(dict: dict[str,Any]) -> "Password":
-        return Password(
-            dict["Hash"],
-            dict["Salt"],
-            dict["UserID"],
-        )
+    @classmethod
+    def from_dict(cls, dict: dict[str,Any]) -> "Password":
+        sanitized = {}
+        for field in fields(cls):
+            val = dict.get(field.name)
+            if val is not None:
+                sanitized[field.name] = val
+        return cls(**sanitized)
     
 @dataclass
 class User:
@@ -116,16 +110,14 @@ class User:
     Activated:bool = False
     def as_dict(self) -> dict:
         return asdict(self)
-    @staticmethod
-    def from_dict(dict: dict[str,Any]) -> "User":
-        return User(
-            dict["UserID"],
-            dict["Username"],
-            dict["ConnectedLL"],
-            dict["Email"],
-            dict["ismod"],
-            dict["Activated"],
-        )
+    @classmethod
+    def from_dict(cls, dict: dict[str,Any]) -> "User":
+        sanitized = {}
+        for field in fields(cls):
+            val = dict.get(field.name)
+            if val is not None:
+                sanitized[field.name] = val
+        return cls(**sanitized)
 
 @dataclass
 class Codes:
@@ -133,12 +125,14 @@ class Codes:
     Code: int = 0
     def as_dict(self) -> dict:
         return asdict(self)
-    @staticmethod
-    def from_dict(dict: dict[str,Any]) -> "Codes":
-        return Codes(
-            dict["UserID"],
-            dict["Code"],
-        )
+    @classmethod
+    def from_dict(cls,dict: dict[str,Any]) -> "Codes":
+        sanitized = {}
+        for field in fields(cls):
+            val = dict.get(field.name)
+            if val is not None:
+                sanitized[field.name] = val
+        return cls(**sanitized)
 
 @dataclass
 class AverageRating:
@@ -147,13 +141,14 @@ class AverageRating:
     NumberOfRatings: int = 0
     def as_dict(self) -> dict:
         return asdict(self)
-    @staticmethod
-    def from_dict(dict: dict[str,Any]) -> "AverageRating":
-        return AverageRating(
-            dict["ListingID"],
-            dict["AverageRating"],
-            dict["NumberOfRating"],
-        )
+    @classmethod
+    def from_dict(cls, dict: dict[str,Any]) -> "AverageRating":
+        sanitized = {}
+        for field in fields(cls):
+            val = dict.get(field.name)
+            if val is not None:
+                sanitized[field.name] = val
+        return cls(**sanitized)
 
 
 # super type alias
@@ -747,7 +742,7 @@ class database_manager:
     # Rating <-> Listing
     def get_user_from_rating(self,rating:Rating) -> User:
         if self.connected:
-            users = self._get_document_using_id("User",User(),rating.UserID)
+            users = self._get_document_using_id("Users",User(),rating.UserID)
             if len(users) == 1:
                 u = users[0]
                 return User.from_dict(u)
@@ -771,7 +766,7 @@ class database_manager:
     # comment <-> listing
     def get_user_from_comments(self,comment:Comments) -> User:
         if self.connected:
-            users = self._get_document_using_id("User",User(),comment.UserID)
+            users = self._get_document_using_id("Users",User(),comment.UserID)
             if len(users) == 1:
                 u = users[0]
                 return User.from_dict(u)
@@ -831,7 +826,7 @@ class database_manager:
     # Landlord <-> Listing (many)
     def get_connected_users_with_landlord(self, landlord:Landlord) -> list[User]:
         if self.connected:
-            users = self._get_document_using_id("User", Landlord(),landlord.LLID)
+            users = self._get_document_using_id("Users", Landlord(),landlord.LLID)
             return [User.from_dict(u) for u in users]
         raise IOError("Not Connected to Database")
     
