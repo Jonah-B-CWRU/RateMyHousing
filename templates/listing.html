@@ -133,7 +133,7 @@
         .rating-detail { color: #666; font-size: 14px; }
         .rating-detail strong { display: block; font-size: 15px; color: #333; margin-bottom: 2px; }
 
-        .rate-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .rate-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
         .rate-form label { font-size: 14px; font-weight: 600; color: #555; }
 
         select {
@@ -165,7 +165,7 @@
         .comments-section { padding: 24px 32px 32px; }
 
         .comments-section h3 {
-            margin: 0 0 20px 0;
+            margin: 0 0 12px 0;
             font-size: 17px;
             color: #333;
             display: flex;
@@ -206,8 +206,13 @@
             flex-shrink: 0;
         }
 
-        .comment-author { font-size: 13px; font-weight: 700; color: #4a5fd9; margin-bottom: 4px; }
+        .comment-body { flex: 1; }
+
+        .comment-author { font-size: 13px; font-weight: 700; color: #4a5fd9; }
+
         .comment-text { font-size: 14px; color: #444; line-height: 1.5; }
+
+        .timestamp { font-size: 0.8em; color: #666; margin-top: 2px; }
 
         .no-comments { text-align: center; color: #bbb; padding: 24px 0; font-size: 15px; }
 
@@ -220,25 +225,7 @@
             border-radius: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         }
-        
-        .row {
-            display: flex;
-        }
-        .column {
-            flex: 50%;
-        }
-        
     </style>
-    
-    {% if listing.CoordinateLat and listing.CoordinateLong %} <!-- Faster loading if no coordinates -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""></script>
-    {% endif %}
-    
 </head>
 <body>
 
@@ -295,20 +282,6 @@
             {{ listing.Description }}
         </div>
         {% endif %}
-        
-        <hr/>
-        {% if comments %}
-            {%for comment in comments%}
-                <div class="comment">
-                    <p><strong>{{ comment.Username }}:</strong> {{ comment.Content }}</p>
-                    {% if comment.CreatedAt %}
-                        <p class="timestamp" style="font-size:0.8em; color:#666;">{{ comment.CreatedAt }}</p>
-                    {% endif %}
-                </div>
-            {% endfor %}
-        {% else %}
-            <h2>No comments</h2>
-        {% endif %}
 
         <div class="rating-section">
             <h3>⭐ Ratings</h3>
@@ -343,21 +316,35 @@
             </form>
         </div>
 
+        <!-- Comments Section -->
         <div class="comments-section">
             <h3>
                 💬 Comments
                 {% if comments %}
                 <span class="comment-count">{{ comments | length }}</span>
                 {% endif %}
+                <button id="btn-add-comment" style="margin-left: 12px; padding:4px 10px; font-size:13px; border-radius:6px; border:none; background:#4a5fd9; color:white; cursor:pointer;">+ Add Comment</button>
             </h3>
+
+            <!-- Hidden form for new comment -->
+            <div id="add-comment-form" style="display:none; margin-top:12px;">
+                <form action="/add_comment" method="post">
+                    <input type="hidden" name="listing_id" value="{{ listing.ListingID }}">
+                    <textarea name="comment" rows="3" placeholder="Write your comment..." style="width:100%; padding:8px; border-radius:6px; border:1px solid #ccc; resize:none;"></textarea>
+                    <button type="submit" style="margin-top:6px; padding:8px 14px; background:#16a34a; color:white; border:none; border-radius:6px; cursor:pointer;">Submit Comment</button>
+                </form>
+            </div>
 
             {% if comments %}
                 {% for comment in comments %}
                 <div class="comment-item">
                     <div class="comment-avatar">💬</div>
                     <div class="comment-body">
-                        <div class="comment-author">{{ comment.UserID }}</div>
+                        <div class="comment-author">{{ comment.Username }}</div>
                         <div class="comment-text">{{ comment.Content }}</div>
+                        {% if comment.CreatedAt %}
+                        <div class="timestamp">{{ comment.CreatedAt }}</div>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
@@ -376,6 +363,20 @@
     </div>
 
 {% endif %}
+
+<script>
+    const btn = document.getElementById('btn-add-comment');
+    const form = document.getElementById('add-comment-form');
+    btn.addEventListener('click', () => {
+        if (form.style.display === 'none') {
+            form.style.display = 'block';
+            btn.textContent = 'Cancel';
+        } else {
+            form.style.display = 'none';
+            btn.textContent = '+ Add Comment';
+        }
+    });
+</script>
 
 </body>
 </html>
