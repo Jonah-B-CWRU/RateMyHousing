@@ -36,6 +36,7 @@ class Listing:
     SquareFootage: int = 0
     Price: float = 0.0
     Description: str = ""
+    CreatedAt: str = ""
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -252,7 +253,8 @@ class database_manager:
                         l.get("Baths", 0),
                         l.get("SquareFootage", 0),
                         l.get("Price", 0.0),
-                        l.get("Description", "")
+                        l.get("Description", ""),
+                        l.get("CreatedAt", "")
                     )
                 )
 

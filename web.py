@@ -6,6 +6,8 @@ from pathlib import Path
 import json
 from src.LoginProcessor import PasswordAttempt
 import secrets
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 #import uuid
 
 # custom stuff
@@ -177,6 +179,7 @@ def create_listing(
 
     listing_id = secrets.token_hex(8)
 
+    created_at = datetime.utcnow().isoformat() + "Z"
     new_listing = Listing(
         listing_id,
         llid,
@@ -185,8 +188,10 @@ def create_listing(
         baths,
         sqft,
         price,
-        description
+        description,
+        created_at
     )
+    
 
 
     data_man.add_listing(new_listing)
@@ -199,11 +204,11 @@ def create_listing(
         }
     )
 
-
 @app.get("/listings")
 def view_listings(request: Request):
-    data_man.connect_to_database()
+    from datetime import datetime
 
+    data_man.connect_to_database()
     listings = data_man.get_all_listings()
 
     listing_data = []
@@ -214,10 +219,20 @@ def view_listings(request: Request):
         count = len(ratings)
         avg = round(sum(r.Rating for r in ratings) / count, 2) if count > 0 else 0
 
+        created_str = ""
+        if listing.CreatedAt:
+            try:
+                utc_dt = datetime.fromisoformat(listing.CreatedAt.replace("Z", "")).replace(tzinfo=timezone.utc)
+                eastern_dt = utc_dt.astimezone(ZoneInfo("America/New_York"))
+                created_str = eastern_dt.strftime("%m/%d/%Y, %I:%M %p")
+            except:
+                created_str = listing.CreatedAt
+
         listing_data.append({
             "listing": listing,
             "avg_rating": avg,
-            "review_count": count
+            "review_count": count,
+            "created_at": created_str
         })
 
     return templates.TemplateResponse(
@@ -228,7 +243,6 @@ def view_listings(request: Request):
             "name": "All Listings"
         }
     )
-
 
 
 @app.post("/add_review")

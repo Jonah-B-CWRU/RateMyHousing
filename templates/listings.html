@@ -68,6 +68,12 @@
             margin-top: 10px;
             font-weight: bold;
         }
+
+        .timestamp {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -78,7 +84,7 @@
             {% for item in listings %}
                 {% set listing = item.listing %}
                 <div class="listing-card">
-                    <h2>{{ listing.ListingLocation }}</h2>
+                    <h2>{{ listing.Address }}</h2>
 
                     <p><strong>Listing ID:</strong> {{ listing.ListingID }}</p>
                     <p><strong>Landlord ID:</strong> {{ listing.LLID }}</p>
@@ -90,6 +96,8 @@
                     {% if listing.Description %}
                         <p><strong>Description:</strong> {{ listing.Description }}</p>
                     {% endif %}
+
+                    <p class="timestamp"><strong>Created At:</strong> {{ item.created_at }}</p>
 
                     <div class="rating-summary">
                         {% if item.review_count > 0 %}
