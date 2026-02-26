@@ -295,7 +295,7 @@ def view_one_listing(request: Request, listingid: str):
 @app.get("/map")
 def view_listing_map(request: Request):
     data_man.connect_to_database()
-    listings = data_man.get_listings()
+    listings = [listdict.as_dict() for listdict in data_man.get_all_from(Listing())]
     return templates.TemplateResponse(
         "listing_map.html",
         {
