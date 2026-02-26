@@ -840,7 +840,7 @@ class database_manager:
                 ar = ars[0]
                 return AverageRating.from_dict(ar)
             else:
-                raise TypeError(f"no Lanloard with LLID: {listing.LLID}")
+                raise TypeError(f"no AverageRating with ListingID: {listing.LLID}")
         raise IOError("Not Connected to Database")
     
     # landlord rlationships
