@@ -148,7 +148,9 @@ def create_listing(
 
 @app.get("/listings")
 def view_listings(request: Request):
-    from datetime import datetime
+    from datetime import datetime, timezone
+    from zoneinfo import ZoneInfo
+
     data_man.connect_to_database()
     listings = data_man.get_all_listings()
     listing_data = []
@@ -160,14 +162,30 @@ def view_listings(request: Request):
         comments_with_users = []
         for c in comments:
             try:
-                user = data_man.get_user_from_userid(c.UserID)
-                comments_with_users.append({"Content": c.Content, "Username": user.Username})
+                user = data_man.get_user_from_id(c.UserID)
+                # Convert comment timestamp to Eastern Time
+                if c.CreatedAt:
+                    utc_dt = datetime.fromisoformat(c.CreatedAt.replace("Z", "")).replace(tzinfo=timezone.utc)
+                    eastern_dt = utc_dt.astimezone(ZoneInfo("America/New_York"))
+                    created_str = eastern_dt.strftime("%m/%d/%Y, %I:%M %p")
+                else:
+                    created_str = ""
+                comments_with_users.append({
+                    "Content": c.Content,
+                    "Username": user.Username,
+                    "CreatedAt": created_str
+                })
             except TypeError:
-                comments_with_users.append({"Content": c.Content, "Username": "Unknown"})
+                comments_with_users.append({
+                    "Content": c.Content,
+                    "Username": "Unknown",
+                    "CreatedAt": ""
+                })
 
         count = len(ratings)
         avg = round(sum(r.Rating for r in ratings) / count, 2) if count > 0 else 0
 
+        # Convert listing timestamp to Eastern Time
         created_str = ""
         if listing.CreatedAt:
             try:
@@ -207,6 +225,8 @@ def add_review(request: Request, listing_id: str = Form(...), rating: int = Form
 
     return RedirectResponse(url="/listings", status_code=302)
 
+from datetime import datetime, timezone
+
 @app.post("/add_comment")
 def add_comment(request: Request, listing_id: str = Form(...), comment: str = Form(...)):
     username = request.cookies.get("username")
@@ -219,12 +239,15 @@ def add_comment(request: Request, listing_id: str = Form(...), comment: str = Fo
     data_man.connect_to_database()
     user = data_man.get_user_with_username(username)
 
+    now_utc = datetime.now(timezone.utc).isoformat()  # store timestamp in UTC
+
     new_comment = Comments(
         CommentId=secrets.token_hex(8),
         ConnectedCommentID="",
         ListingID=listing_id,
         UserID=user.UserID,
-        Content=comment
+        Content=comment,
+        CreatedAt=now_utc  # <-- set timestamp
     )
 
     data_man.add_comment(new_comment)

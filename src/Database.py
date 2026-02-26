@@ -15,6 +15,7 @@ class Comments:
     ListingID: str = ""
     UserID:str = ""
     Content: str = ""
+    CreatedAt: str = ""
     def as_dict(self) -> dict:
         return asdict(self)
 
@@ -226,17 +227,22 @@ class database_manager:
             comments = [doc.to_dict() for doc in query.get()]
             out = []
             for c in comments:
-                out.append(Comments(c["CommentId"],c["ConnectedCommentID"],c["ListingID"],c["UserID"],c["Content"]))
+                out.append(Comments(
+                    CommentId=c.get("CommentId", ""),
+                    ConnectedCommentID=c.get("ConnectedCommentID", ""),
+                    ListingID=c.get("ListingID", ""),
+                    UserID=c.get("UserID", ""),
+                    Content=c.get("Content", ""),
+                    CreatedAt=c.get("CreatedAt", "")
+                ))
             return out
         raise IOError("Not Connected to Database")
-    def get_user_from_userid(self, user_id: str) -> User:
+    def get_user_from_id(self, user_id: str) -> User:
         if self.connected:
             collection = self.fire_store.collection("Users")
             query = collection.where("UserID", "==", user_id)
             users = [doc.to_dict() for doc in query.get()]
-            if len(users) == 1:
+            if users:
                 u = users[0]
                 return User(u["UserID"], u["Username"], u["ConnectedLL"], u["Email"])
-            else:
-                raise TypeError(f"No user with UserID: {user_id}")
-        raise IOError("Not Connected to Database")
+        raise TypeError(f"No user with ID: {user_id}")
