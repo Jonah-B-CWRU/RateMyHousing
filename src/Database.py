@@ -184,10 +184,13 @@ class database_manager:
         """
         collection = self.fire_store.collection(col)
         query = collection.get()
-        total_data = [doc.to_dict() for doc in query]
+        total_data = []
+        for doc in query:
+            data = doc.to_dict()
+            total_data.append(data)
         return total_data
     
-    def _push_data(self, data:dict,col:str) -> tuple[timestamp_pb2.Timestamp,DocumentReference]:
+    def _push_data(self, data:dict,col:str) -> tuple[timestamp_pb2.Timestamp,DocumentReference]: # type: ignore
         collection = self.fire_store.collection(col)
         return collection.add(data)
     
@@ -685,7 +688,7 @@ class database_manager:
         if self.connected:
             collection = self.fire_store.collection("Users")
             query = collection.where("Username","==",username)
-            user = [doc.to_dict() for doc in query.get()]
+            user = self._unwrap_query(query)
             if len(user) == 1:
                 user = user[0]
                 return User.from_dict(user)
@@ -822,7 +825,11 @@ class database_manager:
             coms = self._get_document_using_id("Comments", Listing(),listing.ListingID)
             return [Comments.from_dict(c) for c in coms]
         raise IOError("Not Connected to Database")
-    def get_user_from_id(self, user_id: str) -> User:
+    
+    # landlord rlationships
+    # Landlord <-> User (many)
+    # Landlord <-> Listing (many)
+    def get_connected_users_with_landlord(self, landlord:Landlord) -> list[User]:
         if self.connected:
             users = self._get_document_using_id("User", Landlord(),landlord.LLID)
             return [User.from_dict(u) for u in users]
