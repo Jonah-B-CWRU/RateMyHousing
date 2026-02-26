@@ -9,6 +9,11 @@ from zoneinfo import ZoneInfo
 
 from src.Database import database_manager, User, Password, Comments, Listing, Landlord, Rating
 from src.LoginProcessor import PasswordAttempt
+import random
+
+# custom stuff
+from src.Database import database_manager, User, Password, Comments, Listing, Landlord, Rating,Codes, AverageRating
+
 
 app = FastAPI()
 data_man = database_manager()
@@ -24,18 +29,25 @@ def add_user(username: str, password: str) -> tuple[bool, str]:
 
     if data_man.check_for_username(username):
         return False, "Username already exists"
-
+      
     if data_man.check_for_email(username):
-        return False, "Email already exists"
-
+        return False, "Email already exists
+      
+    # make user and password
     user_id = secrets.token_hex(8)
     p = PasswordAttempt(user_id, password)
+    new_user = User(user_id,username,"",username)
+    new_password = Password(p.hash,p.salt,user_id)
 
-    new_user = User(user_id, username, "", username)
-    new_password = Password(p.hash, p.salt, user_id)
+    data_man.add_object(new_user)
+    data_man.add_object(new_password)
 
-    data_man.add_user(new_user)
-    data_man.add_passwords(new_password)
+    # Make code
+    code = random.randrange(100000,999999)
+    print(code)
+    new_code = Codes(user_id,code)
+    data_man.add_object(new_code)
+    data_man.send_code(new_user,new_code)
 
     return True, "User created successfully"
 
@@ -52,15 +64,12 @@ def verify_login(username: str, password: str) -> bool:
 @app.get("/")
 def index(request: Request):
     data_man.connect_to_database()
-    return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
-            "name": request.cookies.get("username") or "Guest",
-            "title": "Home",
-            # "comments": data_man.get_comments()
-        }
-    )
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "name": (request.cookies.get("username") if request.cookies.get("username") != None else "Guest"),
+        "title": "Home",
+        "comments": data_man.get_all_from(Comments())
+        })
 
 @app.get("/create")
 def create_user_form(request: Request):
@@ -102,6 +111,37 @@ def logout():
     response.delete_cookie("username")
     return response
 
+@app.get("/comment")
+def comment(request: Request):
+    username = request.cookies.get("username")
+    if not username:
+        return templates.TemplateResponse(
+            "redirect.html",
+            {
+                "request": request,
+                "message": "You must log in to access the dashboard.",
+                "target_url": "/"
+            }
+        )
+    return templates.TemplateResponse("comment.html", {"request": request, "name": username})
+@app.post("/comment")
+def comment_post(request: Request, comment: str = Form(...)):
+    data_man.add_object(Comments(
+        secrets.token_hex(8),
+        "",
+        "",
+        "",
+        comment
+        ))
+    return templates.TemplateResponse(
+        "redirect.html",
+            {
+                "request": request,
+                "message": "Comment posted.",
+                "target_url": "/dashboard"
+            }
+    )
+
 @app.get("/create_listing")
 def create_listing_form(request: Request):
     username = request.cookies.get("username")
@@ -139,7 +179,8 @@ def create_listing(
         created_at
     )
 
-    data_man.add_listing(new_listing)
+
+    data_man.add_object(new_listing)
 
     return templates.TemplateResponse(
         "create_listing.html",
@@ -151,8 +192,8 @@ def view_listings(request: Request):
     from datetime import datetime, timezone
     from zoneinfo import ZoneInfo
 
-    data_man.connect_to_database()
-    listings = data_man.get_all_listings()
+    listings:list[Listing] = data_man.get_all_from(Listing()) # type: ignore
+
     listing_data = []
 
     for listing in listings:
@@ -221,7 +262,7 @@ def add_review(request: Request, listing_id: str = Form(...), rating: int = Form
     user = data_man.get_user_with_username(username)
 
     review = Rating(secrets.token_hex(8), user.UserID, listing_id, rating)
-    data_man.add_rating(review)
+    data_man.add_object(review)
 
     return RedirectResponse(url="/listings", status_code=302)
 
@@ -250,5 +291,49 @@ def add_comment(request: Request, listing_id: str = Form(...), comment: str = Fo
         CreatedAt=now_utc  # <-- set timestamp
     )
 
-    data_man.add_comment(new_comment)
+    data_man.add_object(new_comment)
     return RedirectResponse(url="/listings", status_code=302)
+    review = Rating(
+        secrets.token_hex(8),
+        user.UserID,
+        listing_id,
+        rating
+    )
+
+    data_man.add_object(review)
+
+    return RedirectResponse(url="/listings", status_code=302)
+
+@app.get("/listing/{listingid}")
+def view_one_listing(request: Request, listingid: str):
+    data_man.connect_to_database()
+    listing = data_man._get_document_using_id("Listing", Listing(), listingid)[0]
+    comments = data_man.get_comments_from_listing(Listing(ListingID=listingid))
+    
+    ratings = data_man.get_ratings_from_listing(Listing(ListingID=listingid))
+    count = len(ratings)
+    avg = round(sum(r.Rating for r in ratings) / count, 2) if count > 0 else 0
+    
+    listing["avg_rating"] = avg
+    listing["review_count"] = count
+    
+    return templates.TemplateResponse(
+        "listing.html",
+            {
+                "request": request,
+                "listing": listing,
+                "comments": comments
+            }
+    )
+
+@app.get("/map")
+def view_listing_map(request: Request):
+    data_man.connect_to_database()
+    listings = [listdict.as_dict() for listdict in data_man.get_all_from(Listing())]
+    return templates.TemplateResponse(
+        "listing_map.html",
+        {
+            "request": request,
+            "listings": listings
+        }
+    )

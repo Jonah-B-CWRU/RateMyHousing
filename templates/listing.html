@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listings - Rate My Housing</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            padding: 20px; 
+            background: #f0f0f0; 
+        }
+
+        .container { 
+            max-width: 900px; 
+            margin: auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 15px; 
+        }
+
+        h1 { 
+            text-align: center; 
+        }
+
+        .listing-card {
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #fafafa;
+        }
+
+        .listing-card h2 {
+            margin-top: 0;
+            color: #4a5fd9;
+        }
+
+        .review-form {
+            margin-top: 15px;
+        }
+
+        select, button {
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background: #4a5fd9;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        a { 
+            text-decoration: none; 
+            color: #4a5fd9; 
+            font-weight: bold; 
+        }
+
+        .rating-summary {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        
+        .row {
+            display: flex;
+        }
+        .column {
+            flex: 50%;
+        }
+        
+    </style>
+    
+    {% if listing.CoordinateLat and listing.CoordinateLong %} <!-- Faster loading if no coordinates -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+    {% endif %}
+    
+</head>
+<body>
+    
+    
+    
+    <div class="container">
+        
+        <div class="row">
+            <div class="column">
+                {% if listing %}
+                <h2>{{ listing.ListingLocation }}</h2>
+
+                <p><strong>Listing ID:</strong> {{ listing.ListingID }}</p>
+                <p><strong>Landlord ID:</strong> {{ listing.LLID }}</p>
+                <p><strong>Beds:</strong> {{ listing.Beds }}</p>
+                <p><strong>Baths:</strong> {{ listing.Baths }}</p>
+                <p><strong>Square Footage:</strong> {{ listing.SquareFootage }} sq ft</p>
+                <p><strong>Price:</strong> ${{ listing.Price }}</p>
+
+                {% if listing.Description %}
+                    <p><strong>Description:</strong> {{ listing.Description }}</p>
+                {% endif %}
+
+                <div class="rating-summary">
+                    {% if listing.review_count > 0 %}
+                        ⭐ Average Rating: {{ listing.avg_rating }} ({{ listing.review_count }} review{% if listing.review_count > 1 %}s{% endif %})
+                    {% else %}
+                        <span style="color: gray;">No ratings yet.</span>
+                    {% endif %}
+                </div>
+
+                <div class="review-form">
+                    <form action="/add_review" method="post">
+                        <input type="hidden" name="listing_id" value="{{ listing.ListingID }}">
+
+                        <label>Leave a Rating:</label>
+                        <select name="rating">
+                            <option value="1">1 ⭐</option>
+                            <option value="2">2 ⭐⭐</option>
+                            <option value="3">3 ⭐⭐⭐</option>
+                            <option value="4">4 ⭐⭐⭐⭐</option>
+                            <option value="5">5 ⭐⭐⭐⭐⭐</option>
+                        </select>
+
+                        <button type="submit">Submit</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col">
+                <div id="map" style="height: 100%; width: 400px; border-radius: 2%; border: 1px solid grey;"></div>
+            </div>
+        </div>
+        
+        <hr/>
+        {% if comments %}
+            {%for comment in comments%}
+                <b>{{comment.UserID}}</b>: {{comment.Content}}
+            {% endfor %}
+        {% else %}
+            <h2>No comments</h2>
+        {% endif %}
+        
+        
+    </div>
+        <p><a href="/dashboard">Back to Dashboard</a></p>
+    </div>
+    {% else %}
+        <div>No such listing exists</div>
+    {% endif %}
+    
+    {% if listing.CoordinateLat and listing.CoordinateLong %}
+    <script>
+        var map = L.map('map').setView([{{listing.CoordinateLat}}, {{listing.CoordinateLong}}], 15);
+        L.tileLayer(
+            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            {
+                maxZoom: 19,
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }
+        ).addTo(map);
+        L.marker([{{listing.CoordinateLat}}, {{listing.CoordinateLong}}]).addTo(map);
+    </script>
+    {% endif %}
+    
+</body>
+</html>

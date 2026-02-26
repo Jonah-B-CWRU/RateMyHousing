@@ -6,3 +6,8 @@ use the following command too start server
 ```sh
 uvicorn web:app --reload
 ```
+
+To test use
+```sh
+python -m unittest src/Tests.py
+```
