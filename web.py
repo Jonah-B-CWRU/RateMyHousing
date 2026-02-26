@@ -58,7 +58,7 @@ def index(request: Request):
             "request": request,
             "name": request.cookies.get("username") or "Guest",
             "title": "Home",
-            "comments": data_man.get_comments()
+            # "comments": data_man.get_comments()
         }
     )
 
