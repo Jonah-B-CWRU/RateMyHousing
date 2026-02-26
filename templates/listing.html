@@ -3,70 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Listings - Rate My Housing</title>
+    <title>Listing Detail - Rate My Housing</title>
     <style>
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            padding: 20px; 
-            background: #f0f0f0; 
+        body {
+            margin: 0;
+            padding: 30px 20px;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #4a5fd9 0%, #5a3d99 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        .container { 
-            max-width: 900px; 
-            margin: auto; 
-            background: white; 
-            padding: 30px; 
-            border-radius: 15px; 
+        .page-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 24px;
         }
 
-        h1 { 
-            text-align: center; 
+        .page-header h1 { margin: 0; font-size: 32px; }
+
+        .top-nav {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 24px;
         }
 
-        .listing-card {
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            padding: 20px;
+        .nav-btn {
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.2s;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .nav-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+
+        .main-card {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .card-top {
+            padding: 30px 32px 24px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .listing-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
             margin-bottom: 20px;
-            background: #fafafa;
         }
 
-        .listing-card h2 {
-            margin-top: 0;
-            color: #4a5fd9;
+        .listing-address {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
         }
 
-        .review-form {
-            margin-top: 15px;
+        .price-badge {
+            background: linear-gradient(135deg, #4a5fd9 0%, #5a3d99 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 18px;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
-        select, button {
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
         }
 
-        button {
-            background: #4a5fd9;
+        .stat-box {
+            background: #f8f8ff;
+            border: 1px solid #e8e8f8;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+        .stat-value { display: block; font-size: 17px; font-weight: 700; color: #333; }
+        .stat-label { display: block; font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+        .listing-ids { display: flex; gap: 16px; font-size: 13px; color: #999; }
+
+        .description-section {
+            padding: 20px 32px;
+            border-bottom: 2px solid #f0f0f0;
+            color: #555;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .rating-section {
+            padding: 24px 32px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .rating-section h3 { margin: 0 0 16px 0; font-size: 17px; color: #333; }
+
+        .rating-summary-box {
+            background: linear-gradient(135deg, #f8f8ff 0%, #f0eeff 100%);
+            border: 1px solid #ddd8ff;
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .big-rating { font-size: 36px; font-weight: 800; color: #4a5fd9; line-height: 1; }
+        .rating-detail { color: #666; font-size: 14px; }
+        .rating-detail strong { display: block; font-size: 15px; color: #333; margin-bottom: 2px; }
+
+        .rate-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .rate-form label { font-size: 14px; font-weight: 600; color: #555; }
+
+        select {
+            padding: 9px 12px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            font-size: 14px;
+            color: #333;
+            background: white;
+            cursor: pointer;
+        }
+
+        select:focus { outline: none; border-color: #4a5fd9; }
+
+        .btn-submit-rating {
+            padding: 9px 20px;
+            background: linear-gradient(135deg, #4a5fd9 0%, #5a3d99 100%);
             color: white;
             border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
-            margin-left: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        button:hover {
-            opacity: 0.9;
+        .btn-submit-rating:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(74,95,217,0.4); }
+
+        .comments-section { padding: 24px 32px 32px; }
+
+        .comments-section h3 {
+            margin: 0 0 20px 0;
+            font-size: 17px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        a { 
-            text-decoration: none; 
-            color: #4a5fd9; 
-            font-weight: bold; 
+        .comment-count {
+            background: #e8eaff;
+            color: #4a5fd9;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
         }
 
-        .rating-summary {
-            margin-top: 10px;
-            font-weight: bold;
+        .comment-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .comment-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+        .comment-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4a5fd9, #5a3d99);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .comment-author { font-size: 13px; font-weight: 700; color: #4a5fd9; margin-bottom: 4px; }
+        .comment-text { font-size: 14px; color: #444; line-height: 1.5; }
+
+        .no-comments { text-align: center; color: #bbb; padding: 24px 0; font-size: 15px; }
+
+        .no-listing {
+            max-width: 400px;
+            margin: 80px auto;
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         }
         
         .row {
@@ -89,55 +241,58 @@
     
 </head>
 <body>
-    
-    
-    
-    <div class="container">
-        
-        <div class="row">
-            <div class="column">
-                {% if listing %}
-                <h2>{{ listing.ListingLocation }}</h2>
 
-                <p><strong>Listing ID:</strong> {{ listing.ListingID }}</p>
-                <p><strong>Landlord ID:</strong> {{ listing.LLID }}</p>
-                <p><strong>Beds:</strong> {{ listing.Beds }}</p>
-                <p><strong>Baths:</strong> {{ listing.Baths }}</p>
-                <p><strong>Square Footage:</strong> {{ listing.SquareFootage }} sq ft</p>
-                <p><strong>Price:</strong> ${{ listing.Price }}</p>
+{% if listing %}
 
-                {% if listing.Description %}
-                    <p><strong>Description:</strong> {{ listing.Description }}</p>
-                {% endif %}
+    <div class="page-header">
+        <h1>🏠 Rate My Housing</h1>
+    </div>
 
-                <div class="rating-summary">
-                    {% if listing.review_count > 0 %}
-                        ⭐ Average Rating: {{ listing.avg_rating }} ({{ listing.review_count }} review{% if listing.review_count > 1 %}s{% endif %})
-                    {% else %}
-                        <span style="color: gray;">No ratings yet.</span>
-                    {% endif %}
+    <div class="top-nav">
+        <a href="/dashboard" class="nav-btn">← Dashboard</a>
+        <a href="/listings" class="nav-btn">All Listings</a>
+    </div>
+
+    <div class="main-card">
+
+        <div class="card-top">
+            <div class="listing-title-row">
+                <div class="listing-address">📍 {{ listing.ListingLocation }}</div>
+                <span class="price-badge">${{ listing.Price }}/mo</span>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="stat-icon">🛏</span>
+                    <span class="stat-value">{{ listing.Beds }}</span>
+                    <span class="stat-label">Beds</span>
                 </div>
-
-                <div class="review-form">
-                    <form action="/add_review" method="post">
-                        <input type="hidden" name="listing_id" value="{{ listing.ListingID }}">
-
-                        <label>Leave a Rating:</label>
-                        <select name="rating">
-                            <option value="1">1 ⭐</option>
-                            <option value="2">2 ⭐⭐</option>
-                            <option value="3">3 ⭐⭐⭐</option>
-                            <option value="4">4 ⭐⭐⭐⭐</option>
-                            <option value="5">5 ⭐⭐⭐⭐⭐</option>
-                        </select>
-
-                        <button type="submit">Submit</button>
-                    </form>
+                <div class="stat-box">
+                    <span class="stat-icon">🚿</span>
+                    <span class="stat-value">{{ listing.Baths }}</span>
+                    <span class="stat-label">Baths</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-icon">📐</span>
+                    <span class="stat-value">{{ listing.SquareFootage }}</span>
+                    <span class="stat-label">Sq Ft</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-icon">💰</span>
+                    <span class="stat-value">${{ listing.Price }}</span>
+                    <span class="stat-label">/ Month</span>
                 </div>
             </div>
-            <div class="col">
-                <div id="map" style="height: 100%; width: 400px; border-radius: 2%; border: 1px solid grey;"></div>
+
+            <div class="listing-ids">
+                <span>Listing ID: <strong>{{ listing.ListingID }}</strong></span>
+                <span>Landlord ID: <strong>{{ listing.LLID }}</strong></span>
             </div>
+        </div>
+
+        {% if listing.Description %}
+        <div class="description-section">
+            {{ listing.Description }}
         </div>
         
         <hr/>
@@ -153,28 +308,73 @@
         {% else %}
             <h2>No comments</h2>
         {% endif %}
-        
-        
+
+        <div class="rating-section">
+            <h3>⭐ Ratings</h3>
+
+            <div class="rating-summary-box">
+                {% if listing.review_count > 0 %}
+                    <div class="big-rating">{{ listing.avg_rating }}</div>
+                    <div class="rating-detail">
+                        <strong>Average Rating</strong>
+                        Based on {{ listing.review_count }} review{% if listing.review_count > 1 %}s{% endif %}
+                    </div>
+                {% else %}
+                    <div class="big-rating" style="color:#ccc;">—</div>
+                    <div class="rating-detail">
+                        <strong>No ratings yet</strong>
+                        Be the first to leave a review!
+                    </div>
+                {% endif %}
+            </div>
+
+            <form action="/add_review" method="post" class="rate-form">
+                <input type="hidden" name="listing_id" value="{{ listing.ListingID }}">
+                <label>Leave a rating:</label>
+                <select name="rating">
+                    <option value="1">1 ⭐</option>
+                    <option value="2">2 ⭐⭐</option>
+                    <option value="3">3 ⭐⭐⭐</option>
+                    <option value="4">4 ⭐⭐⭐⭐</option>
+                    <option value="5">5 ⭐⭐⭐⭐⭐</option>
+                </select>
+                <button type="submit" class="btn-submit-rating">Submit Rating</button>
+            </form>
+        </div>
+
+        <div class="comments-section">
+            <h3>
+                💬 Comments
+                {% if comments %}
+                <span class="comment-count">{{ comments | length }}</span>
+                {% endif %}
+            </h3>
+
+            {% if comments %}
+                {% for comment in comments %}
+                <div class="comment-item">
+                    <div class="comment-avatar">💬</div>
+                    <div class="comment-body">
+                        <div class="comment-author">{{ comment.UserID }}</div>
+                        <div class="comment-text">{{ comment.Content }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-comments">No comments yet on this listing.</div>
+            {% endif %}
+        </div>
+
     </div>
-        <p><a href="/dashboard">Back to Dashboard</a></p>
+
+{% else %}
+
+    <div class="no-listing">
+        <p style="color:#666; font-size:16px;">This listing doesn't exist or may have been removed.</p>
+        <a href="/listings" style="color:#4a5fd9; font-weight:600;">Browse all listings →</a>
     </div>
-    {% else %}
-        <div>No such listing exists</div>
-    {% endif %}
-    
-    {% if listing.CoordinateLat and listing.CoordinateLong %}
-    <script>
-        var map = L.map('map').setView([{{listing.CoordinateLat}}, {{listing.CoordinateLong}}], 15);
-        L.tileLayer(
-            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            {
-                maxZoom: 19,
-                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }
-        ).addTo(map);
-        L.marker([{{listing.CoordinateLat}}, {{listing.CoordinateLong}}]).addTo(map);
-    </script>
-    {% endif %}
-    
+
+{% endif %}
+
 </body>
 </html>
