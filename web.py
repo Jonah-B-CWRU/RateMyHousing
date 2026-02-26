@@ -181,7 +181,6 @@ def view_listings(request: Request):
     listing_data = []
 
     for listing in listings:
-        ratings = data_man.get_ratings_from_listing(listing)
         comments = data_man.get_comments_from_listing(listing)
         
 
@@ -209,8 +208,11 @@ def view_listings(request: Request):
                     "CreatedAt": ""
                 })
 
-        count = len(ratings)
-        avg = round(sum(r.Rating for r in ratings) / count, 2) if count > 0 else 0
+        ar = data_man.get_average_rating_from_listing(listing)
+        
+        # new variables being sent to website
+        count = ar.NumberOfRatings
+        avg = round(ar.AverageRating, 2) if count > 0 else 0
 
         # Convert listing timestamp to Eastern Time
         created_str = ""
@@ -284,14 +286,15 @@ def add_comment(request: Request, listing_id: str = Form(...), comment: str = Fo
 def view_one_listing(request: Request, listingid: str):
     data_man.connect_to_database()
     listing = data_man._get_document_using_id("Listing", Listing(), listingid)[0]
-    comments = data_man.get_comments_from_listing(Listing(ListingID=listingid))
+    listing_object = Listing.from_dict(listing)
+
+    comments = data_man.get_comments_from_listing(listing_object)
     
-    ratings = data_man.get_ratings_from_listing(Listing(ListingID=listingid))
-    count = len(ratings)
-    avg = round(sum(r.Rating for r in ratings) / count, 2) if count > 0 else 0
+    ar = data_man.get_average_rating_from_listing(listing_object)
     
-    listing["avg_rating"] = avg
-    listing["review_count"] = count
+    # new variables being sent to website
+    listing["avg_rating"] = ar.AverageRating
+    listing["review_count"] = ar.NumberOfRatings
     
     comments_with_users = []
     for c in comments:

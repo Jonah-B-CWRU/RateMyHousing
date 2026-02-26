@@ -167,6 +167,8 @@ class database_manager:
             firebase_admin.initialize_app(cred)
             self.connected = True
             self.fire_store = firestore.client()
+            # additional non-required on set up commands
+            self.update_all_average_ratings()
     
     # basic data handeling
     def _get_data(self, col:str) -> list[dict[str,Any]]:
@@ -267,7 +269,7 @@ class database_manager:
                             return cast(T, User.from_dict(user))
                     raise TypeError(f"No one User with UserID: {id}, there is {len(documents)} of them")
                 case Password():
-                    collection = self.fire_store.collection("Passwords")
+                    collection = self.fire_store.collection("Passwords") 
                     documents = collection.where("UserID", "==", id).get()
                     if len(documents) == 1:
                         p = documents[0].to_dict()
@@ -299,7 +301,7 @@ class database_manager:
                             return cast(T, Listing.from_dict(l))
                     raise TypeError(f"No one Listing with ListingID: {id}, there is {len(documents)} of them")
                 case Rating():
-                    collection = self.fire_store.collection("Listing")
+                    collection = self.fire_store.collection("Rating")
                     documents = collection.where("RatingID", "==", id).get()
                     if len(documents) == 1:
                         r  = documents[0].to_dict()
@@ -528,60 +530,60 @@ class database_manager:
             match object:
                 case User():
                     collection = self.fire_store.collection("Users")
-                    documents = collection.where("UserID", "==", id).get()
+                    documents = collection.where("UserID", "==", object.UserID).get()
                     if len(documents) == 1:
                         refrence = documents[0]
                         return collection.document(refrence.id).update(object.as_dict())
-                    raise TypeError(f"No one User with UserID: {id}, there is {len(documents)} of them")
+                    raise TypeError(f"No one User with UserID: {object.UserID}, there is {len(documents)} of them")
                 case Password():
                     collection = self.fire_store.collection("Passwords")
-                    documents = collection.where("UserID", "==", id).get()
+                    documents = collection.where("UserID", "==", object.UserID).get()
                     if len(documents) == 1:
                         refrence = documents[0]
                         return collection.document(refrence.id).update(object.as_dict())
-                    raise TypeError(f"No one Password with UserID: {id}, there is {len(documents)} of them")
+                    raise TypeError(f"No one Password with UserID: {object.UserID}, there is {len(documents)} of them")
                 case Comments():
                     collection = self.fire_store.collection("Comments")
-                    documents = collection.where("CommentID", "==", id).get()
+                    documents = collection.where("CommentID", "==", object.CommentId).get()
                     if len(documents) == 1:
                         refrence = documents[0]
                         return collection.document(refrence.id).update(object.as_dict())
-                    raise TypeError(f"No one Comment with CommentId: {id}, there is {len(documents)} of them")
+                    raise TypeError(f"No one Comment with CommentId: {object.CommentId}, there is {len(documents)} of them")
                 case Landlord():
                     collection = self.fire_store.collection("Landlord")
-                    documents = collection.where("LLID", "==", id).get()
+                    documents = collection.where("LLID", "==", object.LLID).get()
                     if len(documents) == 1:
                         refrence = documents[0]
                         return collection.document(refrence.id).update(object.as_dict())
-                    raise TypeError(f"No one Landlord with LLID: {id}, there is {len(documents)} of them")
+                    raise TypeError(f"No one Landlord with LLID: {object.LLID}, there is {len(documents)} of them")
                 case Listing():
                     collection = self.fire_store.collection("Listing")
-                    documents = collection.where("LLID", "==", id).get()
+                    documents = collection.where("ListingID", "==", object.ListingID).get()
                     if len(documents) == 1:
                         refrence = documents[0]
                         return collection.document(refrence.id).update(object.as_dict())
-                    raise TypeError(f"No one Listing with ListingID: {id}, there is {len(documents)} of them")
+                    raise TypeError(f"No one Listing with ListingID: {object.ListingID}, there is {len(documents)} of them")
                 case Rating():
-                    collection = self.fire_store.collection("Listing")
-                    documents = collection.where("RatingID", "==", id).get()
+                    collection = self.fire_store.collection("Rating")
+                    documents = collection.where("RatingID", "==", object.RatingID).get()
                     if len(documents) == 1:
                         refrence = documents[0]
                         return collection.document(refrence.id).update(object.as_dict())
-                    raise TypeError(f"No one Rating with RatingID: {id}, there is {len(documents)} of them")
+                    raise TypeError(f"No one Rating with RatingID: {object.RatingID}, there is {len(documents)} of them")
                 case Codes():
                     collection = self.fire_store.collection("Codes")
-                    documents = collection.where("UserID", "==", id).get()
+                    documents = collection.where("UserID", "==", object.UserID).get()
                     if len(documents) == 1:
                         refrence = documents[0]
                         return collection.document(refrence.id).update(object.as_dict())
-                    raise TypeError(f"No one Code with UserID: {id}, there is {len(documents)} of them")
+                    raise TypeError(f"No one Code with UserID: {object.UserID}, there is {len(documents)} of them")
                 case AverageRating():
                     collection = self.fire_store.collection("AverageRating")
-                    documents = collection.where("ListingID", "==", id).get()
+                    documents = collection.where("ListingID", "==", object.ListingID).get()
                     if len(documents) == 1:
                         refrence = documents[0]
                         return collection.document(refrence.id).update(object.as_dict())
-                    raise TypeError(f"No one AverageRating with ListingID: {id}, there is {len(documents)} of them")
+                    raise TypeError(f"No one AverageRating with ListingID: {object.ListingID}, there is {len(documents)} of them")
         raise IOError("Not Connected to Database")
 
     def update_average_rating(self, listing: Listing):
@@ -593,7 +595,7 @@ class database_manager:
         count = len(ratings)
         for rating in ratings:
             sum += rating.Rating
-        average = sum/count
+        average = sum/count if count != 0 else 0
 
         ar = AverageRating(listing.ListingID, average, count)
         if self.check_for_average_rating(listing):
@@ -801,6 +803,7 @@ class database_manager:
     # listing -> landlord
     # listing <-> Rating (many)
     # listing <-> Comments (many)
+    # listing -> Average rating
     def get_landlord_from_Listing(self, listing:Listing) -> Landlord:
         if self.connected:
             Landlord_list = self._get_document_using_id("Lanloards", Landlord(),listing.LLID)
@@ -823,6 +826,16 @@ class database_manager:
             return [Comments.from_dict(c) for c in coms]
         raise IOError("Not Connected to Database")
     
+    def get_average_rating_from_listing(self, listing:Listing) -> AverageRating:
+        if self.connected:
+            ars = self._get_document_using_id("AverageRating", AverageRating(),listing.ListingID)
+            if len(ars) == 1:
+                ar = ars[0]
+                return AverageRating.from_dict(ar)
+            else:
+                raise TypeError(f"no Lanloard with LLID: {listing.LLID}")
+        raise IOError("Not Connected to Database")
+    
     # landlord rlationships
     # Landlord <-> User (many)
     # Landlord <-> Listing (many)
@@ -837,6 +850,3 @@ class database_manager:
             listings = self._get_document_using_id("Listing", Landlord(),landlord.LLID)
             return [Listing.from_dict(l) for l in listings]
         raise IOError("Not Connected to Database")
-    
-
-    # 
