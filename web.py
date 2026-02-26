@@ -228,6 +228,8 @@ def view_listings(request: Request):
 
     for listing in listings:
         comments = data_man.get_comments_from_listing(listing)
+        if data_man.check_for_average_rating(listing):
+            data_man.update_average_rating(listing) # makes it
         
 
         comments_with_users = []
@@ -336,6 +338,9 @@ def view_one_listing(request: Request, listingid: str):
     data_man.connect_to_database()
     listing = data_man._get_document_using_id("Listing", Listing(), listingid)[0]
     listing_object = Listing.from_dict(listing)
+    
+    if data_man.check_for_average_rating(listing_object):
+        data_man.update_average_rating(listing_object) # makes it
 
     comments = data_man.get_comments_from_listing(listing_object)
     
