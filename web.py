@@ -33,7 +33,8 @@ def add_user(username: str, password: str) -> tuple[bool, str]:
       
     if data_man.check_for_email(username):
         return False, "Email already exists"
-      
+    
+    
     # make user and password
     user_id = secrets.token_hex(8)
     p = PasswordAttempt(user_id, password)
@@ -83,6 +84,26 @@ def create_user_post(request: Request, username: str = Form(...), password: str 
         "create.html",
         {"request": request, "error": None if success else msg, "success": msg if success else None}
     )
+
+@app.get("/code")
+def get_code_form(request: Request):
+    return templates.TemplateResponse("code_input.html", {"request": request, "error": None, "success": None})
+@app.post("/code")
+def verify_code_form(request: Request, email: str = Form(...), code: str = Form(...)):
+    data_man.connect_to_database()
+    user = data_man.get_user_with_email(email)
+    
+    if data_man.verify_code(user,int(code)):
+        user.Activated = True
+        data_man.update_object(user)
+        data_man.recursive_deletion(data_man.get_code_from_user(user))
+        print("Valid code!")
+    else:
+        print(f"Invalid code:( {int(code)}")
+
+
+    return templates.TemplateResponse("code_input.html", {"request": request, "error": None, "success": None})
+
 
 @app.get("/login")
 def login_form(request: Request):

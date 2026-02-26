@@ -638,7 +638,7 @@ class database_manager:
     def verify_code(self, user: User,code: int):
         if self.check_for_code(user):
             c = self.get_code_from_user(user)
-            return c == code
+            return c.Code == code
         return False
 
     # check for x functions
@@ -685,6 +685,7 @@ class database_manager:
 
     # User relations
     # username -> user
+    # email -> user
     # user -> password
     # User <-> lanloard
     # user <-> rating (many)
@@ -700,6 +701,18 @@ class database_manager:
                 return User.from_dict(user)
             else:
                 raise TypeError(f"no user with the username: {username}")
+        raise IOError("Not Connected to Database")
+    
+    def get_user_with_email(self, email:str) -> User:
+        if self.connected:
+            collection = self.fire_store.collection("Users")
+            query = collection.where("Email","==",email)
+            user = self._unwrap_query(query)
+            if len(user) == 1:
+                user = user[0]
+                return User.from_dict(user)
+            else:
+                raise TypeError(f"no user with the email: {email}")
         raise IOError("Not Connected to Database")
 
     def get_pass_from_user(self, user:User) -> Password:
@@ -738,14 +751,12 @@ class database_manager:
     
     def get_code_from_user(self, user:User) -> Codes:
         if self.connected:
-            if user.ConnectedLL ==  "":
-                raise TypeError(f"User has no LLID")
-            Landlord_list = self._get_document_using_id("Codes", Codes(),user.UserID)
-            if len(Landlord_list) == 1:
-                l = Landlord_list[0]
-                return Codes.from_dict(l)
+            code_list = self._get_document_using_id("Codes", Codes(),user.UserID)
+            if len(code_list) == 1:
+                c = code_list[0]
+                return Codes.from_dict(c)
             else:
-                raise TypeError(f"no Lanloard with LLID: {user.ConnectedLL}")
+                raise TypeError(f"no code with userid: {user.UserID}")
         raise IOError("Not Connected to Database")
     
     # rating relationships
