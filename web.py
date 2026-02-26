@@ -14,6 +14,7 @@ import random
 # custom stuff
 from src.Database import database_manager, User, Password, Comments, Listing, Landlord, Rating,Codes, AverageRating
 
+import requests
 
 app = FastAPI()
 data_man = database_manager()
@@ -149,18 +150,42 @@ def create_listing(
     data_man.connect_to_database()
     listing_id = secrets.token_hex(8)
     created_at = datetime.utcnow().isoformat() + "Z"
+    
+    try:
+        response = requests.get(
+            "https://nominatim.openstreetmap.org/search",
+            params={"q":address+",Cuyahoga County","format":"json"},
+            headers={
+                "User-Agent": "RateMyHousing Application"
+            }
+            )
+        potential_coords = response.json()[0]
 
-    new_listing = Listing(
-        listing_id,
-        llid,
-        address,
-        beds,
-        baths,
-        sqft,
-        price,
-        description,
-        created_at
-    )
+        new_listing = Listing(
+            listing_id,
+            llid,
+            address,
+            beds,
+            baths,
+            sqft,
+            price,
+            description,
+            created_at,
+            potential_coords["lat"],
+            potential_coords["lon"],
+        )
+    except:
+        new_listing = Listing(
+            listing_id,
+            llid,
+            address,
+            beds,
+            baths,
+            sqft,
+            price,
+            description,
+            created_at
+        )
 
 
     data_man.add_object(new_listing)
