@@ -239,7 +239,14 @@ class database_manager:
                 case Listing():
                     query = collection.where("ListingID", "==", Id_to_look_for)
                     return self._unwrap_query(query)
-                    
+                
+                case Codes():
+                    query = collection.where("UserID", "==", Id_to_look_for)
+                    return self._unwrap_query(query)
+                
+                case AverageRating():
+                    query = collection.where("ListingID", "==", Id_to_look_for)
+                    return self._unwrap_query(query)
                 case _:
                     raise TypeError(f"Id_source Not Valid Type: {Id_type}, {type(Id_type)}")
         raise IOError("Not Connected to Database")

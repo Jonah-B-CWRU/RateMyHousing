@@ -212,7 +212,7 @@ def view_listings(request: Request):
         
         # new variables being sent to website
         count = ar.NumberOfRatings
-        avg = round(ar.AverageRating, 2) if count > 0 else 0
+        avg = round(ar.AverageRating, 2)
 
         # Convert listing timestamp to Eastern Time
         created_str = ""
@@ -251,6 +251,9 @@ def add_review(request: Request, listing_id: str = Form(...), rating: int = Form
 
     review = Rating(secrets.token_hex(8), user.UserID, listing_id, rating)
     data_man.add_object(review)
+
+    # update reviews
+    data_man.update_average_rating(Listing(listing_id))
 
     return RedirectResponse(url="/listings", status_code=302)
 
@@ -293,7 +296,7 @@ def view_one_listing(request: Request, listingid: str):
     ar = data_man.get_average_rating_from_listing(listing_object)
     
     # new variables being sent to website
-    listing["avg_rating"] = ar.AverageRating
+    listing["avg_rating"] = round(ar.AverageRating, 2)
     listing["review_count"] = ar.NumberOfRatings
     
     comments_with_users = []
