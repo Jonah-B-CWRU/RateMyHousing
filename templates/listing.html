@@ -294,6 +294,19 @@
         <div class="description-section">
             {{ listing.Description }}
         </div>
+        
+        <hr/>
+        {% if comments %}
+            {%for comment in comments%}
+                <div class="comment">
+                    <p><strong>{{ comment.Username }}:</strong> {{ comment.Content }}</p>
+                    {% if comment.CreatedAt %}
+                        <p class="timestamp" style="font-size:0.8em; color:#666;">{{ comment.CreatedAt }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <h2>No comments</h2>
         {% endif %}
 
         <div class="rating-section">

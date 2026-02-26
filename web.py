@@ -31,7 +31,7 @@ def add_user(username: str, password: str) -> tuple[bool, str]:
         return False, "Username already exists"
       
     if data_man.check_for_email(username):
-        return False, "Email already exists
+        return False, "Email already exists"
       
     # make user and password
     user_id = secrets.token_hex(8)
@@ -124,23 +124,6 @@ def comment(request: Request):
             }
         )
     return templates.TemplateResponse("comment.html", {"request": request, "name": username})
-@app.post("/comment")
-def comment_post(request: Request, comment: str = Form(...)):
-    data_man.add_object(Comments(
-        secrets.token_hex(8),
-        "",
-        "",
-        "",
-        comment
-        ))
-    return templates.TemplateResponse(
-        "redirect.html",
-            {
-                "request": request,
-                "message": "Comment posted.",
-                "target_url": "/dashboard"
-            }
-    )
 
 @app.get("/create_listing")
 def create_listing_form(request: Request):
@@ -189,21 +172,23 @@ def create_listing(
 
 @app.get("/listings")
 def view_listings(request: Request):
+    data_man.connect_to_database()
     from datetime import datetime, timezone
     from zoneinfo import ZoneInfo
 
-    listings:list[Listing] = data_man.get_all_from(Listing()) # type: ignore
+    listings:list[Listing] = data_man.get_all_from(Listing())
 
     listing_data = []
 
     for listing in listings:
         ratings = data_man.get_ratings_from_listing(listing)
         comments = data_man.get_comments_from_listing(listing)
+        
 
         comments_with_users = []
         for c in comments:
             try:
-                user = data_man.get_user_from_id(c.UserID)
+                user = data_man.get_user_from_comments(c)
                 # Convert comment timestamp to Eastern Time
                 if c.CreatedAt:
                     utc_dt = datetime.fromisoformat(c.CreatedAt.replace("Z", "")).replace(tzinfo=timezone.utc)
@@ -216,7 +201,8 @@ def view_listings(request: Request):
                     "Username": user.Username,
                     "CreatedAt": created_str
                 })
-            except TypeError:
+            except TypeError as e:
+                print(f"user failed: {e}")
                 comments_with_users.append({
                     "Content": c.Content,
                     "Username": "Unknown",
@@ -293,16 +279,6 @@ def add_comment(request: Request, listing_id: str = Form(...), comment: str = Fo
 
     data_man.add_object(new_comment)
     return RedirectResponse(url="/listings", status_code=302)
-    review = Rating(
-        secrets.token_hex(8),
-        user.UserID,
-        listing_id,
-        rating
-    )
-
-    data_man.add_object(review)
-
-    return RedirectResponse(url="/listings", status_code=302)
 
 @app.get("/listing/{listingid}")
 def view_one_listing(request: Request, listingid: str):
@@ -317,12 +293,37 @@ def view_one_listing(request: Request, listingid: str):
     listing["avg_rating"] = avg
     listing["review_count"] = count
     
+    comments_with_users = []
+    for c in comments:
+        try:
+            user = data_man.get_user_from_comments(c)
+            # Convert comment timestamp to Eastern Time
+            if c.CreatedAt:
+                utc_dt = datetime.fromisoformat(c.CreatedAt.replace("Z", "")).replace(tzinfo=timezone.utc)
+                eastern_dt = utc_dt.astimezone(ZoneInfo("America/New_York"))
+                created_str = eastern_dt.strftime("%m/%d/%Y, %I:%M %p")
+            else:
+                created_str = ""
+            comments_with_users.append({
+                "Content": c.Content,
+                "Username": user.Username,
+                "CreatedAt": created_str
+            })
+        except TypeError as e:
+            print(f"user failed: {e}")
+            comments_with_users.append({
+                "Content": c.Content,
+                "Username": "Unknown",
+                "CreatedAt": ""
+            })
+    
+        
     return templates.TemplateResponse(
         "listing.html",
             {
                 "request": request,
                 "listing": listing,
-                "comments": comments
+                "comments": comments_with_users
             }
     )
 
