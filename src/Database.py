@@ -56,6 +56,8 @@ class Listing:
     Price: float = 0.0
     Description: str = ""
     CreatedAt: str = ""
+    CoordinateLat: float = 0.0
+    CoordinateLong: float = 0.0
     def as_dict(self) -> dict:
         return asdict(self)
     @classmethod
