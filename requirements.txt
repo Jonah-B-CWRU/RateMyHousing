@@ -5,3 +5,4 @@ jinja2
 firebase-admin
 google-cloud-firestore
 protobuf
+tzdata
