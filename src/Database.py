@@ -1,12 +1,14 @@
-from typing import Any, TypeAlias, TypeVar, cast
 from dataclasses import dataclass, asdict
+from typing import Any, TypeAlias, TypeVar, cast
 from firebase_admin import firestore, credentials
 from google.cloud.firestore_v1.client import Client as FirestoreClient
 from google.cloud.firestore_v1.document import DocumentReference
 from google.cloud.firestore_v1.query import Query
 from google.protobuf import timestamp_pb2
+from email.mime.text import MIMEText
 import firebase_admin
-
+import json  
+import smtplib
 
 # all dataclasses's for easy use
 @dataclass
@@ -19,14 +21,17 @@ class Comments:
     def as_dict(self) -> dict:
         return asdict(self)
     @staticmethod
-    def from_dict(dict: dict[str,Any]) -> Comments:
-        return Comments(
-            dict["CommentId"],
-            dict["ConnectedCommentID"],
-            dict["ListingID"],
-            dict["UserID"],
-            dict["Content"],
-        )
+    def from_dict(dict: dict[str,Any]) -> "Comments":
+        try:
+            return Comments(
+                dict["CommentId"],
+                dict["ConnectedCommentID"],
+                dict["ListingID"],
+                dict["UserID"],
+                dict["Content"],
+            )
+        except:
+            return Comments()
 
 @dataclass
 class Landlord:
@@ -36,7 +41,7 @@ class Landlord:
     def as_dict(self) -> dict:
         return asdict(self)
     @staticmethod
-    def from_dict(dict: dict[str,Any]) -> Landlord:
+    def from_dict(dict: dict[str,Any]) -> "Landlord":
         return Landlord(
             dict["LLID"],
             dict["Name"],
@@ -56,7 +61,7 @@ class Listing:
     def as_dict(self) -> dict:
         return asdict(self)
     @staticmethod
-    def from_dict(dict: dict[str,Any]) -> Listing:
+    def from_dict(dict: dict[str,Any]) -> "Listing":
         return Listing(
             dict["ListingID"],
             dict["LLID"],
@@ -77,7 +82,7 @@ class Rating:
     def as_dict(self) -> dict:
         return asdict(self)
     @staticmethod
-    def from_dict(dict: dict[str,Any]) -> Rating:
+    def from_dict(dict: dict[str,Any]) -> "Rating":
         return Rating(
             dict["RatingID"],
             dict["UserID"],
@@ -93,7 +98,7 @@ class Password:
     def as_dict(self) -> dict:
         return asdict(self)
     @staticmethod
-    def from_dict(dict: dict[str,Any]) -> Password:
+    def from_dict(dict: dict[str,Any]) -> "Password":
         return Password(
             dict["Hash"],
             dict["Salt"],
@@ -111,7 +116,7 @@ class User:
     def as_dict(self) -> dict:
         return asdict(self)
     @staticmethod
-    def from_dict(dict: dict[str,Any]) -> User:
+    def from_dict(dict: dict[str,Any]) -> "User":
         return User(
             dict["UserID"],
             dict["Username"],
@@ -124,11 +129,11 @@ class User:
 @dataclass
 class Codes:
     UserID: str = ""
-    Code: str = ""
+    Code: int = 0
     def as_dict(self) -> dict:
         return asdict(self)
     @staticmethod
-    def from_dict(dict: dict[str,Any]) -> Codes:
+    def from_dict(dict: dict[str,Any]) -> "Codes":
         return Codes(
             dict["UserID"],
             dict["Code"],
@@ -142,7 +147,7 @@ class AverageRating:
     def as_dict(self) -> dict:
         return asdict(self)
     @staticmethod
-    def from_dict(dict: dict[str,Any]) -> AverageRating:
+    def from_dict(dict: dict[str,Any]) -> "AverageRating":
         return AverageRating(
             dict["ListingID"],
             dict["AverageRating"],
@@ -521,7 +526,7 @@ class database_manager:
         else:
             raise IOError("Not Connected")
         
-    def update_object(self, object:DataObject) -> WriteResult: # type: ignore
+    def update_object(self, object:DataObject):
         if self.connected:
             match object:
                 case User():
@@ -605,9 +610,29 @@ class database_manager:
 
     # Email functions
 
-    def send_code(self, user: User) -> bool:
-        self.fire_store.collection
+    def send_code(self, user: User,code:Codes) -> bool:
+        subject = "RateMyHousingCode"
+        body = f"Your code is {code.Code}"
+        with open("src/Secrets2.json") as f:
+            secrets = json.decoder.JSONDecoder().decode("".join(f.readlines()))
+        sender = secrets["Sender"]
+        password = secrets["Password"]
 
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = sender
+        msg['To'] = user.Email
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
+            smtp_server.login(sender, password)
+            smtp_server.sendmail(sender, user.Email, msg.as_string())
+            print(f"Message sent to {user.Email}")
+            return True
+        return False
+    
+    def verify_code(self, user: User,code: int):
+        if self.check_for_code(user):
+            c = self.get_code_from_user(user)
+            return c == code
         return False
 
     # check for x functions
@@ -645,6 +670,16 @@ class database_manager:
                 return False
         raise IOError("Not Connected to Database")
     
+    def check_for_code(self, user: User):
+        if self.connected:
+            collection = self.fire_store.collection("Codes")
+            query = collection.where("UserID","==",user.UserID)
+            test = self._unwrap_query(query)
+            if len(test) >= 1:
+                return True
+            else:
+                return False
+        raise IOError("Not Connected to Database")
     
 
 
@@ -705,13 +740,14 @@ class database_manager:
         if self.connected:
             if user.ConnectedLL ==  "":
                 raise TypeError(f"User has no LLID")
-            Landlord_list = self._get_document_using_id("Lanloards", Landlord(),user.ConnectedLL)
+            Landlord_list = self._get_document_using_id("Codes", Codes(),user.UserID)
             if len(Landlord_list) == 1:
                 l = Landlord_list[0]
                 return Codes.from_dict(l)
             else:
                 raise TypeError(f"no Lanloard with LLID: {user.ConnectedLL}")
         raise IOError("Not Connected to Database")
+    
     # rating relationships
     # Rating <-> user
     # Rating <-> Listing

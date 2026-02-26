@@ -6,10 +6,11 @@ from pathlib import Path
 import json
 from src.LoginProcessor import PasswordAttempt
 import secrets
+import random
 #import uuid
 
 # custom stuff
-from src.Database import database_manager, User, Password, Comments, Listing, Landlord, Rating
+from src.Database import database_manager, User, Password, Comments, Listing, Landlord, Rating,Codes, AverageRating
 
 
 app = FastAPI()
@@ -31,15 +32,21 @@ def add_user(username: str, password: str) -> tuple[bool,str]:
     if data_man.check_for_email(username): #******************* change this to email when thats implemented
         return False, "Email already exists" # uniqueness of Email
 
+    # make user and password
     user_id = secrets.token_hex(8)
-
     p = PasswordAttempt(user_id, password)
-
     new_user = User(user_id,username,"",username)
     new_password = Password(p.hash,p.salt,user_id)
 
     data_man.add_object(new_user)
     data_man.add_object(new_password)
+
+    # Make code
+    code = random.randrange(100000,999999)
+    print(code)
+    new_code = Codes(user_id,code)
+    data_man.add_object(new_code)
+    data_man.send_code(new_user,new_code)
 
     return True, "User created successfully"
 
