@@ -40,7 +40,7 @@
             margin-top: 15px;
         }
 
-        select, button {
+        select, button, input {
             padding: 8px;
             border-radius: 6px;
             border: 1px solid #ccc;
@@ -54,8 +54,8 @@
             margin-left: 10px;
         }
 
-        button:hover {
-            opacity: 0.9;
+        button:hover { 
+            opacity: 0.9; 
         }
 
         a { 
@@ -68,6 +68,21 @@
             margin-top: 10px;
             font-weight: bold;
         }
+
+        .timestamp {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .comments-section {
+            margin-top: 15px;
+        }
+
+        .comment {
+            border-top: 1px solid #eee;
+            padding: 5px 0;
+        }
     </style>
 </head>
 <body>
@@ -78,18 +93,20 @@
             {% for item in listings %}
                 {% set listing = item.listing %}
                 <div class="listing-card">
-                    <h2>{{ listing.ListingLocation }}</h2>
+                    <h2>{{ listing.Address }}</h2>
 
                     <p><strong>Listing ID:</strong> {{ listing.ListingID }}</p>
                     <p><strong>Landlord ID:</strong> {{ listing.LLID }}</p>
                     <p><strong>Beds:</strong> {{ listing.Beds }}</p>
                     <p><strong>Baths:</strong> {{ listing.Baths }}</p>
                     <p><strong>Square Footage:</strong> {{ listing.SquareFootage }} sq ft</p>
-                    <p><strong>Price:</strong> ${{ listing.Price }}</p>
+                    <p><strong>Price:</strong> ${{ "%.2f"|format(listing.Price) }}</p>
 
                     {% if listing.Description %}
                         <p><strong>Description:</strong> {{ listing.Description }}</p>
                     {% endif %}
+
+                    <p class="timestamp"><strong>Created At:</strong> {{ item.created_at }}</p>
 
                     <div class="rating-summary">
                         {% if item.review_count > 0 %}
@@ -99,10 +116,31 @@
                         {% endif %}
                     </div>
 
+                    <div class="comments-section">
+                        <h3>Comments:</h3>
+                        {% if item.comments %}
+                            {% for comment in item.comments %}
+                                <div class="comment">
+                                    <p><strong>{{ comment.Username }}:</strong> {{ comment.Content }}</p>
+                                    {% if comment.CreatedAt %}
+                                        <p class="timestamp" style="font-size:0.8em; color:#666;">{{ comment.CreatedAt }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p style="color: gray;">No comments yet.</p>
+                        {% endif %}
+
+                        <form action="/add_comment" method="post">
+                            <input type="hidden" name="listing_id" value="{{ listing.ListingID }}">
+                            <input type="text" name="comment" placeholder="Write a comment..." required>
+                            <button type="submit">Submit</button>
+                        </form>
+                    </div>
+
                     <div class="review-form">
                         <form action="/add_review" method="post">
                             <input type="hidden" name="listing_id" value="{{ listing.ListingID }}">
-
                             <label>Leave a Rating:</label>
                             <select name="rating">
                                 <option value="1">1 ⭐</option>
@@ -111,7 +149,6 @@
                                 <option value="4">4 ⭐⭐⭐⭐</option>
                                 <option value="5">5 ⭐⭐⭐⭐⭐</option>
                             </select>
-
                             <button type="submit">Submit</button>
                         </form>
                     </div>

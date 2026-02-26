@@ -10,7 +10,6 @@ import firebase_admin
 import json  
 import smtplib
 
-# all dataclasses's for easy use
 @dataclass
 class Comments:
     CommentId: str = ""
@@ -18,6 +17,7 @@ class Comments:
     ListingID: str = ""
     UserID:str = ""
     Content: str = ""
+    CreatedAt: str = ""
     def as_dict(self) -> dict:
         return asdict(self)
     @staticmethod
@@ -58,6 +58,7 @@ class Listing:
     SquareFootage: int = 0
     Price: float = 0.0
     Description: str = ""
+    CreatedAt: str = ""
     def as_dict(self) -> dict:
         return asdict(self)
     @staticmethod
@@ -163,13 +164,12 @@ class database_manager:
     connected: bool = False
     fire_store: FirestoreClient
 
-    # Connect to database
     def connect_to_database(self):
         if not self.connected:
             cred = credentials.Certificate("src/Secrets.json")
-            fire_app = firebase_admin.initialize_app(cred)
+            firebase_admin.initialize_app(cred)
             self.connected = True
-            self.fire_store = firestore.client(fire_app)
+            self.fire_store = firestore.client()
     
     # basic data handeling
     def _get_data(self, col:str) -> list[dict[str,Any]]:
@@ -184,13 +184,10 @@ class database_manager:
         """
         collection = self.fire_store.collection(col)
         query = collection.get()
-        total_data = []
-        for doc in query:
-            data = doc.to_dict()
-            total_data.append(data)
+        total_data = [doc.to_dict() for doc in query]
         return total_data
     
-    def _push_data(self, data:dict,col:str) -> tuple[timestamp_pb2.Timestamp,DocumentReference]: # type: ignore
+    def _push_data(self, data:dict,col:str) -> tuple[timestamp_pb2.Timestamp,DocumentReference]:
         collection = self.fire_store.collection(col)
         return collection.add(data)
     
@@ -641,22 +638,16 @@ class database_manager:
         if self.connected:
             collection = self.fire_store.collection("Users")
             query = collection.where("Username","==",username)
-            user = self._unwrap_query(query)
-            if len(user) >= 1:
-                return True
-            else:
-                return False
+            user = [doc.to_dict() for doc in query.get()]
+            return len(user) >= 1
         raise IOError("Not Connected to Database")
    
     def check_for_email(self, email:str) -> bool:
         if self.connected:
             collection = self.fire_store.collection("Users")
             query = collection.where("Email","==",email)
-            user = self._unwrap_query(query)
-            if len(user) >= 1:
-                return True
-            else:
-                return False
+            user = [doc.to_dict() for doc in query.get()]
+            return len(user) >= 1
         raise IOError("Not Connected to Database")
 
     def check_for_average_rating(self, listing: Listing):
@@ -694,7 +685,7 @@ class database_manager:
         if self.connected:
             collection = self.fire_store.collection("Users")
             query = collection.where("Username","==",username)
-            user = self._unwrap_query(query)
+            user = [doc.to_dict() for doc in query.get()]
             if len(user) == 1:
                 user = user[0]
                 return User.from_dict(user)
@@ -831,11 +822,7 @@ class database_manager:
             coms = self._get_document_using_id("Comments", Listing(),listing.ListingID)
             return [Comments.from_dict(c) for c in coms]
         raise IOError("Not Connected to Database")
-    
-    # landlord rlationships
-    # Landlord <-> User (many)
-    # Landlord <-> Listing (many)
-    def get_connected_users_with_landlord(self, landlord:Landlord) -> list[User]:
+    def get_user_from_id(self, user_id: str) -> User:
         if self.connected:
             users = self._get_document_using_id("User", Landlord(),landlord.LLID)
             return [User.from_dict(u) for u in users]
