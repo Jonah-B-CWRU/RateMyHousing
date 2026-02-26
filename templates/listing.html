@@ -68,47 +68,72 @@
             margin-top: 10px;
             font-weight: bold;
         }
+        
+        .row {
+            display: flex;
+        }
+        .column {
+            flex: 50%;
+        }
+        
     </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
 </head>
 <body>
+    
+    
+    
     <div class="container">
-        {% if listing %}
-        <h2>{{ listing.ListingLocation }}</h2>
+        
+        <div class="row">
+            <div class="column">
+                {% if listing %}
+                <h2>{{ listing.ListingLocation }}</h2>
 
-        <p><strong>Listing ID:</strong> {{ listing.ListingID }}</p>
-        <p><strong>Landlord ID:</strong> {{ listing.LLID }}</p>
-        <p><strong>Beds:</strong> {{ listing.Beds }}</p>
-        <p><strong>Baths:</strong> {{ listing.Baths }}</p>
-        <p><strong>Square Footage:</strong> {{ listing.SquareFootage }} sq ft</p>
-        <p><strong>Price:</strong> ${{ listing.Price }}</p>
+                <p><strong>Listing ID:</strong> {{ listing.ListingID }}</p>
+                <p><strong>Landlord ID:</strong> {{ listing.LLID }}</p>
+                <p><strong>Beds:</strong> {{ listing.Beds }}</p>
+                <p><strong>Baths:</strong> {{ listing.Baths }}</p>
+                <p><strong>Square Footage:</strong> {{ listing.SquareFootage }} sq ft</p>
+                <p><strong>Price:</strong> ${{ listing.Price }}</p>
 
-        {% if listing.Description %}
-            <p><strong>Description:</strong> {{ listing.Description }}</p>
-        {% endif %}
+                {% if listing.Description %}
+                    <p><strong>Description:</strong> {{ listing.Description }}</p>
+                {% endif %}
 
-        <div class="rating-summary">
-            {% if listing.review_count > 0 %}
-                ⭐ Average Rating: {{ listing.avg_rating }} ({{ listing.review_count }} review{% if listing.review_count > 1 %}s{% endif %})
-            {% else %}
-                <span style="color: gray;">No ratings yet.</span>
-            {% endif %}
-        </div>
+                <div class="rating-summary">
+                    {% if listing.review_count > 0 %}
+                        ⭐ Average Rating: {{ listing.avg_rating }} ({{ listing.review_count }} review{% if listing.review_count > 1 %}s{% endif %})
+                    {% else %}
+                        <span style="color: gray;">No ratings yet.</span>
+                    {% endif %}
+                </div>
 
-        <div class="review-form">
-            <form action="/add_review" method="post">
-                <input type="hidden" name="listing_id" value="{{ listing.ListingID }}">
+                <div class="review-form">
+                    <form action="/add_review" method="post">
+                        <input type="hidden" name="listing_id" value="{{ listing.ListingID }}">
 
-                <label>Leave a Rating:</label>
-                <select name="rating">
-                    <option value="1">1 ⭐</option>
-                    <option value="2">2 ⭐⭐</option>
-                    <option value="3">3 ⭐⭐⭐</option>
-                    <option value="4">4 ⭐⭐⭐⭐</option>
-                    <option value="5">5 ⭐⭐⭐⭐⭐</option>
-                </select>
+                        <label>Leave a Rating:</label>
+                        <select name="rating">
+                            <option value="1">1 ⭐</option>
+                            <option value="2">2 ⭐⭐</option>
+                            <option value="3">3 ⭐⭐⭐</option>
+                            <option value="4">4 ⭐⭐⭐⭐</option>
+                            <option value="5">5 ⭐⭐⭐⭐⭐</option>
+                        </select>
 
-                <button type="submit">Submit</button>
-            </form>
+                        <button type="submit">Submit</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col">
+                <div id="map" style="height: 100%; width: 400px;"></div>
+            </div>
         </div>
         
         <hr/>
@@ -126,6 +151,20 @@
     </div>
     {% else %}
         <div>No such listing exists</div>
+    {% endif %}
+    
+    {% if listing.CoordinateLat and listing.CoordinateLong %}
+    <script>
+        var map = L.map('map').setView([{{listing.CoordinateLat}}, {{listing.CoordinateLong}}], 15);
+        L.tileLayer(
+            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            {
+                maxZoom: 19,
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }
+        ).addTo(map);
+        L.marker([{{listing.CoordinateLat}}, {{listing.CoordinateLong}}]).addTo(map);
+    </script>
     {% endif %}
     
 </body>
