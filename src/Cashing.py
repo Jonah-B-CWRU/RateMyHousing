@@ -1,0 +1,107 @@
+from dataclasses import dataclass, asdict, fields
+from datetime import datetime, timedelta
+from typing import Any
+import os.path
+import json
+
+
+
+@dataclass
+class cache_data:
+    cache_name:str
+    cache_start_time:datetime
+    cache_max_age:datetime
+    cache_location:str
+    cache_data:dict
+    def as_dict(self) -> dict:
+        return asdict(self)
+    @classmethod
+    def from_dict(cls, dict: dict[str,Any]) -> "cache_data":
+        sanitized = {}
+        for field in fields(cls):
+            val = dict.get(field.name)
+            if val is not None:
+                sanitized[field.name] = val
+        return cls(**sanitized)
+    def as_refrence(self) -> "cache_refrence":
+        return cache_refrence.from_cache_data(self)
+
+@dataclass
+class cache_refrence:
+    cache_name:str
+    cache_location:str
+    cache_max_age:datetime
+    @classmethod
+    def from_dict(cls, dict: dict[str,Any]) -> "cache_refrence":
+        sanitized = {}
+        for field in fields(cls):
+            val = dict.get(field.name)
+            if val is not None:
+                sanitized[field.name] = val
+        return cls(**sanitized)
+    @classmethod
+    def from_cache_data(cls,data:cache_data)-> "cache_refrence":
+        return cls(data.cache_name,data.cache_location,data.cache_max_age)
+
+
+
+class cashe_manager:
+    """
+    Manages a physical data cache to reduce/limit database calls and increase performance
+    """
+    cashe_location:str = "src/cache"
+    data_timeout_seconds:float = 600.0
+    all_refrences:dict[str,cache_refrence]
+    def add_to_cache(self,data:dict, name:str) -> cache_refrence:
+        now = datetime.now()
+        timeout = now + timedelta(0,self.data_timeout_seconds)
+        location = self.cashe_location+name
+        # check for exsisting file
+        try:
+            old_cache = self.get_cache(name)
+            if old_cache.cache_max_age > now:
+                # cache out still in date. 
+                # NOT the update function, return old refrence
+                return old_cache.as_refrence()
+        except IOError:
+            # cache dne safe to make new one
+            pass
+        except TypeError as e:
+            print("Old cache formatted wrong, replacing")
+        cache = cache_data(
+            name,
+            now,
+            timeout,
+            location,
+            data
+        )
+        output = open(location, "w")
+        text = json.encoder.JSONEncoder().encode(cache.as_dict())
+        output.writelines(text)
+        self.all_refrences[name] = cache.as_refrence()
+        return cache.as_refrence()
+
+    def get_cache(self,name: str) -> cache_data:
+        location = self.cashe_location+name
+        if os.path.isfile(location):
+            file = open(location)
+            data = json.decoder.JSONDecoder().decode("".join(file.readlines()))
+            try:
+                return cache_data.from_dict(data)
+            except:
+                raise TypeError(f"Cache {name} not formatted properly")
+        raise IOError("Cache cache does not exsist")
+    
+
+    def update_cache(self,new_data:dict, refrence:cache_refrence) -> cache_refrence:
+        now = datetime.now()
+        new_timeout = now + timedelta(0,self.data_timeout_seconds)
+        # simply trust that the old cache is real... still
+        old_cache = self.get_cache(refrence.cache_name)
+        old_cache.cache_max_age = new_timeout
+        old_cache.cache_data = new_data
+        output = open(old_cache.cache_location, "w")
+        text = json.encoder.JSONEncoder().encode(old_cache.as_dict())
+        output.writelines(text)
+        self.all_refrences[old_cache.cache_name] = old_cache.as_refrence()
+        return old_cache.as_refrence()
