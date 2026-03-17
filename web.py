@@ -114,21 +114,23 @@ def login_post(request: Request, username: str = Form(...), password: str = Form
     if verify_login(username, password):
         response = RedirectResponse(url="/dashboard", status_code=302)
         response.set_cookie(key="username", value=username)
-        data_man.connect_to_database() # This and following 2 lines are temporary, will be reworked with session tokens
-        if data_man.get_user_with_username(username).ismod:
-            response.set_cookie(key="modkey", value=username.encode('utf-8').hex())
+        data_man.connect_to_database() # This and following 3 lines are temporary, will be reworked with session tokens
+        usr = data_man.get_user_with_username(username)
+        if usr.ismod:
+            response.set_cookie(key="modkey", value=usr.UserID.encode('utf-8').hex())
         return response
     return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid username or password"})
 
 @app.get("/dashboard")
 def dashboard(request: Request):
     username = request.cookies.get("username")
+    hasmodkey = request.cookies.get("modkey") != None
     if not username:
         return templates.TemplateResponse(
             "redirect.html",
             {"request": request, "message": "You must log in to access the dashboard.", "target_url": "/"}
         )
-    return templates.TemplateResponse("dashboard.html", {"request": request, "name": username})
+    return templates.TemplateResponse("dashboard.html", {"request": request, "name": username, "hasmodkey": hasmodkey})
 
 @app.get("/logout")
 def logout():
