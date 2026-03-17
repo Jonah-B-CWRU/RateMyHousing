@@ -13,7 +13,7 @@ import requests
 # custom stuff
 from src.Database import database_manager, User, Password, Comments, Listing, Landlord, Rating,Codes, AverageRating
 from src.LoginProcessor import PasswordAttempt
-from src.Cashing import cache_manager
+from src.Caching import cache_manager
 import random
 
 
@@ -131,6 +131,45 @@ def make_listing_data(listings: list[Listing]) -> list:
             "comments": comments_with_users
         })
     return listing_data
+
+def make_specific_listing_data(listing: Listing):
+    meta_listing = listing.as_dict()
+    
+    if data_man.check_for_average_rating(listing):
+        data_man.update_average_rating(listing) # makes it
+
+    comments = data_man.get_comments_from_listing(listing)
+    
+    ar = data_man.get_average_rating_from_listing(listing)
+    
+    # new variables being sent to website
+    meta_listing["avg_rating"] = round(ar.AverageRating, 2)
+    meta_listing["review_count"] = ar.NumberOfRatings
+    
+    comments_with_users = []
+    for c in comments:
+        try:
+            user = data_man.get_user_from_comments(c)
+            # Convert comment timestamp to Eastern Time
+            if c.CreatedAt:
+                utc_dt = datetime.fromisoformat(c.CreatedAt.replace("Z", "")).replace(tzinfo=timezone.utc)
+                eastern_dt = utc_dt.astimezone(ZoneInfo("America/New_York"))
+                created_str = eastern_dt.strftime("%m/%d/%Y, %I:%M %p")
+            else:
+                created_str = ""
+            comments_with_users.append({
+                "Content": c.Content,
+                "Username": user.Username,
+                "CreatedAt": created_str
+            })
+        except TypeError as e:
+            print(f"user failed: {e}")
+            comments_with_users.append({
+                "Content": c.Content,
+                "Username": "Unknown",
+                "CreatedAt": ""
+            })
+    return (meta_listing,comments_with_users)
 
 @app.get("/")
 def index(request: Request):
@@ -315,27 +354,6 @@ def view_listings(request: Request):
     **Is cached**
     """
     data_man.connect_to_database()
-    from datetime import datetime, timezone
-    from zoneinfo import ZoneInfo
-
-    # check for cached data
-    if "listings" in cache_man.all_refrences:
-        cache_ref = cache_man.all_refrences["listings"]
-        # cache is real, use it
-        cache_data = cache_man.get_cache("listings")
-        if cache_data.cache_max_age > datetime.now():
-            # cache valid!!
-            listings = cache_data.cache_data
-            print("listings cache hit!!!")
-        else:
-            # cache not valid get it again
-            cache_man.remove_cache(cache_ref)
-            listings:list[Listing] = data_man.get_all_from(Listing())
-            cache_man.add_to_cache(listings, "listings")
-    else:
-        # cache dne. get listings and add to cache
-        listings:list[Listing] = data_man.get_all_from(Listing())
-        cache_man.add_to_cache(listings, "listings")
 
     listing_data = []
     # check cache for data
@@ -346,19 +364,31 @@ def view_listings(request: Request):
         if cache_data.cache_max_age > datetime.now():
             # cache valid!!
             print("listing_data cache hit!!!")
+
             listing_data = []
             for l in cache_data.cache_data:
-                listing_data.append(Listing().from_dict(l))
-            print(cache_data.cache_data)
+                listing_data.append({
+                    "listing": Listing().from_dict(l["listing"]),
+                    "avg_rating": l["avg_rating"],
+                    "review_count": l["review_count"],
+                    "created_at": l["created_at"],
+                    "comments": l["comments"]
+                    })
+            return templates.TemplateResponse(
+                "listings.html",
+                {"request": request, "listings": listing_data, "name": "All Listings"}
+            )
         else:
             # cache not valid get it again
             print("cache not valid")
             cache_man.remove_cache(data_ref)
+            listings:list[Listing] = data_man.get_all_from(Listing())
             listing_data = make_listing_data(listings)
             cache_man.add_to_cache(listing_data, "listing_data")
     else:
         # cache dne. get listings and add to cache
         print("cache not real")
+        listings:list[Listing] = data_man.get_all_from(Listing())
         listing_data = make_listing_data(listings)
         cache_man.add_to_cache(listings, "listing_data")
 
@@ -369,6 +399,10 @@ def view_listings(request: Request):
 
 @app.post("/add_review")
 def add_review(request: Request, listing_id: str = Form(...), rating: int = Form(...)):
+    """
+    Adds a review \n
+    **Not cached**
+    """
     username = request.cookies.get("username")
     if not username:
         return templates.TemplateResponse(
@@ -391,6 +425,10 @@ from datetime import datetime, timezone
 
 @app.post("/add_comment")
 def add_comment(request: Request, listing_id: str = Form(...), comment: str = Form(...)):
+    """
+    Adds a comment \n
+    **Not cached**
+    """
     username = request.cookies.get("username")
     if not username:
         return templates.TemplateResponse(
@@ -417,51 +455,41 @@ def add_comment(request: Request, listing_id: str = Form(...), comment: str = Fo
 
 @app.get("/listing/{listingid}")
 def view_one_listing(request: Request, listingid: str):
+    """
+    views one listing \n
+    **Is cached**
+    """
     data_man.connect_to_database()
-    listing = data_man._get_document_using_id("Listing", Listing(), listingid)[0]
-    listing_object = Listing.from_dict(listing)
-    
-    if data_man.check_for_average_rating(listing_object):
-        data_man.update_average_rating(listing_object) # makes it
 
-    comments = data_man.get_comments_from_listing(listing_object)
-    
-    ar = data_man.get_average_rating_from_listing(listing_object)
-    
-    # new variables being sent to website
-    listing["avg_rating"] = round(ar.AverageRating, 2)
-    listing["review_count"] = ar.NumberOfRatings
-    
-    comments_with_users = []
-    for c in comments:
-        try:
-            user = data_man.get_user_from_comments(c)
-            # Convert comment timestamp to Eastern Time
-            if c.CreatedAt:
-                utc_dt = datetime.fromisoformat(c.CreatedAt.replace("Z", "")).replace(tzinfo=timezone.utc)
-                eastern_dt = utc_dt.astimezone(ZoneInfo("America/New_York"))
-                created_str = eastern_dt.strftime("%m/%d/%Y, %I:%M %p")
-            else:
-                created_str = ""
-            comments_with_users.append({
-                "Content": c.Content,
-                "Username": user.Username,
-                "CreatedAt": created_str
-            })
-        except TypeError as e:
-            print(f"user failed: {e}")
-            comments_with_users.append({
-                "Content": c.Content,
-                "Username": "Unknown",
-                "CreatedAt": ""
-            })
+    # cache real
+    if f"listing_{listingid}" in cache_man.all_refrences: 
+        cache_data = cache_man.get_cache(f"listing_{listingid}")
+        if cache_data.cache_max_age > datetime.now():
+            # use cached data
+            raw_data:dict = cache_data.cache_data
+            meta_listing:dict = raw_data["meta_listing"]
+            comments_with_users:list = raw_data["comments"]
+        else:
+            listing = data_man._get_document_using_id("Listing", Listing(), listingid)[0]
+            listing_object = Listing.from_dict(listing)
+            meta_listing, comments_with_users = make_specific_listing_data(listing_object)
+        # pack into cached data
+            data = {"meta_listing":meta_listing,"comments":comments_with_users}
+            cache_man.add_to_cache(data,f"listing_{listingid}")
+    else:
+        listing = data_man._get_document_using_id("Listing", Listing(), listingid)[0]
+        listing_object = Listing.from_dict(listing)
+        meta_listing, comments_with_users = make_specific_listing_data(listing_object)
+        # pack into cached data
+        data = {"meta_listing":meta_listing,"comments":comments_with_users}
+        cache_man.add_to_cache(data,f"listing_{listingid}")
     
         
     return templates.TemplateResponse(
         "listing.html",
             {
                 "request": request,
-                "listing": listing,
+                "listing": meta_listing,
                 "comments": comments_with_users
             }
     )

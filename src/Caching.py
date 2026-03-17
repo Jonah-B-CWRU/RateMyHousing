@@ -55,11 +55,11 @@ class cache_manager:
 
     def __init__(self):
         for f in os.listdir(self.cache_location):
-            file = open(f,"rb")
-            data = pickle.Unpickler(file).load()
-            
-
-            pass
+            file = open(self.cache_location+f,"rb")
+            data = cache_data.from_dict(pickle.Unpickler(file).load())
+            ref = data.as_refrence()
+            self.all_refrences[data.cache_name] = ref
+        print(f"refrences found: {self.all_refrences.keys()}")
         
     def add_to_cache(self,data:Any, name:str) -> cache_refrence:
         now = datetime.now()
