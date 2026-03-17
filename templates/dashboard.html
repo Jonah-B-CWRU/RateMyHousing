@@ -94,6 +94,9 @@
             <a href="/listings" class="listings-link">View Listings</a>
             <a href="/map" class="listings-link">View Map</a>
             <a href="/create_listing" class="create-listing-link">Create Listing</a>
+            {% if hasmodkey %}
+                <a href="/mod_page" class="create-listing-link">Mod Menu</a>
+            {% endif %}
             <a href="/logout" class="logout-link">Logout</a>
         </div>
 
