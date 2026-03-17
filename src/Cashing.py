@@ -1,8 +1,8 @@
 from dataclasses import dataclass, asdict, fields
 from datetime import datetime, timedelta
 from typing import Any
-import os.path
-import json
+import os
+import pickle
 
 
 
@@ -12,7 +12,7 @@ class cache_data:
     cache_start_time:datetime
     cache_max_age:datetime
     cache_location:str
-    cache_data:dict
+    cache_data:Any
     def as_dict(self) -> dict:
         return asdict(self)
     @classmethod
@@ -45,17 +45,26 @@ class cache_refrence:
 
 
 
-class cashe_manager:
+class cache_manager:
     """
     Manages a physical data cache to reduce/limit database calls and increase performance
     """
-    cashe_location:str = "src/cache"
+    cache_location:str = "src/cache/"
     data_timeout_seconds:float = 600.0
-    all_refrences:dict[str,cache_refrence]
-    def add_to_cache(self,data:dict, name:str) -> cache_refrence:
+    all_refrences:dict[str,cache_refrence] = {}
+
+    def __init__(self):
+        for f in os.listdir(self.cache_location):
+            file = open(f,"rb")
+            data = pickle.Unpickler(file).load()
+            
+
+            pass
+        
+    def add_to_cache(self,data:Any, name:str) -> cache_refrence:
         now = datetime.now()
         timeout = now + timedelta(0,self.data_timeout_seconds)
-        location = self.cashe_location+name
+        location = self.cache_location+name
         # check for exsisting file
         try:
             old_cache = self.get_cache(name)
@@ -75,17 +84,18 @@ class cashe_manager:
             location,
             data
         )
-        output = open(location, "w")
-        text = json.encoder.JSONEncoder().encode(cache.as_dict())
-        output.writelines(text)
+        output = open(location, "wb")
+        pickle.Pickler(output).dump(cache.as_dict())
+        output.close()
         self.all_refrences[name] = cache.as_refrence()
         return cache.as_refrence()
 
     def get_cache(self,name: str) -> cache_data:
-        location = self.cashe_location+name
+        location = self.cache_location+name
         if os.path.isfile(location):
-            file = open(location)
-            data = json.decoder.JSONDecoder().decode("".join(file.readlines()))
+            file = open(location, "rb")
+            data = pickle.Unpickler(file).load()
+            file.close()
             try:
                 return cache_data.from_dict(data)
             except:
@@ -93,15 +103,23 @@ class cashe_manager:
         raise IOError("Cache cache does not exsist")
     
 
-    def update_cache(self,new_data:dict, refrence:cache_refrence) -> cache_refrence:
+    def update_cache(self,new_data:Any, refrence:cache_refrence) -> cache_refrence:
         now = datetime.now()
         new_timeout = now + timedelta(0,self.data_timeout_seconds)
         # simply trust that the old cache is real... still
         old_cache = self.get_cache(refrence.cache_name)
         old_cache.cache_max_age = new_timeout
         old_cache.cache_data = new_data
-        output = open(old_cache.cache_location, "w")
-        text = json.encoder.JSONEncoder().encode(old_cache.as_dict())
-        output.writelines(text)
+        output = open(old_cache.cache_location, "wb")
+        pickle.Pickler(output).dump(old_cache.as_dict())
+        output.close()
         self.all_refrences[old_cache.cache_name] = old_cache.as_refrence()
         return old_cache.as_refrence()
+    
+    def remove_cache(self, refrence:cache_refrence) -> bool:
+        if os.path.isfile(refrence.cache_location):
+            # exsists
+            os.remove(refrence.cache_location)
+            del self.all_refrences[refrence.cache_name]
+            return True
+        return False

@@ -3,26 +3,33 @@ from fastapi.responses import RedirectResponse # type: ignore
 from fastapi.staticfiles import StaticFiles # type: ignore
 from fastapi.templating import Jinja2Templates # type: ignore
 from pathlib import Path
-import secrets
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
+import secrets
+import requests
 
-from src.Database import database_manager, User, Password, Comments, Listing, Landlord, Rating
-from src.LoginProcessor import PasswordAttempt
-import random
+
 
 # custom stuff
 from src.Database import database_manager, User, Password, Comments, Listing, Landlord, Rating,Codes, AverageRating
+from src.LoginProcessor import PasswordAttempt
+from src.Cashing import cache_manager
+import random
 
-import requests
+
 
 app = FastAPI()
 data_man = database_manager()
+cache_man = cache_manager()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 def add_user(username: str, password: str) -> tuple[bool, str]:
+    """
+    adds user to database\n
+    **not cached**
+    """
     if not username.endswith("@case.edu"):
         return False, "Username must end with @case.edu"
 
@@ -54,6 +61,10 @@ def add_user(username: str, password: str) -> tuple[bool, str]:
     return True, "User created successfully"
 
 def verify_login(username: str, password: str) -> bool:
+    """
+    verifies login by checking for valid user and valid password \n
+    **not cached**
+    """
     data_man.connect_to_database()
     try:
         user_data = data_man.get_user_with_username(username)
@@ -62,6 +73,64 @@ def verify_login(username: str, password: str) -> bool:
         return (p.hash == pass_data.Hash) and user_data.Activated
     except TypeError:
         return False
+
+def make_listing_data(listings: list[Listing]) -> list:
+    listing_data = []
+
+    for listing in listings:
+        comments = data_man.get_comments_from_listing(listing)
+        if not data_man.check_for_average_rating(listing):
+            data_man.update_average_rating(listing) # makes it
+        
+
+        comments_with_users = []
+        for c in comments:
+            try:
+                user = data_man.get_user_from_comments(c)
+                # Convert comment timestamp to Eastern Time
+                if c.CreatedAt:
+                    utc_dt = datetime.fromisoformat(c.CreatedAt.replace("Z", "")).replace(tzinfo=timezone.utc)
+                    eastern_dt = utc_dt.astimezone(ZoneInfo("America/New_York"))
+                    created_str = eastern_dt.strftime("%m/%d/%Y, %I:%M %p")
+                else:
+                    created_str = ""
+                comments_with_users.append({
+                    "Content": c.Content,
+                    "Username": user.Username,
+                    "CreatedAt": created_str
+                })
+            except TypeError as e:
+                print(f"user failed: {e}")
+                comments_with_users.append({
+                    "Content": c.Content,
+                    "Username": "Unknown",
+                    "CreatedAt": ""
+                })
+
+        ar = data_man.get_average_rating_from_listing(listing)
+        
+        # new variables being sent to website
+        count = ar.NumberOfRatings
+        avg = round(ar.AverageRating, 2)
+
+        # Convert listing timestamp to Eastern Time
+        created_str = ""
+        if listing.CreatedAt:
+            try:
+                utc_dt = datetime.fromisoformat(listing.CreatedAt.replace("Z", "")).replace(tzinfo=timezone.utc)
+                eastern_dt = utc_dt.astimezone(ZoneInfo("America/New_York"))
+                created_str = eastern_dt.strftime("%m/%d/%Y, %I:%M %p")
+            except:
+                created_str = listing.CreatedAt
+
+        listing_data.append({
+            "listing": listing,
+            "avg_rating": avg,
+            "review_count": count,
+            "created_at": created_str,
+            "comments": comments_with_users
+        })
+    return listing_data
 
 @app.get("/")
 def index(request: Request):
@@ -79,6 +148,10 @@ def create_user_form(request: Request):
 
 @app.post("/create")
 def create_user_post(request: Request, username: str = Form(...), password: str = Form(...)):
+    """
+    creates a user in database \n
+    **not cached**
+    """
     success, msg = add_user(username, password)
     return templates.TemplateResponse(
         "create.html",
@@ -88,8 +161,13 @@ def create_user_post(request: Request, username: str = Form(...), password: str 
 @app.get("/code")
 def get_code_form(request: Request):
     return templates.TemplateResponse("code_input.html", {"request": request, "error": None, "success": None})
+
 @app.post("/code")
 def verify_code_form(request: Request, email: str = Form(...), code: str = Form(...)):
+    """
+    verifies code \n
+    **not cached**
+    """
     data_man.connect_to_database()
     user = data_man.get_user_with_email(email)
     
@@ -104,13 +182,16 @@ def verify_code_form(request: Request, email: str = Form(...), code: str = Form(
 
     return templates.TemplateResponse("code_input.html", {"request": request, "error": None, "success": None})
 
-
 @app.get("/login")
 def login_form(request: Request):
     return templates.TemplateResponse("login.html", {"request": request, "error": None})
 
 @app.post("/login")
 def login_post(request: Request, username: str = Form(...), password: str = Form(...)):
+    """
+    verifies login by checking for valid user and valid password \n
+    **not cached**
+    """
     if verify_login(username, password):
         response = RedirectResponse(url="/dashboard", status_code=302)
         response.set_cookie(key="username", value=username)
@@ -168,9 +249,13 @@ def create_listing(
     price: float = Form(...),
     description: str = Form("")
 ):
+    """
+    creates listing with relevent infromation \n
+    **Is cached**
+    """
     data_man.connect_to_database()
     listing_id = secrets.token_hex(8)
-    created_at = datetime.utcnow().isoformat() + "Z"
+    created_at = datetime.now(timezone.utc).isoformat() + "Z"
     
     try:
         response = requests.get(
@@ -211,6 +296,13 @@ def create_listing(
 
     data_man.add_object(new_listing)
 
+    # try to update cache
+    if cache_man.all_refrences["listings"] != None:
+        # cache is real, update it
+        new_listing = data_man.get_all_from(Listing())
+        cache_man.update_cache(new_listing, cache_man.all_refrences["listings"])
+    # cache dne, dont touch it
+
     return templates.TemplateResponse(
         "create_listing.html",
         {"request": request, "success": "Listing created successfully!"}
@@ -218,67 +310,57 @@ def create_listing(
 
 @app.get("/listings")
 def view_listings(request: Request):
+    """
+    Gets all listings \n
+    **Is cached**
+    """
     data_man.connect_to_database()
     from datetime import datetime, timezone
     from zoneinfo import ZoneInfo
 
-    listings:list[Listing] = data_man.get_all_from(Listing())
+    # check for cached data
+    if "listings" in cache_man.all_refrences:
+        cache_ref = cache_man.all_refrences["listings"]
+        # cache is real, use it
+        cache_data = cache_man.get_cache("listings")
+        if cache_data.cache_max_age > datetime.now():
+            # cache valid!!
+            listings = cache_data.cache_data
+            print("listings cache hit!!!")
+        else:
+            # cache not valid get it again
+            cache_man.remove_cache(cache_ref)
+            listings:list[Listing] = data_man.get_all_from(Listing())
+            cache_man.add_to_cache(listings, "listings")
+    else:
+        # cache dne. get listings and add to cache
+        listings:list[Listing] = data_man.get_all_from(Listing())
+        cache_man.add_to_cache(listings, "listings")
 
     listing_data = []
-
-    for listing in listings:
-        comments = data_man.get_comments_from_listing(listing)
-        if data_man.check_for_average_rating(listing):
-            data_man.update_average_rating(listing) # makes it
-        
-
-        comments_with_users = []
-        for c in comments:
-            try:
-                user = data_man.get_user_from_comments(c)
-                # Convert comment timestamp to Eastern Time
-                if c.CreatedAt:
-                    utc_dt = datetime.fromisoformat(c.CreatedAt.replace("Z", "")).replace(tzinfo=timezone.utc)
-                    eastern_dt = utc_dt.astimezone(ZoneInfo("America/New_York"))
-                    created_str = eastern_dt.strftime("%m/%d/%Y, %I:%M %p")
-                else:
-                    created_str = ""
-                comments_with_users.append({
-                    "Content": c.Content,
-                    "Username": user.Username,
-                    "CreatedAt": created_str
-                })
-            except TypeError as e:
-                print(f"user failed: {e}")
-                comments_with_users.append({
-                    "Content": c.Content,
-                    "Username": "Unknown",
-                    "CreatedAt": ""
-                })
-
-        ar = data_man.get_average_rating_from_listing(listing)
-        
-        # new variables being sent to website
-        count = ar.NumberOfRatings
-        avg = round(ar.AverageRating, 2)
-
-        # Convert listing timestamp to Eastern Time
-        created_str = ""
-        if listing.CreatedAt:
-            try:
-                utc_dt = datetime.fromisoformat(listing.CreatedAt.replace("Z", "")).replace(tzinfo=timezone.utc)
-                eastern_dt = utc_dt.astimezone(ZoneInfo("America/New_York"))
-                created_str = eastern_dt.strftime("%m/%d/%Y, %I:%M %p")
-            except:
-                created_str = listing.CreatedAt
-
-        listing_data.append({
-            "listing": listing,
-            "avg_rating": avg,
-            "review_count": count,
-            "created_at": created_str,
-            "comments": comments_with_users
-        })
+    # check cache for data
+    if "listing_data" in cache_man.all_refrences:
+        data_ref = cache_man.all_refrences["listing_data"]
+        # cache is real
+        cache_data = cache_man.get_cache("listing_data")
+        if cache_data.cache_max_age > datetime.now():
+            # cache valid!!
+            print("listing_data cache hit!!!")
+            listing_data = []
+            for l in cache_data.cache_data:
+                listing_data.append(Listing().from_dict(l))
+            print(cache_data.cache_data)
+        else:
+            # cache not valid get it again
+            print("cache not valid")
+            cache_man.remove_cache(data_ref)
+            listing_data = make_listing_data(listings)
+            cache_man.add_to_cache(listing_data, "listing_data")
+    else:
+        # cache dne. get listings and add to cache
+        print("cache not real")
+        listing_data = make_listing_data(listings)
+        cache_man.add_to_cache(listings, "listing_data")
 
     return templates.TemplateResponse(
         "listings.html",
