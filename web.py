@@ -400,3 +400,17 @@ def view_listing_map(request: Request):
             "listings": listings
         }
     )
+
+@app.get("/mod_page")
+def view_mod_page(request: Request):
+    if request.cookies.get("modkey") != None:
+        data_man.connect_to_database()
+        user = data_man.get_user_with_username(request.cookies.get("username"))
+        if user.UserID.encode('utf-8').hex() == request.cookies.get("modkey"):
+            return templates.TemplateResponse(
+                "mod_page.html",
+                {
+                    "request": request
+                }
+            )
+    return RedirectResponse(url="/dashboard")
