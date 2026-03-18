@@ -105,13 +105,11 @@ def make_all_listing_data(listings: list[Listing]) -> list:
     return listing_data
 
 def make_specific_listing_data(listing: Listing):
+    # meta listing creation
     meta_listing = listing.as_dict()
-    
     if data_man.check_for_average_rating(listing):
         data_man.update_average_rating(listing) # makes it
-
     comments = data_man.get_comments_from_listing(listing)
-    
     ar = data_man.get_average_rating_from_listing(listing)
     
     # new variables being sent to website
@@ -126,7 +124,8 @@ def make_specific_listing_data(listing: Listing):
         except:
             created_str = listing.CreatedAt
     meta_listing["CreatedAt"] = created_str
-    
+
+    # comments
     comments_with_users = []
     for c in comments:
         try:
@@ -195,11 +194,6 @@ def verify_code_form(request: Request, email: str = Form(...), code: str = Form(
         user.Activated = True
         data_man.update_object(user)
         data_man.recursive_deletion(data_man.get_code_from_user(user))
-        print("Valid code!")
-    else:
-        print(f"Invalid code:( {int(code)}")
-
-
     return templates.TemplateResponse("code_input.html", {"request": request, "error": None, "success": None})
 
 @app.get("/login")
@@ -337,7 +331,7 @@ def view_listings(request: Request):
     data_man.connect_to_database()
 
     listings:list[Listing] = data_man.get_all_from(Listing())
-    listing_data = make_all_listing_data(listings) # has built in cach checking and removal
+    listing_data = make_all_listing_data(listings) # has built in cach checking and renewing
 
     return templates.TemplateResponse(
         "listings.html",
@@ -348,7 +342,7 @@ def view_listings(request: Request):
 def add_review(request: Request, listing_id: str = Form(...), rating: int = Form(...)):
     """
     Adds a review \n
-    **Not cached**
+    **Updates cache**
     """
     username = request.cookies.get("username")
     if not username:
@@ -365,6 +359,14 @@ def add_review(request: Request, listing_id: str = Form(...), rating: int = Form
 
     # update reviews
     data_man.update_average_rating(Listing(listing_id))
+
+    # update cache
+    ref = cache_man.all_refrences[f"listing_{listing_id}"] 
+    listing = data_man.get_listing_from_rating(review)
+    meta_listing, comments_with_users = make_specific_listing_data(listing)
+    data = {"meta_listing":meta_listing,"comments":comments_with_users}
+    ref = cache_man.update_cache(data, ref)
+    cache_man.all_refrences[f"listing_{listing_id}"] = ref
 
     return RedirectResponse(url="/listings", status_code=302)
 
@@ -399,8 +401,14 @@ def add_comment(request: Request, listing_id: str = Form(...), comment: str = Fo
 
     data_man.add_object(new_comment)
 
-    # update listings cache
-    
+   
+    # update cache
+    ref = cache_man.all_refrences[f"listing_{listing_id}"] 
+    listing = data_man.get_listing_from_comments(new_comment)
+    meta_listing, comments_with_users = make_specific_listing_data(listing)
+    data = {"meta_listing":meta_listing,"comments":comments_with_users}
+    ref = cache_man.update_cache(data, ref)
+    cache_man.all_refrences[f"listing_{listing_id}"] = ref
 
     return RedirectResponse(url="/listings", status_code=302)
 
