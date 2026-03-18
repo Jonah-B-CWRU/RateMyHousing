@@ -777,7 +777,7 @@ class database_manager:
             listings = self._get_document_using_id("Listing",Listing(),rating.ListingID)
             if len(listings) == 1:
                 l = listings[0]
-                return Listing(l["ListingID"],l["LLID"],l["ListingLocation"])
+                return Listing.from_dict(l)
             else:
                 raise TypeError(f"no listing with ListingID: {rating.ListingID}")
         raise IOError("Not Connected to Database")

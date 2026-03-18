@@ -248,8 +248,8 @@
                 {% endif %}
 
                 <div class="rating-row">
-                    {% if item.review_count > 0 %}
-                        ⭐ {{ item.avg_rating }} avg · {{ item.review_count }} review{% if item.review_count > 1 %}s{% endif %}
+                    {% if listing.review_count > 0 %}
+                        ⭐ {{ listing.avg_rating }} avg · {{ listing.review_count }} review{% if listing.review_count > 1 %}s{% endif %}
                     {% else %}
                         <span class="no-rating">No ratings yet — be the first!</span>
                     {% endif %}
