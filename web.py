@@ -16,6 +16,13 @@ from src.Database import database_manager, User, Password, Comments, Listing, La
 
 import requests
 
+TAG_GROUPS = {
+    "value": ["Great value", "Overpriced"],
+    "noise": ["Paper-thin walls", "Quiet"],
+    "condition": ["Pest issues", "Well maintained"],
+    "parking": ["Parking Included", "No Parking Included"],
+}
+
 app = FastAPI()
 data_man = database_manager()
 
@@ -285,7 +292,12 @@ def view_listings(request: Request):
     )
 
 @app.post("/add_review")
-def add_review(request: Request, listing_id: str = Form(...), rating: int = Form(...)):
+def add_review(
+    request: Request,
+    listing_id: str = Form(...),
+    rating: int = Form(...),
+    tags: list[str] = Form([])
+):
     username = request.cookies.get("username")
     if not username:
         return templates.TemplateResponse(
@@ -296,7 +308,24 @@ def add_review(request: Request, listing_id: str = Form(...), rating: int = Form
     data_man.connect_to_database()
     user = data_man.get_user_with_username(username)
 
-    review = Rating(secrets.token_hex(8), user.UserID, listing_id, rating)
+    valid, msg = validate_tags(tags)
+    if not valid:
+        return templates.TemplateResponse(
+            "redirect.html",
+            {
+                "request": request,
+                "message": msg,
+                "target_url": "/listings"
+            }
+        )
+
+    review = Rating(
+        RatingID=secrets.token_hex(8),
+        UserID=user.UserID,
+        ListingID=listing_id,
+        Rating=rating,
+        Tags=tags
+    )
     data_man.add_object(review)
 
     # update reviews
@@ -392,3 +421,25 @@ def view_listing_map(request: Request):
             "listings": listings
         }
     )
+
+
+
+def validate_tags(selected_tags: list[str]) -> tuple[bool, str]:
+    if len(selected_tags) > 4:
+        return False, "You can select up to 4 tags."
+
+    used_groups = set()
+
+    for tag in selected_tags:
+        found = False
+        for group, options in TAG_GROUPS.items():
+            if tag in options:
+                if group in used_groups:
+                    return False, f"Only one tag allowed from '{group}' category."
+                used_groups.add(group)
+                found = True
+                break
+        if not found:
+            return False, f"Invalid tag: {tag}"
+
+    return True, ""
