@@ -219,8 +219,7 @@ def create_listing(
 @app.get("/listings")
 def view_listings(request: Request):
     data_man.connect_to_database()
-    from datetime import datetime, timezone
-    from zoneinfo import ZoneInfo
+
 
     listings:list[Listing] = data_man.get_all_from(Listing())
 
@@ -304,8 +303,6 @@ def add_review(request: Request, listing_id: str = Form(...), rating: int = Form
     data_man.update_average_rating(Listing(listing_id))
 
     return RedirectResponse(url="/listings", status_code=302)
-
-from datetime import datetime, timezone
 
 @app.post("/add_comment")
 def add_comment(request: Request, listing_id: str = Form(...), comment: str = Form(...)):
