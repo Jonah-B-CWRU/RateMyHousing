@@ -1,12 +1,12 @@
 from dataclasses import dataclass, asdict, fields
 from typing import Any, TypeAlias, TypeVar, cast
-from firebase_admin import firestore, credentials
-from google.cloud.firestore_v1.client import Client as FirestoreClient
-from google.cloud.firestore_v1.document import DocumentReference
-from google.cloud.firestore_v1.query import Query
-from google.protobuf import timestamp_pb2
+from firebase_admin import firestore, credentials # type: ignore
+from google.cloud.firestore_v1.client import Client as FirestoreClient # type: ignore
+from google.cloud.firestore_v1.document import DocumentReference # type: ignore
+from google.cloud.firestore_v1.query import Query # type: ignore
+from google.protobuf import timestamp_pb2 # type: ignore
 from email.mime.text import MIMEText
-import firebase_admin
+import firebase_admin # type: ignore
 import json  
 import smtplib
 
