@@ -337,7 +337,7 @@ def add_comment(
     request: Request,
     listing_id: str = Form(...),
     comment: str = Form(...),
-    tags_location: list[str] = Form([]),
+    tags_noise: list[str] = Form([]),
     tags_condition: list[str] = Form([]),
     tags_landlord: list[str] = Form([]),
     tags_value: list[str] = Form([])
@@ -350,10 +350,10 @@ def add_comment(
         )
     
     # Combine all selected tags
-    selected_tags = tags_location + tags_condition + tags_landlord + tags_value
+    selected_tags = tags_noise + tags_condition + tags_landlord + tags_value
 
     # Enforce max 1 per group
-    if len(tags_location) > 1 or len(tags_condition) > 1 or len(tags_landlord) > 1 or len(tags_value) > 1:
+    if len(tags_noise) > 1 or len(tags_condition) > 1 or len(tags_landlord) > 1 or len(tags_value) > 1:
         return templates.TemplateResponse(
             "redirect.html",
             {"request": request, "message": "You can only select one tag per group.", "target_url": f"/listing/{listing_id}"}
