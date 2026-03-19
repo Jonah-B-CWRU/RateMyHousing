@@ -147,7 +147,7 @@ def make_specific_listing_data(listing: Listing):
             comments_with_users.append({
                 "Content": c.Content,
                 "Username": user.Username,
-                "CreatedAt": created_str
+                "CreatedAt": created_str,
                 "Tags": c.Tags if c.Tags else []
             })
         except TypeError as e:
@@ -155,7 +155,7 @@ def make_specific_listing_data(listing: Listing):
             comments_with_users.append({
                 "Content": c.Content,
                 "Username": "Unknown",
-                "CreatedAt": ""
+                "CreatedAt": "",
                 "Tags": c.Tags if c.Tags else []
             })
     return (meta_listing,comments_with_users)
@@ -458,7 +458,7 @@ def add_comment(
         ListingID=listing_id,
         UserID=user.UserID,
         Content=comment,
-        CreatedAt=now_utc
+        CreatedAt=now_utc,
         Tags=selected_tags
     )
 
