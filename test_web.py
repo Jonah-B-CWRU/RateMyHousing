@@ -4,6 +4,8 @@ import pytest # type: ignore
 from unittest.mock import patch
 import web
 
+# NEEDS PYTHON 3.10 in venv
+
 @pytest.fixture(autouse=True)
 def disable_db():
     with patch.object(web.data_man, "connect_to_database"):
