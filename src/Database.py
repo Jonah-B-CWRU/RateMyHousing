@@ -682,6 +682,63 @@ class database_manager:
         raise IOError("Not Connected to Database")
     
 
+    # mod tools
+    def find_orphend_data(self, data_type:T) -> list[T]:
+        orphens = []
+        match data_type:
+            case User():
+                # dependent on password
+                for user in self.get_all_from(User()):
+                    try: self.get_pass_from_user(user)
+                    except: orphens.append(user)
+            case Rating():
+                # dependent on user and listing
+                for rating in self.get_all_from(Rating()):
+                    try: self.get_user_from_rating(rating)
+                    except: 
+                        orphens.append(rating)
+                        break
+                    try: self.get_listing_from_rating(rating)
+                    except: orphens.append(rating)
+            case Landlord():
+                # dependent on nothing
+                pass
+            case Password():
+                # dependent on user
+                for password in self.get_all_from(Password()):
+                    try: self.get_object_by_id(password.UserID,User())
+                    except: orphens.append(password)
+            case Comments():
+                # dependent on user and Listing
+                for com in self.get_all_from(Comments()):
+                    try: self.get_listing_from_comments(com)
+                    except: 
+                        orphens.append(com)
+                        break
+                    try: self.get_user_from_comments(com)
+                    except: 
+                        orphens.append(com)
+            case Listing():
+                # dependent on lanloard
+                for listing in self.get_all_from(Listing()):
+                    try: self.get_landlord_from_Listing(listing)
+                    except: orphens.append(listing)
+            case Codes():
+                # dependent on user
+                for code in self.get_all_from(Codes()):
+                    try: self.get_object_by_id(code.UserID,User())
+                    except: orphens.append(code)
+            case AverageRating():
+                # dependent on listing
+                for average in self.get_all_from(AverageRating()):
+                    try: self.get_object_by_id(average.ListingID,Listing())
+                    except: orphens.append(average)
+            case _:
+                    pass
+        return orphens
+
+    
+
 
     # User relations
     # username -> user

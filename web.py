@@ -476,9 +476,16 @@ def view_listing_map(request: Request):
 
 @app.get("/mod_page")
 def view_mod_page(request: Request):
+    # to be replaced after merge
+    username = request.cookies.get("username")
+    if not username:
+        return templates.TemplateResponse(
+            "redirect.html",
+            {"request": request, "message": "You must log in.", "target_url": "/login"}
+        )
     if request.cookies.get("modkey") != None:
         data_man.connect_to_database()
-        user = data_man.get_user_with_username(request.cookies.get("username"))
+        user = data_man.get_user_with_username(username)
         if user.UserID.encode('utf-8').hex() == request.cookies.get("modkey"):
             return templates.TemplateResponse(
                 "mod_page.html",
@@ -486,6 +493,7 @@ def view_mod_page(request: Request):
                     "request": request
                 }
             )
+        print(f"invalid mod key, correct key is {user.UserID.encode('utf-8').hex()}")
     return RedirectResponse(url="/dashboard")
 @app.post("/mod_page")
 def post_mod_page_search(
@@ -495,9 +503,16 @@ def post_mod_page_search(
     uid_search:     str = Form(""),
     content_search: str = Form("")
 ):
+    # to be replaced after merge
+    username = request.cookies.get("username")
+    if not username:
+        return templates.TemplateResponse(
+            "redirect.html",
+            {"request": request, "message": "You must log in to leave a comment.", "target_url": "/login"}
+        )
     if request.cookies.get("modkey") != None:
         data_man.connect_to_database()
-        user = data_man.get_user_with_username(request.cookies.get("username"))
+        user = data_man.get_user_with_username(username)
         if user.UserID.encode('utf-8').hex() == request.cookies.get("modkey"):
             
             response = None
@@ -505,19 +520,28 @@ def post_mod_page_search(
             match search_type:
                 case "Users":
                     if uid_search == "":
-                        response = data_man.get_all_from(User())
+                        if not get_orphaned:
+                            response = data_man.get_all_from(User())
+                        else:
+                            response = data_man.find_orphend_data(User())
                     else:
                         response = data_man.get_user_with_username(uid_search)
                 case "Comments":
                     if uid_search == "":
-                        response = data_man.get_all_from(Comments())
+                        if not get_orphaned:
+                            response = data_man.get_all_from(Comments())
+                        else:
+                            response = data_man.find_orphend_data(Comments())
                     else:
                         response = data_man.get_comments_from_user(User(UserID=uid_search))
                 case "Listings":
-                    pass
+                    response = data_man.get_all_from(Listing())
                 case "Ratings":
                     if uid_search == "":
-                        response = data_man.get_all_from(Rating())
+                        if not get_orphaned:
+                            response = data_man.get_all_from(Rating())
+                        else:
+                            response = data_man.find_orphend_data(Rating())
                     else:
                         response = data_man.get_ratings_from_user(data_man.get_object_by_id(uid_search, User()))
                         print(data_man.get_object_by_id(uid_search, User()))
