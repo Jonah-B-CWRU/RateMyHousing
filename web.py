@@ -12,7 +12,7 @@ import requests
 
 # custom stuff
 from src.Database import database_manager, User, Password, Comments, Listing, Landlord, Rating,Codes, AverageRating
-from src.LoginProcessor import PasswordAttempt
+from src.LoginProcessor import PasswordAttempt, get_known_users, update_known_users
 from src.Caching import cache_manager
 import random
 
@@ -28,6 +28,10 @@ TAG_GROUPS = {
 app = FastAPI()
 data_man = database_manager()
 cache_man = cache_manager()
+
+# queriable by seshid
+known_users:dict[str,User] = get_known_users()
+
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -162,12 +166,15 @@ def make_specific_listing_data(listing: Listing):
 
 @app.get("/")
 def index(request: Request):
+    seshid = request.cookies.get("session_id")
+    username = "Guest"
+    if seshid in known_users:
+        username = known_users[seshid].Username
     data_man.connect_to_database()
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "name": (request.cookies.get("username") if request.cookies.get("username") != None else "Guest"),
+        "name": (username),
         "title": "Home",
-        "comments": data_man.get_all_from(Comments())
         })
 
 @app.get("/create")
@@ -216,39 +223,45 @@ def login_post(request: Request, username: str = Form(...), password: str = Form
     **not cached**
     """
     if verify_login(username, password):
+        # real user, make seshid and log as known
+        seshid = secrets.token_hex(16) # massive sesh id for security
+        known_users[seshid] = data_man.get_user_with_username(username)
+        # injecty into webpage
         response = RedirectResponse(url="/dashboard", status_code=302)
-        response.set_cookie(key="username", value=username)
+        response.set_cookie(key="session_id", value=seshid, max_age=86400, httponly=True, samesite="lax") # max age 1 day
+        update_known_users(known_users,cache_man)
         return response
     return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid username or password"})
 
 @app.get("/dashboard")
 def dashboard(request: Request):
-    username = request.cookies.get("username")
-    if not username:
+    seshid = request.cookies.get("session_id")
+    if seshid not in known_users:
         return templates.TemplateResponse(
             "redirect.html",
             {"request": request, "message": "You must log in to access the dashboard.", "target_url": "/"}
         )
+    username = known_users[seshid].Username
     return templates.TemplateResponse("dashboard.html", {"request": request, "name": username})
 
 @app.get("/logout")
-def logout():
+def logout(request: Request):
     response = RedirectResponse(url="/")
-    response.delete_cookie("username")
+    seshid = request.cookies.get("session_id")
+    if seshid in known_users:
+        del known_users[seshid]
+    response.delete_cookie("session_id")
     return response
 
 @app.get("/comment")
 def comment(request: Request):
-    username = request.cookies.get("username")
-    if not username:
+    seshid = request.cookies.get("session_id")
+    if seshid not in known_users:
         return templates.TemplateResponse(
             "redirect.html",
-            {
-                "request": request,
-                "message": "You must log in to access the dashboard.",
-                "target_url": "/"
-            }
+            {"request": request, "message": "You must log in to access the dashboard.", "target_url": "/"}
         )
+    username = known_users[seshid].Username
     return templates.TemplateResponse(
             "comment.html",
             {
@@ -260,12 +273,13 @@ def comment(request: Request):
 
 @app.get("/create_listing")
 def create_listing_form(request: Request):
-    username = request.cookies.get("username")
-    if not username:
+    seshid = request.cookies.get("session_id")
+    if seshid not in known_users:
         return templates.TemplateResponse(
             "redirect.html",
-            {"request": request, "message": "You must log in to create a listing.", "target_url": "/login"}
+            {"request": request, "message": "You must log in to access the dashboard.", "target_url": "/"}
         )
+    username = known_users[seshid].Username
     return templates.TemplateResponse("create_listing.html", {"request": request, "error": None})
 
 @app.post("/create_listing")
@@ -283,6 +297,12 @@ def create_listing(
     creates listing with relevent infromation \n
     **Updates cache**
     """
+    seshid = request.cookies.get("session_id")
+    if seshid not in known_users:
+        return templates.TemplateResponse(
+            "redirect.html",
+            {"request": request, "message": "You must log in to access the dashboard.", "target_url": "/"}
+        )
     data_man.connect_to_database()
     listing_id = secrets.token_hex(8)
     created_at = datetime.now(timezone.utc).isoformat() + "Z"
@@ -344,6 +364,12 @@ def view_listings(request: Request):
     Gets all listings \n
     **Is cached**
     """
+    seshid = request.cookies.get("session_id")
+    if seshid not in known_users:
+        return templates.TemplateResponse(
+            "redirect.html",
+            {"request": request, "message": "You must log in to access the dashboard.", "target_url": "/"}
+        )
     data_man.connect_to_database()
 
     listings:list[Listing] = data_man.get_all_from(Listing())
@@ -364,19 +390,14 @@ def add_review(
     Adds a review \n
     **Updates cache**
     """
-    username = request.cookies.get("username")
-    if not username:
+    seshid = request.cookies.get("session_id")
+    if seshid not in known_users:
         return templates.TemplateResponse(
             "redirect.html",
-            {
-                "request": request,
-                "message": "You must log in to leave a review.",
-                "target_url": "/login"
-            }
+            {"request": request, "message": "You must log in to access the dashboard.", "target_url": "/"}
         )
-
+    user = known_users[seshid]
     data_man.connect_to_database()
-    user = data_man.get_user_with_username(username)
 
     review = Rating(
         RatingID=secrets.token_hex(8),
@@ -415,12 +436,13 @@ def add_comment(
     Adds a comment \n
     **Updates cache**
     """
-    username = request.cookies.get("username")
-    if not username:
+    seshid = request.cookies.get("session_id")
+    if seshid not in known_users:
         return templates.TemplateResponse(
             "redirect.html",
-            {"request": request, "message": "You must log in to leave a comment.", "target_url": "/login"}
+            {"request": request, "message": "You must log in to access the dashboard.", "target_url": "/"}
         )
+    user = known_users[seshid]
     
     # Combine all selected tags
     selected_tags = tags_noise + tags_condition + tags_landlord + tags_value
@@ -440,15 +462,7 @@ def add_comment(
             {"request": request, "message": msg, "target_url": f"/listing/{listing_id}"}
         )
     
-
     data_man.connect_to_database()
-    user = data_man.get_user_with_username(username)
-
-    if not user:
-        return templates.TemplateResponse(
-            "redirect.html",
-            {"request": request, "message": "You must log in to leave a comment.", "target_url": "/login"}
-        )
 
     now_utc = datetime.now(timezone.utc).isoformat()  # store timestamp in UTC
 
@@ -481,6 +495,12 @@ def view_one_listing(request: Request, listingid: str):
     views one listing \n
     **Is cached**
     """
+    seshid = request.cookies.get("session_id")
+    if seshid not in known_users:
+        return templates.TemplateResponse(
+            "redirect.html",
+            {"request": request, "message": "You must log in to access the dashboard.", "target_url": "/"}
+        )
     data_man.connect_to_database()
 
     # cache real
@@ -518,6 +538,12 @@ def view_one_listing(request: Request, listingid: str):
 
 @app.get("/map")
 def view_listing_map(request: Request):
+    seshid = request.cookies.get("session_id")
+    if seshid not in known_users:
+        return templates.TemplateResponse(
+            "redirect.html",
+            {"request": request, "message": "You must log in to access the dashboard.", "target_url": "/"}
+        )
     data_man.connect_to_database()
     listings = [listdict.as_dict() for listdict in data_man.get_all_from(Listing())]
     return templates.TemplateResponse(
@@ -527,8 +553,6 @@ def view_listing_map(request: Request):
             "listings": listings
         }
     )
-
-
 
 def validate_tags(selected_tags: list[str]) -> tuple[bool, str]:
     if len(selected_tags) > 4:
