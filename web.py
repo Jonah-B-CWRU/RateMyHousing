@@ -509,7 +509,10 @@ def post_mod_page_search(
                     else:
                         response = data_man.get_user_with_username(uid_search)
                 case "Comments":
-                    pass
+                    if uid_search == "":
+                        response = data_man.get_all_from(Comments())
+                    else:
+                        response = data_man.get_comments_from_user(User(UserID=uid_search))
                 case "Listings":
                     pass
                 case "Ratings":

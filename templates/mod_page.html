@@ -36,6 +36,16 @@
         .column {
             flex: 50%;
             padding: 4px;
+            max-width: 75%;
+        }
+        .commentcontent {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            max-width: 10em;
+        }
+        .commentcontent:hover {
+            text-decoration: underline dotted skyblue;
         }
     </style>
 </head>
@@ -75,11 +85,14 @@
                         </div>
                     {% endif %}
                     {% if content_type == "Comments" %}
-                        <div class="infobox">
-                            <div class="infoitem"><b>Username:&nbsp;</b>{{record.Username}}</div>
-                            <div class="infoitem"><b>Email:&nbsp;</b>{{record.Email}}</div>
+                        <div class="infobox" style="max-height: 10em;">
+                            <div class="infoitem"><b>Comment ID:&nbsp;</b>{{record.CommentId}}</div>
+                            <div class="infoitem"><b>Listing ID:&nbsp;</b>{{record.ListingID}}</div>
                             <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
-                            <div class="infoitem"><b>Moderator?&nbsp;</b>{{record.ismod}}</div>
+                            <div class="infoitem"><b>Content:&nbsp;</b>
+                                <div class="commentcontent" title="{{record.Content}}"> {{record.Content}} </div>
+                            </div>
+                            <div class="infoitem"><b>Created At:&nbsp;</b>{{record.CreatedAt}}</div>
                         </div>
                     {% endif %}
                     {% if content_type == "Listings" %}
