@@ -18,8 +18,13 @@ class Comments:
     UserID:str = ""
     Content: str = ""
     CreatedAt: str = ""
+    Tags: list[str] = None   # ADD THIS
+
     def as_dict(self) -> dict:
-        return asdict(self)
+        data = asdict(self)
+        if data["Tags"] is None:
+            data["Tags"] = []
+        return data
     @classmethod
     def from_dict(cls, dict: dict[str,Any]) -> "Comments":
         sanitized = {}
@@ -75,12 +80,12 @@ class Rating:
     UserID: str = ""
     ListingID: str = ""
     Rating: int = 0
-    Tags: list[str] = None
+    #Tags: list[str] = None
 
     def as_dict(self) -> dict:
         data = asdict(self)
-        if data["Tags"] is None:
-            data["Tags"] = []
+        #if data["Tags"] is None:
+        #    data["Tags"] = []
         return data
     @classmethod
     def from_dict(cls,dict: dict[str,Any]) -> "Rating":
