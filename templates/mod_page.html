@@ -65,8 +65,9 @@
             </label>
             <input type="checkbox" id="get_orphaned" disabled onchange="check_content_search_valid(document.getElementById('search_type'))" name="get_orphaned"/>
             <input id="uid_search" placeholder="User ID" name="uid_search" disabled/>
-            <input id="content_search" placeholder="Content" name="content_search" disabled/>
-                <label style="display:inline;cursor:help;" class="disabled_text" title="For Listings, this is the address&#010For Ratings, this is ListingID" id="help_label">(?)</label>
+            <!-- Unhide lines when content search implemented -->
+            <input id="content_search" placeholder="Content" name="content_search" style="display:none;" disabled/>
+                <label style="display:inline;cursor:help; display:none; " class="disabled_text" title="For Listings, this is the address&#010For Ratings, this is ListingID" id="help_label">(?)</label>
             <input style="margin-left:25px" id="submit" type="submit" disabled/>
         </form>
     </div>
