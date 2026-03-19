@@ -23,6 +23,9 @@
             height: 3em;
             display: flex;
             align-items: center;
+            overflow-y: hidden;
+            overflow-x: scroll;
+            transform: translateX(-1em);
         }
         .infoitem {
             margin-right: 1em;
@@ -58,7 +61,7 @@
                 <option>Users</option>
                 <option>Comments</option>
                 <option>Listings</option>
-                <option>Ratings</option>
+                <!-- <option>Ratings</option> -->
             </select>
             <label stlye="display:inline" class="disabled_text" title="For Listings, this is the address" id="orph_label">
                 Orphaned Data?
@@ -78,15 +81,17 @@
                 {% for record in content %}
                     {% if content_type == "Users" %}
                         <div class="infobox">
+                            <button type="button" onclick="generate_user_form('{{record.UserID}}','{{record.Username}}','{{record.Email}}','{{record.ismod}}','{{record.flag}}')">✎</button>
                             <div class="infoitem"><b>Username:&nbsp;</b>{{record.Username}}</div>
                             <div class="infoitem"><b>Email:&nbsp;</b>{{record.Email}}</div>
                             <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
                             <div class="infoitem"><b>Moderator?&nbsp;</b>{{record.ismod}}</div>
                             {% if record.flag %} <div class="infoitem"><b>Flag&nbsp;</b><div class="warning">{{record.Flag}}</div></div> {% endif %}
                         </div>
-                    {% endif %}
-                    {% if content_type == "Comments" %}
+                        {% endif %}
+                        {% if content_type == "Comments" %}
                         <div class="infobox" style="max-height: 10em;">
+                            <button type="button" onclick="generate_comment_form('{{record.CommentId}}', '{{record.ListingID}}', '{{record.UserID}}', '{{record.Content}}')">✎</button>
                             <div class="infoitem"><b>Comment ID:&nbsp;</b>{{record.CommentId}}</div>
                             <div class="infoitem"><b>Listing ID:&nbsp;</b>{{record.ListingID}}</div>
                             <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
@@ -95,9 +100,10 @@
                             </div>
                             <div class="infoitem"><b>Created At:&nbsp;</b>{{record.CreatedAt}}</div>
                         </div>
-                    {% endif %}
-                    {% if content_type == "Listings" %}
+                        {% endif %}
+                        {% if content_type == "Listings" %}
                         <div class="infobox">
+                            <button type="button" onclick="">✎</button>
                             <div class="infoitem"><b>Listing ID:&nbsp;</b>{{record.ListingID}}</div>
                             <div class="infoitem"><b>Address:&nbsp;</b>{{record.Address}}</div>
                             <div class="infoitem"><b>Beds/Baths:&nbsp;</b>{{record.UserID}}</div>
@@ -105,7 +111,8 @@
                         </div>
                     {% endif %}
                     {% if content_type == "Ratings" %}
-                        <div class="infobox">
+                    <div class="infobox">
+                            <button type="button" onclick="">✎</button>
                             <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
                             <div class="infoitem"><b>ListingID:&nbsp;</b>{{record.ListingID}}</div>
                             <div class="infoitem"><b>Rating:&nbsp;</b>{{record.Rating}}</div>
@@ -116,8 +123,8 @@
                 {% if content_type %} No matching records found. {% endif %} Input a search to view records
                 {% endif %}
             </div>
-            <div class="column">
-                haii
+            <div class="column" style="background-color: whitesmoke; height: 80vh; position: sticky; top:4em;">
+                <div id="modify_record" style="place-items: center;"><h2 style="text-align: center;">Select a record to view actions</h2></div>
             </div>
         </div>
     </div>
@@ -161,6 +168,38 @@
                 help_label.classList.add("disabled_text")
             }
         }
+        
+        function generate_user_form(userid, username, email, ismod, flag) {
+            document.getElementById("modify_record").innerHTML = /*html*/`
+                <form action="/mod_page" method="POST">
+                    <input type="hidden" id="ISPUT" name="ISPUT" value="True">
+                    <input type="hidden" id="search_type" name="search_type" value="Users">
+                    <label>User ID:&nbsp;</label> <input type="text" id="u_uid" value="${userid}" disabled/><br/>
+                    <label>Username:&nbsp;</label><input type="text" id="u_usn" value="${username}" disabled/><br/>
+                    <label>Email:&nbsp;</label>   <input type="text" id="u_eml" value="${email}"/><br/>
+                    <label>Flag:&nbsp;</label>    <input type="text" id="u_flg" value="${flag}"/><br/>
+                    <label>Delete?&nbsp;</label>  <input type="checkbox" id="DELTE"/><br/>
+                    <input type="submit"/>
+                </form>
+            `
+        }
+        function generate_comment_form(commentid, listingid, userid, content) {
+            document.getElementById("modify_record").innerHTML = /*html*/`
+                <form action="/mod_page" method="POST">
+                    <input type="hidden" id="ISPUT" name="ISPUT" value="True">
+                    <input type="hidden" id="search_type" name="search_type" value="Comments">
+                    <label>Comment ID:&nbsp;</label><input type="text" id="c_cid" value="${commentid}" disabled/><br/>
+                    <label>Listing ID:&nbsp;</label><input type="text" id="c_lid" value="${listingid}" disabled/><br/>
+                    <label>User ID:&nbsp;</label>   <input type="text" id="c_uid" value="${userid}" disabled/><br/>
+                    <label>Content:&nbsp;</label> <textarea rows="5" cols="40" id="c_cnt" disabled>${content}</textarea><br/>
+                    <label>Delete?&nbsp;</label>  <input type="checkbox" id="DELTE"/><br/>
+                    <input id="submit" type="submit"/>
+                </form>
+            `
+        }
+        function generate_listing_form() {}
+        function generate_rating_form() {}
+        
     </script>
     
 </body>

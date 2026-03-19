@@ -493,15 +493,21 @@ def post_mod_page_search(
     search_type:    str = Form(...),
     get_orphaned:  bool = Form(False),
     uid_search:     str = Form(""),
-    content_search: str = Form("")
+    content_search: str = Form(""),
+    DELETE: bool = Form(False),
+    ISPUT: bool = Form(False),
+    u_uid: str = Form(None),
+    u_usn: str = Form(None),
+    u_eml: str = Form(None),
+    u_flg: str = Form(None)
 ):
     if request.cookies.get("modkey") != None:
         data_man.connect_to_database()
         user = data_man.get_user_with_username(request.cookies.get("username"))
         if user.UserID.encode('utf-8').hex() == request.cookies.get("modkey"):
-            
+            if ISPUT:
+                pass
             response = None
-            
             match search_type:
                 case "Users":
                     if uid_search == "":
