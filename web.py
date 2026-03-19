@@ -236,8 +236,8 @@ def login_post(request: Request, username: str = Form(...), password: str = Form
         response.set_cookie(key="session_id", value=seshid, max_age=86400, httponly=True, samesite="lax") # max age 1 day
         update_known_users(known_users,cache_man)
         usr = data_man.get_user_with_username(username)
-            if usr.ismod:
-                response.set_cookie(key="modkey", value=usr.UserID.encode('utf-8').hex())
+        if usr.ismod:
+            response.set_cookie(key="modkey", value=usr.UserID.encode('utf-8').hex())
         return response
     return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid username or password"})
 
@@ -250,6 +250,7 @@ def dashboard(request: Request):
             "redirect.html",
             {"request": request, "message": "You must log in to access the dashboard.", "target_url": "/"}
         )
+    username = known_users[seshid].Username
     return templates.TemplateResponse("dashboard.html", {"request": request, "name": username, "hasmodkey": hasmodkey})
 
 @app.get("/logout")
