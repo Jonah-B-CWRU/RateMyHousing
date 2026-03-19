@@ -18,6 +18,13 @@ import random
 
 
 
+TAG_GROUPS = {
+    "value": ["Good Value", "Overpriced"],
+    "noise": ["Quiet", "Noisy"],
+    "condition": ["Clean", "Dirty"],
+    "landlord": ["Responsive Landlord", "Unresponsive Landlord"]
+}
+
 app = FastAPI()
 data_man = database_manager()
 cache_man = cache_manager()
@@ -140,14 +147,16 @@ def make_specific_listing_data(listing: Listing):
             comments_with_users.append({
                 "Content": c.Content,
                 "Username": user.Username,
-                "CreatedAt": created_str
+                "CreatedAt": created_str,
+                "Tags": c.Tags if c.Tags else []
             })
         except TypeError as e:
             print(f"user failed: {e}")
             comments_with_users.append({
                 "Content": c.Content,
                 "Username": "Unknown",
-                "CreatedAt": ""
+                "CreatedAt": "",
+                "Tags": c.Tags if c.Tags else []
             })
     return (meta_listing,comments_with_users)
 
@@ -240,7 +249,14 @@ def comment(request: Request):
                 "target_url": "/"
             }
         )
-    return templates.TemplateResponse("comment.html", {"request": request, "name": username})
+    return templates.TemplateResponse(
+            "comment.html",
+            {
+                "request": request,
+                "name": username,
+                "TAG_GROUPS": TAG_GROUPS    # REQUIRED
+            }
+        )
 
 @app.get("/create_listing")
 def create_listing_form(request: Request):
@@ -339,7 +355,11 @@ def view_listings(request: Request):
     )
 
 @app.post("/add_review")
-def add_review(request: Request, listing_id: str = Form(...), rating: int = Form(...)):
+def add_review(
+    request: Request,
+    listing_id: str = Form(...),
+    rating: int = Form(...)
+):
     """
     Adds a review \n
     **Updates cache**
@@ -348,16 +368,26 @@ def add_review(request: Request, listing_id: str = Form(...), rating: int = Form
     if not username:
         return templates.TemplateResponse(
             "redirect.html",
-            {"request": request, "message": "You must log in to leave a review.", "target_url": "/login"}
+            {
+                "request": request,
+                "message": "You must log in to leave a review.",
+                "target_url": "/login"
+            }
         )
 
     data_man.connect_to_database()
     user = data_man.get_user_with_username(username)
 
-    review = Rating(secrets.token_hex(8), user.UserID, listing_id, rating)
+    review = Rating(
+        RatingID=secrets.token_hex(8),
+        UserID=user.UserID,
+        ListingID=listing_id,
+        Rating=rating
+    )
+
     data_man.add_object(review)
 
-    # update reviews
+    # update average rating
     data_man.update_average_rating(Listing(listing_id))
 
     # update cache
@@ -370,10 +400,17 @@ def add_review(request: Request, listing_id: str = Form(...), rating: int = Form
 
     return RedirectResponse(url="/listings", status_code=302)
 
-from datetime import datetime, timezone
 
 @app.post("/add_comment")
-def add_comment(request: Request, listing_id: str = Form(...), comment: str = Form(...)):
+def add_comment(
+    request: Request,
+    listing_id: str = Form(...),
+    comment: str = Form(...),
+    tags_noise: list[str] = Form([]),
+    tags_condition: list[str] = Form([]),
+    tags_landlord: list[str] = Form([]),
+    tags_value: list[str] = Form([])
+):
     """
     Adds a comment \n
     **Updates cache**
@@ -384,9 +421,34 @@ def add_comment(request: Request, listing_id: str = Form(...), comment: str = Fo
             "redirect.html",
             {"request": request, "message": "You must log in to leave a comment.", "target_url": "/login"}
         )
+    
+    # Combine all selected tags
+    selected_tags = tags_noise + tags_condition + tags_landlord + tags_value
+
+    # Enforce max 1 per group
+    if len(tags_noise) > 1 or len(tags_condition) > 1 or len(tags_landlord) > 1 or len(tags_value) > 1:
+        return templates.TemplateResponse(
+            "redirect.html",
+            {"request": request, "message": "You can only select one tag per group.", "target_url": f"/listing/{listing_id}"}
+        )
+
+    # Validate against TAG_GROUPS
+    valid, msg = validate_tags(selected_tags)
+    if not valid:
+        return templates.TemplateResponse(
+            "redirect.html",
+            {"request": request, "message": msg, "target_url": f"/listing/{listing_id}"}
+        )
+    
 
     data_man.connect_to_database()
     user = data_man.get_user_with_username(username)
+
+    if not user:
+        return templates.TemplateResponse(
+            "redirect.html",
+            {"request": request, "message": "You must log in to leave a comment.", "target_url": "/login"}
+        )
 
     now_utc = datetime.now(timezone.utc).isoformat()  # store timestamp in UTC
 
@@ -396,7 +458,8 @@ def add_comment(request: Request, listing_id: str = Form(...), comment: str = Fo
         ListingID=listing_id,
         UserID=user.UserID,
         Content=comment,
-        CreatedAt=now_utc
+        CreatedAt=now_utc,
+        Tags=selected_tags
     )
 
     data_man.add_object(new_comment)
@@ -464,3 +527,25 @@ def view_listing_map(request: Request):
             "listings": listings
         }
     )
+
+
+
+def validate_tags(selected_tags: list[str]) -> tuple[bool, str]:
+    if len(selected_tags) > 4:
+        return False, "You can select up to 4 tags."
+
+    used_groups = set()
+
+    for tag in selected_tags:
+        found = False
+        for group, options in TAG_GROUPS.items():
+            if tag in options:
+                if group in used_groups:
+                    return False, f"Only one tag allowed from '{group}' category."
+                used_groups.add(group)
+                found = True
+                break
+        if not found:
+            return False, f"Invalid tag: {tag}"
+
+    return True, ""
