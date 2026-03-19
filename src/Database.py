@@ -1,4 +1,4 @@
-from dataclasses import dataclass, asdict, fields
+from dataclasses import dataclass, asdict, fields,field
 from typing import Any, TypeAlias, TypeVar, cast
 from firebase_admin import firestore, credentials # type: ignore
 from google.cloud.firestore_v1.client import Client as FirestoreClient # type: ignore
@@ -18,8 +18,7 @@ class Comments:
     UserID:str = ""
     Content: str = ""
     CreatedAt: str = ""
-    Tags: list[str] = None   # ADD THIS
-
+    Tags: list[str] = field(default_factory=list)
     def as_dict(self) -> dict:
         data = asdict(self)
         if data["Tags"] is None:
