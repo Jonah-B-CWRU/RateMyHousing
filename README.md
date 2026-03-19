@@ -11,3 +11,8 @@ To test use
 ```sh
 python -m unittest src/Tests.py
 ```
+
+To test webpage
+```sh
+python pytest
+```

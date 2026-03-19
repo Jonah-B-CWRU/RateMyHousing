@@ -10,3 +10,4 @@ pyvenv.cfg
 Secrets.json
 Secrets2.json
 cache
+.pytest_cache

@@ -62,7 +62,10 @@ class cache_manager:
         except FileNotFoundError as e:
             # no directory
             os.mkdir(self.cache_location)
-            pass
+        except EOFError as e:
+            print("Cache bad, removing it")
+            os.remove(self.cache_location+f) # type: ignore
+            
         
     def add_to_cache(self,data:Any, name:str, timeout_seconds: float = 600.0) -> cache_refrence:
         now = datetime.now()
