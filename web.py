@@ -380,6 +380,25 @@ def view_listings(request: Request):
         {"request": request, "listings": listing_data, "name": "All Listings"}
     )
 
+@app.get("/compare")
+def compare(request: Request):
+    data_man.connect_to_database()
+    listings: list[Listing] = data_man.get_all_from(Listing())
+    listing_data = []
+    for listing in listings:
+        ratings = data_man.get_ratings_from_listing(listing)
+        count = len(ratings)
+        avg = round(sum(r.Rating for r in ratings) / count, 2) if count > 0 else 0
+        listing_data.append({
+            "listing": listing.as_dict(),  # ← was just `listing` (not JSON serializable)
+            "avg_rating": avg,
+            "review_count": count
+        })
+    return templates.TemplateResponse("compare.html", {
+        "request": request,
+        "listings": listing_data
+    })
+
 @app.post("/add_review")
 def add_review(
     request: Request,
