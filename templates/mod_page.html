@@ -13,6 +13,9 @@
         .content {
             padding: 16px;
         }
+        .disabled_text {
+            color: #868686;
+        }
     </style>
 </head>
 <body>
@@ -26,10 +29,13 @@
                 <option>Listings</option>
                 <option>Ratings</option>
             </select>
-            Orphaned Data? <input type="checkbox" id="get_orphaned" disabled/>
+            <label stlye="display:inline" class="disabled_text" title="For Listings, this is the address" id="orph_label">
+                Orphaned Data?
+            </label>
+            <input type="checkbox" id="get_orphaned" disabled onchange="check_content_search_valid(document.getElementById('search_type'))"/>
             <input id="uid_search" placeholder="User ID" disabled />
             <input id="content_search" placeholder="Content" disabled>
-                <label class="display:inline;cursor:help;" title="For Listings, this is the address">(?)</label>
+                <label style="display:inline;cursor:help;" class="disabled_text" title="For Listings, this is the address" id="help_label">(?)</label>
             <button style="margin-left:25px" id="submit" disabled>Go!</button>
         </form>
     </div>
@@ -43,6 +49,8 @@
             const content_search = document.getElementById("content_search");
             const get_orphaned = document.getElementById("get_orphaned");
             const submit = document.getElementById("submit");
+            const help_label = document.getElementById("help_label");
+            const orph_label = document.getElementById("orph_label");
             if(dropdown.value === "") {
                 submit.disabled = true;
             } else {
@@ -52,10 +60,26 @@
                 if(dropdown.value === "Users") {
                     uid_search.disabled = false;
                     content_search.disabled = true;
+                    get_orphaned.disabled = true;
+                    orph_label.classList.add("disabled_text")
+                    help_label.classList.add("disabled_text")
+                } else if(dropdown.value === "Listings") {
+                    uid_search.disabled = false;
+                    content_search.disabled = false;
+                    get_orphaned.disabled = true;
+                    orph_label.classList.add("disabled_text")
+                    help_label.classList.remove("disabled_text")
                 } else {
                     uid_search.disabled = false;
                     content_search.disabled = false;
+                    get_orphaned.disabled = false;
+                    orph_label.classList.remove("disabled_text")
+                    help_label.classList.remove("disabled_text")
                 }
+            } else {
+                uid_search.disabled = true;
+                content_search.disabled = true;
+                help_label.classList.add("disabled_text")
             }
         }
     </script>
