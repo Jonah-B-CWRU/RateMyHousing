@@ -666,7 +666,7 @@ def post_mod_page_search(
                                 data_man.recursive_deletion(Comments(CommentId=c_cid))
                         case "Listings":
                             if l_lid:
-                                data_man.recursive_deletion(Comments(CommentId=l_lid))
+                                data_man.recursive_deletion(Listing(ListingID=l_lid))
                             
             response = None
             match search_type:
