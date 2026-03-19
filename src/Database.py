@@ -110,7 +110,7 @@ class User:
     Email: str = ""
     ismod:bool = False
     Activated:bool = False
-    flag:str = None
+    flag:str = ""
     def as_dict(self) -> dict:
         return asdict(self)
     @classmethod
