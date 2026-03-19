@@ -139,6 +139,7 @@
     </div>
     
     <script>
+        var map = null;
         function check_content_search_valid(dropdown) {
             const uid_search = document.getElementById("uid_search");
             const content_search = document.getElementById("content_search");
@@ -189,7 +190,7 @@
                     <label>Username:&nbsp;</label><input type="text" value="${username}" disabled/><br/>
                     <label>Email:&nbsp;</label>   <input type="text" name="u_eml" value="${email}"/><br/>
                     <label>Flag:&nbsp;</label>    <input type="text" name="u_flg" value="${flag}"/><br/>
-                    <label>Delete?&nbsp;</label>  <input type="checkbox" name="DELTE"/><br/>
+                    <label>Delete?&nbsp;</label>  <input type="checkbox" name="DELETE"/><br/>
                     <input type="submit"/>
                 </form>
             `
@@ -199,11 +200,12 @@
                 <form action="/mod_page" method="POST">
                     <input type="hidden" id="ISPUT" name="ISPUT" value="True">
                     <input type="hidden" id="search_type" name="search_type" value="Comments">
+                    <input type="hidden" name="c_cid" value="${commentid}"/>
                     <label>Comment ID:&nbsp;</label><input type="text" id="c_cid" value="${commentid}" disabled/><br/>
                     <label>Listing ID:&nbsp;</label><input type="text" id="c_lid" value="${listingid}" disabled/><br/>
                     <label>User ID:&nbsp;</label>   <input type="text" id="c_uid" value="${userid}" disabled/><br/>
                     <label>Content:&nbsp;</label> <textarea rows="5" cols="40" id="c_cnt" disabled>${content}</textarea><br/>
-                    <label>Delete?&nbsp;</label>  <input type="checkbox" id="DELTE"/><br/>
+                    <label>Delete?&nbsp;</label>  <input type="checkbox" name="DELETE"/><br/>
                     <input id="submit" type="submit"/>
                 </form>
             `
@@ -218,19 +220,21 @@
                     <label>Landlord ID:&nbsp;</label><input type="text" id="l_lld" value="${llid}"/><br/>
                     <label>Address&nbsp;</label><textarea type="text" name="l_adr" rows="1" cols="60">${address}</textarea><br/>
                     <label>Description&nbsp;</label><textarea type="text" name="l_dsc" rows="1" cols="60">${description}</textarea><br/>
-                    <label>Lat:&nbsp;</label><input type="text" name="l_lat" value="${lat}"/>
-                    <label>Long:&nbsp;</label><input type="text" name="l_lon" value="${long}"/>
-                    <button type="button" onclick="">🗘</button><br/>
+                    <label>Lat:&nbsp;</label><input type="text" name="l_lat" id="l_lat" value="${lat}"/>
+                    <label>Long:&nbsp;</label><input type="text" name="l_lon" id="l_lon" value="${long}"/>
+                    <button type="button" onclick="preview_listing_map()">🗘</button><br/>
                     <div id="map" style="height:25em;width:45em;background:black;">hi</div><br/>
                     <label>Beds:&nbsp;</label><input type="text" name="l_bed" value="${beds}"/>
                     <label>Baths:&nbsp;</label><input type="text" name="l_bat" value="${baths}"/>
                     <label>Square Feet:&nbsp;</label><input type="text" name="l_sft" value="${area}"/><br/>
                     <label>Price:&nbsp;</label><input type="text" name="l_rnt" value="${price}"/><br/>
-                    <label>Delete?&nbsp;</label>  <input type="checkbox" name="DELTE"/><br/>
+                    <label>Delete?&nbsp;</label>  <input type="checkbox" name="DELETE"/><br/>
                     <input id="submit" type="submit"/>
                 </form>
             `
-            var map = L.map('map').setView([41.505, -81.605], 14);
+            if(lat == 0 && long == 0) {map = L.map('map').setView([41.505, -81.605], 14);}
+            else {map = L.map('map').setView([lat, long], 14);}
+            
             L.tileLayer(
                 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 {
@@ -238,18 +242,23 @@
                     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                 }
             ).addTo(map);
-            L.marker([lat, long]).addTo(map)
+            if(lat != 0 && long != 0) {L.marker([lat, long]).addTo(map)}
         }
         function preview_listing_map() {
-            var map = L.map('map').setView([41.505, -81.605], 14);
-            L.tileLayer(
-                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                {
-                    maxZoom: 19,
-                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                }
-            ).addTo(map);
-        }
+            const lat = document.getElementById("l_lat").value
+            const lon = document.getElementById("l_lon").value
+            if(lat != 0 && lon != 0) {
+                map.remove()
+                map = L.map('map').setView([lat, lon], 14);
+                L.tileLayer(
+                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    {
+                        maxZoom: 19,
+                        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    }
+                ).addTo(map);
+                L.marker([lat, lon]).addTo(map)}
+            }
         function generate_rating_form() {}
         
     </script>

@@ -530,6 +530,7 @@ def post_mod_page_search(
         user = data_man.get_user_with_username(username)
         if user.UserID.encode('utf-8').hex() == request.cookies.get("modkey"):
             if ISPUT:
+                print(DELETE)
                 if not DELETE:
                     match search_type:
                         case "Users":
@@ -547,6 +548,17 @@ def post_mod_page_search(
                                 Price=l_rnt,
                                 SquareFootage=l_sft
                             ))
+                else:
+                    match search_type:
+                        case "Users":
+                            if u_uid:
+                                data_man.recursive_deletion(User(UserID=u_uid))
+                        case "Comments":
+                            if c_cid:
+                                data_man.recursive_deletion(Comments(CommentId=c_cid))
+                        case "Listings":
+                            if l_lid:
+                                data_man.recursive_deletion(Comments(CommentId=l_lid))
                             
             response = None
             match search_type:
