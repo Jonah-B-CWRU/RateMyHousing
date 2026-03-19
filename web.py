@@ -438,7 +438,7 @@ def add_review(
     ref = cache_man.update_cache(data, ref)
     cache_man.all_refrences[f"listing_{listing_id}"] = ref
 
-    return RedirectResponse(url="/listings", status_code=302)
+    return RedirectResponse(url=f"/listing/{listing_id}", status_code=303)
 
 
 @app.post("/add_comment")
@@ -506,7 +506,7 @@ def add_comment(
     ref = cache_man.update_cache(data, ref)
     cache_man.all_refrences[f"listing_{listing_id}"] = ref
 
-    return RedirectResponse(url="/listings", status_code=302)
+    return RedirectResponse(url=f"/listing/{listing_id}", status_code=303)
 
 @app.get("/listing/{listingid}")
 def view_one_listing(request: Request, listingid: str):
