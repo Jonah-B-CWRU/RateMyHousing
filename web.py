@@ -500,15 +500,24 @@ def post_mod_page_search(
         user = data_man.get_user_with_username(request.cookies.get("username"))
         if user.UserID.encode('utf-8').hex() == request.cookies.get("modkey"):
             
+            response = None
+            
             match search_type:
                 case "Users":
-                    pass
+                    if uid_search == "":
+                        response = data_man.get_all_from(User())
+                    else:
+                        response = data_man.get_user_with_username(uid_search)
                 case "Comments":
                     pass
                 case "Listings":
                     pass
                 case "Ratings":
-                    pass
+                    if uid_search == "":
+                        response = data_man.get_all_from(Rating())
+                    else:
+                        response = data_man.get_ratings_from_user(data_man.get_object_by_id(uid_search, User()))
+                        print(data_man.get_object_by_id(uid_search, User()))
                 case _:
                     return templates.TemplateResponse(
                     "mod_page.html",
@@ -522,6 +531,8 @@ def post_mod_page_search(
                 "mod_page.html",
                 {
                     "request": request,
+                    "content_type": search_type,
+                    "content": response
                 }
             )
     return RedirectResponse(url="/dashboard")
