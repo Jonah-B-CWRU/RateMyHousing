@@ -371,6 +371,12 @@ def add_comment(
     data_man.connect_to_database()
     user = data_man.get_user_with_username(username)
 
+    if not user:
+        return templates.TemplateResponse(
+            "redirect.html",
+            {"request": request, "message": "You must log in to leave a comment.", "target_url": "/login"}
+        )
+
     now_utc = datetime.now(timezone.utc).isoformat()  # store timestamp in UTC
 
     new_comment = Comments(
