@@ -21,7 +21,7 @@
 <body>
     <div class="navbar">
         <b>Mod Tools</b>
-        <form>
+        <form action="/mod_page" method="post">
             Search: <select id="search_type" onchange="check_content_search_valid(this)" style="margin-right:15px">
                 <option></option>
                 <option>Users</option>
@@ -36,7 +36,7 @@
             <input id="uid_search" placeholder="User ID" disabled />
             <input id="content_search" placeholder="Content" disabled>
                 <label style="display:inline;cursor:help;" class="disabled_text" title="For Listings, this is the address" id="help_label">(?)</label>
-            <button style="margin-left:25px" id="submit" disabled>Go!</button>
+            <button style="margin-left:25px" id="submit" type="submit" disabled>Go!</button>
         </form>
     </div>
     <div class="content">
