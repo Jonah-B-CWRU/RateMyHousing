@@ -6,12 +6,13 @@
             top: 0;
             width: 100%;
             overflow: auto;
-            position: sticky;
+            position: fixed;
             border-bottom: 3px solid black;
             padding-bottom: 8px;
             background: white;
         }
         .content {
+            margin-top: 3em;
             padding: 16px;
         }
         .disabled_text {
@@ -28,6 +29,13 @@
         }
         .warning {
             text-decoration: underline solid rgb(255, 115, 0);
+        }
+        .row {
+            display: flex;
+        }
+        .column {
+            flex: 50%;
+            padding: 4px;
         }
     </style>
 </head>
@@ -53,45 +61,51 @@
         </form>
     </div>
     <div class="content">
-        {% if content %}
-        {% for record in content %}
-            {% if content_type == "Users" %}
-                <div class="infobox">
-                    <div class="infoitem"><b>Username:&nbsp;</b>{{record.Username}}</div>
-                    <div class="infoitem"><b>Email:&nbsp;</b>{{record.Email}}</div>
-                    <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
-                    <div class="infoitem"><b>Moderator?&nbsp;</b>{{record.ismod}}</div>
-                    {% if record.flag %} <div class="infoitem"><b>Flag&nbsp;</b><div class="warning">{{record.Flag}}</div></div> {% endif %}
-                </div>
-            {% endif %}
-            {% if content_type == "Comments" %}
-                <div class="infobox">
-                    <div class="infoitem"><b>Username:&nbsp;</b>{{record.Username}}</div>
-                    <div class="infoitem"><b>Email:&nbsp;</b>{{record.Email}}</div>
-                    <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
-                    <div class="infoitem"><b>Moderator?&nbsp;</b>{{record.ismod}}</div>
-                </div>
-            {% endif %}
-            {% if content_type == "Listings" %}
-                <div class="infobox">
-                    <div class="infoitem"><b>Listing ID:&nbsp;</b>{{record.ListingID}}</div>
-                    <div class="infoitem"><b>Address:&nbsp;</b>{{record.Address}}</div>
-                    <div class="infoitem"><b>Beds/Baths:&nbsp;</b>{{record.UserID}}</div>
-                    <div class="infoitem"><b>Moderator?&nbsp;</b>{{record.ismod}}</div>
-                </div>
-            {% endif %}
-            {% if content_type == "Ratings" %}
-                <div class="infobox">
-                    <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
-                    <div class="infoitem"><b>ListingID:&nbsp;</b>{{record.ListingID}}</div>
-                    <div class="infoitem"><b>Rating:&nbsp;</b>{{record.Rating}}</div>
-                </div>
-            {% endif %}
-        {% endfor %}
-        {% else %}
-        {% if content_type %} No matching records found. {% endif %} Input a search to view records
-        {% endif %}
-        
+        <div class="row">
+            <div class="column">
+                {% if content %}
+                {% for record in content %}
+                    {% if content_type == "Users" %}
+                        <div class="infobox">
+                            <div class="infoitem"><b>Username:&nbsp;</b>{{record.Username}}</div>
+                            <div class="infoitem"><b>Email:&nbsp;</b>{{record.Email}}</div>
+                            <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
+                            <div class="infoitem"><b>Moderator?&nbsp;</b>{{record.ismod}}</div>
+                            {% if record.flag %} <div class="infoitem"><b>Flag&nbsp;</b><div class="warning">{{record.Flag}}</div></div> {% endif %}
+                        </div>
+                    {% endif %}
+                    {% if content_type == "Comments" %}
+                        <div class="infobox">
+                            <div class="infoitem"><b>Username:&nbsp;</b>{{record.Username}}</div>
+                            <div class="infoitem"><b>Email:&nbsp;</b>{{record.Email}}</div>
+                            <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
+                            <div class="infoitem"><b>Moderator?&nbsp;</b>{{record.ismod}}</div>
+                        </div>
+                    {% endif %}
+                    {% if content_type == "Listings" %}
+                        <div class="infobox">
+                            <div class="infoitem"><b>Listing ID:&nbsp;</b>{{record.ListingID}}</div>
+                            <div class="infoitem"><b>Address:&nbsp;</b>{{record.Address}}</div>
+                            <div class="infoitem"><b>Beds/Baths:&nbsp;</b>{{record.UserID}}</div>
+                            <div class="infoitem"><b>Moderator?&nbsp;</b>{{record.ismod}}</div>
+                        </div>
+                    {% endif %}
+                    {% if content_type == "Ratings" %}
+                        <div class="infobox">
+                            <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
+                            <div class="infoitem"><b>ListingID:&nbsp;</b>{{record.ListingID}}</div>
+                            <div class="infoitem"><b>Rating:&nbsp;</b>{{record.Rating}}</div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                {% else %}
+                {% if content_type %} No matching records found. {% endif %} Input a search to view records
+                {% endif %}
+            </div>
+            <div class="column">
+                haii
+            </div>
+        </div>
     </div>
     
     <script>
