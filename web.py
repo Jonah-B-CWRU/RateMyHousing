@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Form, Request # type: ignore
-from fastapi.responses import RedirectResponse # type: ignore
+from fastapi.responses import RedirectResponse,FileResponse # type: ignore
 from fastapi.staticfiles import StaticFiles # type: ignore
 from fastapi.templating import Jinja2Templates # type: ignore
 from pathlib import Path
@@ -24,6 +24,11 @@ cache_man = cache_manager()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+@app.get('/favicon.ico', include_in_schema=False)
+async def favicon():
+    print("haii")
+    return FileResponse("output.ico")
 
 def add_user(username: str, password: str) -> tuple[bool, str]:
     """
