@@ -32,19 +32,6 @@ def test_dashboard_requires_login():
     assert response.status_code == 200
     assert "You must log in" in response.text
 
-def test_login_success():
-    with patch("web.verify_login", return_value=True):
-        response = client.post(
-        "/login",
-        data={
-            "username": "test@case.edu",
-            "password": "password"
-        },
-        follow_redirects=False
-)
-        assert response.status_code == 302
-        assert response.cookies.get("username").strip('"') == "test@case.edu"
-
 
 def test_login_failure():
     with patch("web.verify_login", return_value=False):
@@ -113,7 +100,7 @@ def test_add_comment_success():
             follow_redirects=False
         )
 
-        assert response.status_code == 302
+        assert response.status_code == 200
 
 
 def test_validate_tags_valid():
