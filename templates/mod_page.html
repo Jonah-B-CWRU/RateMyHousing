@@ -1,7 +1,63 @@
 <!DOCTYPE html>
 <head>
     <title>Mod Tools</title>
+    <style>
+        .navbar {
+            top: 0;
+            width: 100%;
+            overflow: auto;
+            position: sticky;
+            border-bottom: 1px solid black;
+            padding-bottom: 8px;
+        }
+        .content {
+            padding: 16px;
+        }
+    </style>
 </head>
 <body>
-    <h2>Moderator Tools</h2>
+    <div class="navbar">
+        <b>Mod Tools</b>
+        <form>
+            Search: <select id="search_type" onchange="check_content_search_valid(this)" style="margin-right:15px">
+                <option></option>
+                <option>Users</option>
+                <option>Comments</option>
+                <option>Listings</option>
+                <option>Ratings</option>
+            </select>
+            Orphaned Data? <input type="checkbox" id="get_orphaned" disabled/>
+            <input id="uid_search" placeholder="User ID" disabled />
+            <input id="content_search" placeholder="Content" disabled>
+                <label class="display:inline;cursor:help;" title="For Listings, this is the address">(?)</label>
+            <button style="margin-left:25px" id="submit" disabled>Go!</button>
+        </form>
+    </div>
+    <div class="content">
+        hello, world!
+    </div>
+    
+    <script>
+        function check_content_search_valid(dropdown) {
+            const uid_search = document.getElementById("uid_search");
+            const content_search = document.getElementById("content_search");
+            const get_orphaned = document.getElementById("get_orphaned");
+            const submit = document.getElementById("submit");
+            if(dropdown.value === "") {
+                submit.disabled = true;
+            } else {
+                submit.disabled = false;
+            }
+            if(!get_orphaned.checked){
+                if(dropdown.value === "Users") {
+                    uid_search.disabled = false;
+                    content_search.disabled = true;
+                } else {
+                    uid_search.disabled = false;
+                    content_search.disabled = false;
+                }
+            }
+        }
+    </script>
+    
 </body>
