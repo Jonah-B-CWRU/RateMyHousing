@@ -738,6 +738,14 @@ class database_manager:
                     pass
         return orphens
 
+    def has_missing_data(self, object:dict, data_type:DataObject)-> tuple[bool, list]:
+        missing_keys = []
+        result = False
+        for field in fields(data_type):
+            if field not in object:
+                result = True
+                missing_keys.append(field)
+        return result, missing_keys
     
 
 
