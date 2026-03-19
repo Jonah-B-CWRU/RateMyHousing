@@ -507,21 +507,47 @@ def post_mod_page_search(
     u_uid: str = Form(None),
     u_usn: str = Form(None),
     u_eml: str = Form(None),
-    u_flg: str = Form(None)
+    u_flg: str = Form(None),
+    c_cid: str = Form(None),
+    l_lid: str = Form(None),
+    l_lld: str = Form(None),
+    l_adr: str = Form(None),
+    l_dsc: str = Form(None),
+    l_lat: float = Form(None),
+    l_lon: float = Form(None),
+    l_bed: int = Form(None),
+    l_bat: int = Form(None),
+    l_sft: int = Form(None),
+    l_rnt: float = Form(None),
+
 ):
     # to be replaced after merge
     username = request.cookies.get("username")
     if not username:
-        return templates.TemplateResponse(
-            "redirect.html",
-            {"request": request, "message": "You must log in to leave a comment.", "target_url": "/login"}
-        )
+        return RedirectResponse(url="/dashboard")
     if request.cookies.get("modkey") != None:
         data_man.connect_to_database()
         user = data_man.get_user_with_username(username)
         if user.UserID.encode('utf-8').hex() == request.cookies.get("modkey"):
             if ISPUT:
-                pass
+                if not DELETE:
+                    match search_type:
+                        case "Users":
+                            data_man.update_object(User(UserID=u_uid,Username=u_usn,Email=u_eml,flag=u_flg))
+                        case "Listings":
+                            data_man.update_object(Listing(
+                                ListingID=l_lid,
+                                LLID=l_lld,
+                                Address=l_adr,
+                                Description=l_dsc,
+                                CoordinateLat=l_lat,
+                                CoordinateLong=l_lon,
+                                Baths=l_bat,
+                                Beds=l_bed,
+                                Price=l_rnt,
+                                SquareFootage=l_sft
+                            ))
+                            
             response = None
             match search_type:
                 case "Users":

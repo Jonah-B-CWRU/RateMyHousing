@@ -20,12 +20,12 @@
         }
         .infobox {
             border-bottom: 1px solid gray;
-            height: 3em;
+            height: 4em;
             display: flex;
             align-items: center;
-            overflow-y: hidden;
             overflow-x: scroll;
             transform: translateX(-1em);
+            width: 100%;
         }
         .infoitem {
             margin-right: 1em;
@@ -51,6 +51,12 @@
             text-decoration: underline dotted skyblue;
         }
     </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
 </head>
 <body>
     <div class="navbar">
@@ -86,7 +92,7 @@
                             <div class="infoitem"><b>Email:&nbsp;</b>{{record.Email}}</div>
                             <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
                             <div class="infoitem"><b>Moderator?&nbsp;</b>{{record.ismod}}</div>
-                            {% if record.flag %} <div class="infoitem"><b>Flag&nbsp;</b><div class="warning">{{record.Flag}}</div></div> {% endif %}
+                            {% if record.flag %} <div class="infoitem"><b>Flag&nbsp;</b><div class="warning">{{record.flag}}</div></div> {% endif %}
                         </div>
                         {% endif %}
                         {% if content_type == "Comments" %}
@@ -103,11 +109,14 @@
                         {% endif %}
                         {% if content_type == "Listings" %}
                         <div class="infobox">
-                            <button type="button" onclick="">✎</button>
+                            <button
+                                type="button"
+                                onclick="generate_listing_form('{{record.ListingID}}','{{record.LLID}}','{{record.Address}}','{{record.Description}}','{{record.CoordinateLat}}','{{record.CoordinateLong}}','{{record.Beds}}','{{record.Baths}}','{{record.SquareFootage}}','{{record.Price}}')"
+                            > ✎ </button>
                             <div class="infoitem"><b>Listing ID:&nbsp;</b>{{record.ListingID}}</div>
+                            <div class="infoitem"><b>Landlord:&nbsp;</b>{{record.LLID}}</div>
                             <div class="infoitem"><b>Address:&nbsp;</b>{{record.Address}}</div>
-                            <div class="infoitem"><b>Beds/Baths:&nbsp;</b>{{record.UserID}}</div>
-                            <div class="infoitem"><b>Moderator?&nbsp;</b>{{record.ismod}}</div>
+                            <!-- <div class="infoitem"><b>Beds/Baths:&nbsp;</b>{{record.UserID}}</div> -->
                         </div>
                     {% endif %}
                     {% if content_type == "Ratings" %}
@@ -174,11 +183,13 @@
                 <form action="/mod_page" method="POST">
                     <input type="hidden" id="ISPUT" name="ISPUT" value="True">
                     <input type="hidden" id="search_type" name="search_type" value="Users">
-                    <label>User ID:&nbsp;</label> <input type="text" id="u_uid" value="${userid}" disabled/><br/>
-                    <label>Username:&nbsp;</label><input type="text" id="u_usn" value="${username}" disabled/><br/>
-                    <label>Email:&nbsp;</label>   <input type="text" id="u_eml" value="${email}"/><br/>
-                    <label>Flag:&nbsp;</label>    <input type="text" id="u_flg" value="${flag}"/><br/>
-                    <label>Delete?&nbsp;</label>  <input type="checkbox" id="DELTE"/><br/>
+                    <input type="hidden" name="u_uid" value="${userid}"/>
+                    <input type="hidden" name="u_usn" value="${username}"/>
+                    <label>User ID:&nbsp;</label> <input type="text" value="${userid}" disabled/><br/>
+                    <label>Username:&nbsp;</label><input type="text" value="${username}" disabled/><br/>
+                    <label>Email:&nbsp;</label>   <input type="text" name="u_eml" value="${email}"/><br/>
+                    <label>Flag:&nbsp;</label>    <input type="text" name="u_flg" value="${flag}"/><br/>
+                    <label>Delete?&nbsp;</label>  <input type="checkbox" name="DELTE"/><br/>
                     <input type="submit"/>
                 </form>
             `
@@ -197,7 +208,48 @@
                 </form>
             `
         }
-        function generate_listing_form() {}
+        function generate_listing_form(listingid,llid,address,description,lat,long,beds,baths,area,price) {
+            document.getElementById("modify_record").innerHTML = /*html*/`
+                <form action="/mod_page" method="POST">
+                    <input type="hidden" id="ISPUT" name="ISPUT" value="True">
+                    <input type="hidden" id="search_type" name="search_type" value="Listings">
+                    <input type="hidden" name="l_lid" value="${listingid}"/>
+                    <label>Listing ID:&nbsp;</label><input type="text" id="l_lid" value="${listingid}" disabled/><br/>
+                    <label>Landlord ID:&nbsp;</label><input type="text" id="l_lld" value="${llid}"/><br/>
+                    <label>Address&nbsp;</label><textarea type="text" name="l_adr" rows="1" cols="60">${address}</textarea><br/>
+                    <label>Description&nbsp;</label><textarea type="text" name="l_dsc" rows="1" cols="60">${description}</textarea><br/>
+                    <label>Lat:&nbsp;</label><input type="text" name="l_lat" value="${lat}"/>
+                    <label>Long:&nbsp;</label><input type="text" name="l_lon" value="${long}"/>
+                    <button type="button" onclick="">🗘</button><br/>
+                    <div id="map" style="height:25em;width:45em;background:black;">hi</div><br/>
+                    <label>Beds:&nbsp;</label><input type="text" name="l_bed" value="${beds}"/>
+                    <label>Baths:&nbsp;</label><input type="text" name="l_bat" value="${baths}"/>
+                    <label>Square Feet:&nbsp;</label><input type="text" name="l_sft" value="${area}"/><br/>
+                    <label>Price:&nbsp;</label><input type="text" name="l_rnt" value="${price}"/><br/>
+                    <label>Delete?&nbsp;</label>  <input type="checkbox" name="DELTE"/><br/>
+                    <input id="submit" type="submit"/>
+                </form>
+            `
+            var map = L.map('map').setView([41.505, -81.605], 14);
+            L.tileLayer(
+                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                }
+            ).addTo(map);
+            L.marker([lat, long]).addTo(map)
+        }
+        function preview_listing_map() {
+            var map = L.map('map').setView([41.505, -81.605], 14);
+            L.tileLayer(
+                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                }
+            ).addTo(map);
+        }
         function generate_rating_form() {}
         
     </script>
