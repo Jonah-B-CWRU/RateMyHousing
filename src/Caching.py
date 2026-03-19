@@ -50,7 +50,6 @@ class cache_manager:
     Manages a physical data cache to reduce/limit database calls and increase performance
     """
     cache_location:str = "src/cache/"
-    data_timeout_seconds:float = 600.0
     all_refrences:dict[str,cache_refrence] = {}
 
     def __init__(self):
@@ -63,11 +62,14 @@ class cache_manager:
         except FileNotFoundError as e:
             # no directory
             os.mkdir(self.cache_location)
-            pass
+        except EOFError as e:
+            print("Cache bad, removing it")
+            os.remove(self.cache_location+f) # type: ignore
+            
         
-    def add_to_cache(self,data:Any, name:str) -> cache_refrence:
+    def add_to_cache(self,data:Any, name:str, timeout_seconds: float = 600.0) -> cache_refrence:
         now = datetime.now()
-        timeout = now + timedelta(0,self.data_timeout_seconds)
+        timeout = now + timedelta(0,timeout_seconds)
         location = self.cache_location+name
         # check for exsisting file
         try:
@@ -107,9 +109,9 @@ class cache_manager:
         raise IOError("Cache cache does not exsist")
     
 
-    def update_cache(self,new_data:Any, refrence:cache_refrence) -> cache_refrence:
+    def update_cache(self,new_data:Any, refrence:cache_refrence, timeout_seconds: float = 600.0) -> cache_refrence:
         now = datetime.now()
-        new_timeout = now + timedelta(0,self.data_timeout_seconds)
+        new_timeout = now + timedelta(0,timeout_seconds)
         # simply trust that the old cache is real... still
         old_cache = self.get_cache(refrence.cache_name)
         old_cache.cache_max_age = new_timeout

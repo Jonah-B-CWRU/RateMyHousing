@@ -1,12 +1,12 @@
-from dataclasses import dataclass, asdict, fields
+from dataclasses import dataclass, asdict, fields,field
 from typing import Any, TypeAlias, TypeVar, cast
-from firebase_admin import firestore, credentials
-from google.cloud.firestore_v1.client import Client as FirestoreClient
-from google.cloud.firestore_v1.document import DocumentReference
-from google.cloud.firestore_v1.query import Query
-from google.protobuf import timestamp_pb2
+from firebase_admin import firestore, credentials # type: ignore
+from google.cloud.firestore_v1.client import Client as FirestoreClient # type: ignore
+from google.cloud.firestore_v1.document import DocumentReference # type: ignore
+from google.cloud.firestore_v1.query import Query # type: ignore
+from google.protobuf import timestamp_pb2 # type: ignore
 from email.mime.text import MIMEText
-import firebase_admin
+import firebase_admin # type: ignore
 import json  
 import smtplib
 
@@ -18,8 +18,12 @@ class Comments:
     UserID:str = ""
     Content: str = ""
     CreatedAt: str = ""
+    Tags: list[str] = field(default_factory=list)
     def as_dict(self) -> dict:
-        return asdict(self)
+        data = asdict(self)
+        if data["Tags"] is None:
+            data["Tags"] = []
+        return data
     @classmethod
     def from_dict(cls, dict: dict[str,Any]) -> "Comments":
         sanitized = {}
@@ -75,8 +79,13 @@ class Rating:
     UserID: str = ""
     ListingID: str = ""
     Rating: int = 0
+    #Tags: list[str] = None
+
     def as_dict(self) -> dict:
-        return asdict(self)
+        data = asdict(self)
+        #if data["Tags"] is None:
+        #    data["Tags"] = []
+        return data
     @classmethod
     def from_dict(cls,dict: dict[str,Any]) -> "Rating":
         sanitized = {}

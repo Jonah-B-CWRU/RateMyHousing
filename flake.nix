@@ -23,6 +23,7 @@
         firebase-admin
         google-cloud-firestore
         protobuf
+        pytest
       ];
 
       # Create a custom Python environment
