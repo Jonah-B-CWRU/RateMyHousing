@@ -330,7 +330,7 @@ def add_review(
     # update average rating
     data_man.update_average_rating(Listing(listing_id))
 
-    return RedirectResponse(url="/listings", status_code=302)
+    return RedirectResponse(url=f"/listing/{listing_id}", status_code=302)
 
 @app.post("/add_comment")
 def add_comment(
@@ -384,7 +384,7 @@ def add_comment(
     )
 
     data_man.add_object(new_comment)
-    return RedirectResponse(url="/listings", status_code=302)
+    return RedirectResponse(url=f"/listing/{listing_id}", status_code=302)
 
 @app.get("/listing/{listingid}")
 def view_one_listing(request: Request, listingid: str):
