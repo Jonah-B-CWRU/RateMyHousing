@@ -21,8 +21,8 @@
 <body>
     <div class="navbar">
         <b>Mod Tools</b>
-        <form action="/mod_page" method="post">
-            Search: <select id="search_type" onchange="check_content_search_valid(this)" style="margin-right:15px">
+        <form action="/mod_page" method="POST">
+            Search: <select id="search_type" onchange="check_content_search_valid(this)" style="margin-right:15px" name="search_type">
                 <option></option>
                 <option>Users</option>
                 <option>Comments</option>
@@ -32,15 +32,20 @@
             <label stlye="display:inline" class="disabled_text" title="For Listings, this is the address" id="orph_label">
                 Orphaned Data?
             </label>
-            <input type="checkbox" id="get_orphaned" disabled onchange="check_content_search_valid(document.getElementById('search_type'))"/>
-            <input id="uid_search" placeholder="User ID" disabled />
-            <input id="content_search" placeholder="Content" disabled>
+            <input type="checkbox" id="get_orphaned" disabled onchange="check_content_search_valid(document.getElementById('search_type'))" name="get_orphaned"/>
+            <input id="uid_search" placeholder="User ID" name="uid_search" disabled/>
+            <input id="content_search" placeholder="Content" name="content_search" disabled/>
                 <label style="display:inline;cursor:help;" class="disabled_text" title="For Listings, this is the address" id="help_label">(?)</label>
-            <button style="margin-left:25px" id="submit" type="submit" disabled>Go!</button>
+            <input style="margin-left:25px" id="submit" type="submit" disabled/>
         </form>
     </div>
     <div class="content">
-        hello, world!
+        {% if content %}
+        content
+        {% else %}
+        Input a search to view records
+        {% endif %}
+        
     </div>
     
     <script>

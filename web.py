@@ -27,7 +27,6 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get('/favicon.ico', include_in_schema=False)
 async def favicon():
-    print("haii")
     return FileResponse("output.ico")
 
 def add_user(username: str, password: str) -> tuple[bool, str]:
@@ -485,6 +484,44 @@ def view_mod_page(request: Request):
                 "mod_page.html",
                 {
                     "request": request
+                }
+            )
+    return RedirectResponse(url="/dashboard")
+@app.post("/mod_page")
+def post_mod_page_search(
+    request: Request,
+    search_type:    str = Form(...),
+    get_orphaned:  bool = Form(False),
+    uid_search:     str = Form(""),
+    content_search: str = Form("")
+):
+    if request.cookies.get("modkey") != None:
+        data_man.connect_to_database()
+        user = data_man.get_user_with_username(request.cookies.get("username"))
+        if user.UserID.encode('utf-8').hex() == request.cookies.get("modkey"):
+            
+            match search_type:
+                case "Users":
+                    pass
+                case "Comments":
+                    pass
+                case "Listings":
+                    pass
+                case "Ratings":
+                    pass
+                case _:
+                    return templates.TemplateResponse(
+                    "mod_page.html",
+                    {
+                        "request": request,
+                    }
+                )
+            # End switch statement
+            
+            return templates.TemplateResponse(
+                "mod_page.html",
+                {
+                    "request": request,
                 }
             )
     return RedirectResponse(url="/dashboard")
