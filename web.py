@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Form, Request # type: ignore
-from fastapi.responses import RedirectResponse # type: ignore
+from fastapi.responses import RedirectResponse,FileResponse # type: ignore
 from fastapi.staticfiles import StaticFiles # type: ignore
 from fastapi.templating import Jinja2Templates # type: ignore
 from pathlib import Path
@@ -35,6 +35,10 @@ known_users:dict[str,User] = get_known_users()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+@app.get('/favicon.ico', include_in_schema=False)
+async def favicon():
+    return FileResponse("output.ico")
 
 def add_user(username: str, password: str) -> tuple[bool, str]:
     """
@@ -222,6 +226,7 @@ def login_post(request: Request, username: str = Form(...), password: str = Form
     verifies login by checking for valid user and valid password \n
     **not cached**
     """
+    data_man.connect_to_database()
     if verify_login(username, password):
         # real user, make seshid and log as known
         seshid = secrets.token_hex(16) # massive sesh id for security
@@ -230,19 +235,22 @@ def login_post(request: Request, username: str = Form(...), password: str = Form
         response = RedirectResponse(url="/dashboard", status_code=302)
         response.set_cookie(key="session_id", value=seshid, max_age=86400, httponly=True, samesite="lax") # max age 1 day
         update_known_users(known_users,cache_man)
+        usr = data_man.get_user_with_username(username)
+            if usr.ismod:
+                response.set_cookie(key="modkey", value=usr.UserID.encode('utf-8').hex())
         return response
     return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid username or password"})
 
 @app.get("/dashboard")
 def dashboard(request: Request):
     seshid = request.cookies.get("session_id")
+    hasmodkey = request.cookies.get("modkey") != None
     if seshid not in known_users:
         return templates.TemplateResponse(
             "redirect.html",
             {"request": request, "message": "You must log in to access the dashboard.", "target_url": "/"}
         )
-    username = known_users[seshid].Username
-    return templates.TemplateResponse("dashboard.html", {"request": request, "name": username})
+    return templates.TemplateResponse("dashboard.html", {"request": request, "name": username, "hasmodkey": hasmodkey})
 
 @app.get("/logout")
 def logout(request: Request):
@@ -573,6 +581,140 @@ def view_listing_map(request: Request):
         }
     )
 
+@app.get("/mod_page")
+def view_mod_page(request: Request):
+    # to be replaced after merge
+    username = request.cookies.get("username")
+    if not username:
+        return templates.TemplateResponse(
+            "redirect.html",
+            {"request": request, "message": "You must log in.", "target_url": "/login"}
+        )
+    if request.cookies.get("modkey") != None:
+        data_man.connect_to_database()
+        user = data_man.get_user_with_username(username)
+        if user.UserID.encode('utf-8').hex() == request.cookies.get("modkey"):
+            return templates.TemplateResponse(
+                "mod_page.html",
+                {
+                    "request": request
+                }
+            )
+        print(f"invalid mod key, correct key is {user.UserID.encode('utf-8').hex()}")
+    return RedirectResponse(url="/dashboard")
+@app.post("/mod_page")
+def post_mod_page_search(
+    request: Request,
+    search_type:    str = Form(...),
+    get_orphaned:  bool = Form(False),
+    uid_search:     str = Form(""),
+    content_search: str = Form(""),
+    DELETE: bool = Form(False),
+    ISPUT: bool = Form(False),
+    u_uid: str = Form(None),
+    u_usn: str = Form(None),
+    u_eml: str = Form(None),
+    u_flg: str = Form(None),
+    c_cid: str = Form(None),
+    l_lid: str = Form(None),
+    l_lld: str = Form(None),
+    l_adr: str = Form(None),
+    l_dsc: str = Form(None),
+    l_lat: float = Form(None),
+    l_lon: float = Form(None),
+    l_bed: int = Form(None),
+    l_bat: int = Form(None),
+    l_sft: int = Form(None),
+    l_rnt: float = Form(None),
+
+):
+    # to be replaced after merge
+    username = request.cookies.get("username")
+    if not username:
+        return RedirectResponse(url="/dashboard")
+    if request.cookies.get("modkey") != None:
+        data_man.connect_to_database()
+        user = data_man.get_user_with_username(username)
+        if user.UserID.encode('utf-8').hex() == request.cookies.get("modkey"):
+            if ISPUT:
+                print(DELETE)
+                if not DELETE:
+                    match search_type:
+                        case "Users":
+                            data_man.update_object(User(UserID=u_uid,Username=u_usn,Email=u_eml,flag=u_flg))
+                        case "Listings":
+                            data_man.update_object(Listing(
+                                ListingID=l_lid,
+                                LLID=l_lld,
+                                Address=l_adr,
+                                Description=l_dsc,
+                                CoordinateLat=l_lat,
+                                CoordinateLong=l_lon,
+                                Baths=l_bat,
+                                Beds=l_bed,
+                                Price=l_rnt,
+                                SquareFootage=l_sft
+                            ))
+                else:
+                    match search_type:
+                        case "Users":
+                            if u_uid:
+                                data_man.recursive_deletion(User(UserID=u_uid))
+                        case "Comments":
+                            if c_cid:
+                                data_man.recursive_deletion(Comments(CommentId=c_cid))
+                        case "Listings":
+                            if l_lid:
+                                data_man.recursive_deletion(Comments(CommentId=l_lid))
+                            
+            response = None
+            match search_type:
+                case "Users":
+                    if uid_search == "":
+                        if not get_orphaned:
+                            response = data_man.get_all_from(User())
+                        else:
+                            response = data_man.find_orphend_data(User())
+                    else:
+                        response = data_man.get_user_with_username(uid_search)
+                case "Comments":
+                    if uid_search == "":
+                        if not get_orphaned:
+                            response = data_man.get_all_from(Comments())
+                        else:
+                            response = data_man.find_orphend_data(Comments())
+                    else:
+                        response = data_man.get_comments_from_user(User(UserID=uid_search))
+                case "Listings":
+                    response = data_man.get_all_from(Listing())
+                case "Ratings":
+                    if uid_search == "":
+                        if not get_orphaned:
+                            response = data_man.get_all_from(Rating())
+                        else:
+                            response = data_man.find_orphend_data(Rating())
+                    else:
+                        response = data_man.get_ratings_from_user(data_man.get_object_by_id(uid_search, User()))
+                        print(data_man.get_object_by_id(uid_search, User()))
+                case _:
+                    return templates.TemplateResponse(
+                    "mod_page.html",
+                    {
+                        "request": request,
+                    }
+                )
+            # End switch statement
+            
+            return templates.TemplateResponse(
+                "mod_page.html",
+                {
+                    "request": request,
+                    "content_type": search_type,
+                    "content": response
+                }
+            )
+    return RedirectResponse(url="/dashboard")
+  
 def validate_tags(selected_tags: list[str]) -> tuple[bool, str]:
     if len(selected_tags) > 4:
         return False, "You can select up to 4 tags."

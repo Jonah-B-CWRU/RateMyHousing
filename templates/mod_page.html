@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<head>
+    <title>Mod Tools</title>
+    <style>
+        .navbar {
+            top: 0;
+            width: 100%;
+            overflow: auto;
+            position: fixed;
+            border-bottom: 3px solid black;
+            padding-bottom: 8px;
+            background: white;
+        }
+        .content {
+            margin-top: 3em;
+            padding: 16px;
+        }
+        .disabled_text {
+            color: #868686;
+        }
+        .infobox {
+            border-bottom: 1px solid gray;
+            height: 4em;
+            display: flex;
+            align-items: center;
+            overflow-x: scroll;
+            transform: translateX(-1em);
+            width: 100%;
+        }
+        .infoitem {
+            margin-right: 1em;
+        }
+        .warning {
+            text-decoration: underline solid rgb(255, 115, 0);
+        }
+        .row {
+            display: flex;
+        }
+        .column {
+            flex: 50%;
+            padding: 4px;
+            max-width: 75%;
+        }
+        .commentcontent {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            max-width: 10em;
+        }
+        .commentcontent:hover {
+            text-decoration: underline dotted skyblue;
+        }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+</head>
+<body>
+    <div class="navbar">
+        <b>Mod Tools</b>
+        <form action="/mod_page" method="POST">
+            Search: <select id="search_type" onchange="check_content_search_valid(this)" style="margin-right:15px" name="search_type">
+                <option></option>
+                <option>Users</option>
+                <option>Comments</option>
+                <option>Listings</option>
+                <!-- <option>Ratings</option> -->
+            </select>
+            <label stlye="display:inline" class="disabled_text" title="For Listings, this is the address" id="orph_label">
+                Orphaned Data?
+            </label>
+            <input type="checkbox" id="get_orphaned" disabled onchange="check_content_search_valid(document.getElementById('search_type'))" name="get_orphaned"/>
+            <input id="uid_search" placeholder="User ID" name="uid_search" disabled/>
+            <!-- Unhide lines when content search implemented -->
+            <input id="content_search" placeholder="Content" name="content_search" style="display:none;" disabled/>
+                <label style="display:inline;cursor:help; display:none; " class="disabled_text" title="For Listings, this is the address&#010For Ratings, this is ListingID" id="help_label">(?)</label>
+            <input style="margin-left:25px" id="submit" type="submit" disabled/>
+        </form>
+    </div>
+    <div class="content">
+        <div class="row">
+            <div class="column">
+                {% if content %}
+                {% for record in content %}
+                    {% if content_type == "Users" %}
+                        <div class="infobox">
+                            <button type="button" onclick="generate_user_form('{{record.UserID}}','{{record.Username}}','{{record.Email}}','{{record.ismod}}','{{record.flag}}')">✎</button>
+                            <div class="infoitem"><b>Username:&nbsp;</b>{{record.Username}}</div>
+                            <div class="infoitem"><b>Email:&nbsp;</b>{{record.Email}}</div>
+                            <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
+                            <div class="infoitem"><b>Moderator?&nbsp;</b>{{record.ismod}}</div>
+                            {% if record.flag %} <div class="infoitem"><b>Flag&nbsp;</b><div class="warning">{{record.flag}}</div></div> {% endif %}
+                        </div>
+                        {% endif %}
+                        {% if content_type == "Comments" %}
+                        <div class="infobox" style="max-height: 10em;">
+                            <button type="button" onclick="generate_comment_form('{{record.CommentId}}', '{{record.ListingID}}', '{{record.UserID}}', '{{record.Content}}')">✎</button>
+                            <div class="infoitem"><b>Comment ID:&nbsp;</b>{{record.CommentId}}</div>
+                            <div class="infoitem"><b>Listing ID:&nbsp;</b>{{record.ListingID}}</div>
+                            <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
+                            <div class="infoitem"><b>Content:&nbsp;</b>
+                                <div class="commentcontent" title="{{record.Content}}"> {{record.Content}} </div>
+                            </div>
+                            <div class="infoitem"><b>Created At:&nbsp;</b>{{record.CreatedAt}}</div>
+                        </div>
+                        {% endif %}
+                        {% if content_type == "Listings" %}
+                        <div class="infobox">
+                            <button
+                                type="button"
+                                onclick="generate_listing_form('{{record.ListingID}}','{{record.LLID}}','{{record.Address}}','{{record.Description}}','{{record.CoordinateLat}}','{{record.CoordinateLong}}','{{record.Beds}}','{{record.Baths}}','{{record.SquareFootage}}','{{record.Price}}')"
+                            > ✎ </button>
+                            <div class="infoitem"><b>Listing ID:&nbsp;</b>{{record.ListingID}}</div>
+                            <div class="infoitem"><b>Landlord:&nbsp;</b>{{record.LLID}}</div>
+                            <div class="infoitem"><b>Address:&nbsp;</b>{{record.Address}}</div>
+                            <!-- <div class="infoitem"><b>Beds/Baths:&nbsp;</b>{{record.UserID}}</div> -->
+                        </div>
+                    {% endif %}
+                    {% if content_type == "Ratings" %}
+                    <div class="infobox">
+                            <button type="button" onclick="">✎</button>
+                            <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
+                            <div class="infoitem"><b>ListingID:&nbsp;</b>{{record.ListingID}}</div>
+                            <div class="infoitem"><b>Rating:&nbsp;</b>{{record.Rating}}</div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                {% else %}
+                {% if content_type %} No matching records found. {% endif %} Input a search to view records
+                {% endif %}
+            </div>
+            <div class="column" style="background-color: whitesmoke; height: 80vh; position: sticky; top:4em;">
+                <div id="modify_record" style="place-items: center;"><h2 style="text-align: center;">Select a record to view actions</h2></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        var map = null;
+        function check_content_search_valid(dropdown) {
+            const uid_search = document.getElementById("uid_search");
+            const content_search = document.getElementById("content_search");
+            const get_orphaned = document.getElementById("get_orphaned");
+            const submit = document.getElementById("submit");
+            const help_label = document.getElementById("help_label");
+            const orph_label = document.getElementById("orph_label");
+            if(dropdown.value === "") {
+                submit.disabled = true;
+            } else {
+                submit.disabled = false;
+            }
+            if(!get_orphaned.checked){
+                if(dropdown.value === "Users") {
+                    uid_search.disabled = false;
+                    content_search.disabled = true;
+                    get_orphaned.disabled = true;
+                    orph_label.classList.add("disabled_text")
+                    help_label.classList.add("disabled_text")
+                } else if(dropdown.value === "Listings") {
+                    uid_search.disabled = false;
+                    content_search.disabled = false;
+                    get_orphaned.disabled = true;
+                    orph_label.classList.add("disabled_text")
+                    help_label.classList.remove("disabled_text")
+                } else {
+                    uid_search.disabled = false;
+                    content_search.disabled = false;
+                    get_orphaned.disabled = false;
+                    orph_label.classList.remove("disabled_text")
+                    help_label.classList.remove("disabled_text")
+                }
+            } else {
+                uid_search.disabled = true;
+                content_search.disabled = true;
+                help_label.classList.add("disabled_text")
+            }
+        }
+        
+        function generate_user_form(userid, username, email, ismod, flag) {
+            document.getElementById("modify_record").innerHTML = /*html*/`
+                <form action="/mod_page" method="POST">
+                    <input type="hidden" id="ISPUT" name="ISPUT" value="True">
+                    <input type="hidden" id="search_type" name="search_type" value="Users">
+                    <input type="hidden" name="u_uid" value="${userid}"/>
+                    <input type="hidden" name="u_usn" value="${username}"/>
+                    <label>User ID:&nbsp;</label> <input type="text" value="${userid}" disabled/><br/>
+                    <label>Username:&nbsp;</label><input type="text" value="${username}" disabled/><br/>
+                    <label>Email:&nbsp;</label>   <input type="text" name="u_eml" value="${email}"/><br/>
+                    <label>Flag:&nbsp;</label>    <input type="text" name="u_flg" value="${flag}"/><br/>
+                    <label>Delete?&nbsp;</label>  <input type="checkbox" name="DELETE"/><br/>
+                    <input type="submit"/>
+                </form>
+            `
+        }
+        function generate_comment_form(commentid, listingid, userid, content) {
+            document.getElementById("modify_record").innerHTML = /*html*/`
+                <form action="/mod_page" method="POST">
+                    <input type="hidden" id="ISPUT" name="ISPUT" value="True">
+                    <input type="hidden" id="search_type" name="search_type" value="Comments">
+                    <input type="hidden" name="c_cid" value="${commentid}"/>
+                    <label>Comment ID:&nbsp;</label><input type="text" id="c_cid" value="${commentid}" disabled/><br/>
+                    <label>Listing ID:&nbsp;</label><input type="text" id="c_lid" value="${listingid}" disabled/><br/>
+                    <label>User ID:&nbsp;</label>   <input type="text" id="c_uid" value="${userid}" disabled/><br/>
+                    <label>Content:&nbsp;</label> <textarea rows="5" cols="40" id="c_cnt" disabled>${content}</textarea><br/>
+                    <label>Delete?&nbsp;</label>  <input type="checkbox" name="DELETE"/><br/>
+                    <input id="submit" type="submit"/>
+                </form>
+            `
+        }
+        function generate_listing_form(listingid,llid,address,description,lat,long,beds,baths,area,price) {
+            document.getElementById("modify_record").innerHTML = /*html*/`
+                <form action="/mod_page" method="POST">
+                    <input type="hidden" id="ISPUT" name="ISPUT" value="True">
+                    <input type="hidden" id="search_type" name="search_type" value="Listings">
+                    <input type="hidden" name="l_lid" value="${listingid}"/>
+                    <label>Listing ID:&nbsp;</label><input type="text" id="l_lid" value="${listingid}" disabled/><br/>
+                    <label>Landlord ID:&nbsp;</label><input type="text" id="l_lld" value="${llid}"/><br/>
+                    <label>Address&nbsp;</label><textarea type="text" name="l_adr" rows="1" cols="60">${address}</textarea><br/>
+                    <label>Description&nbsp;</label><textarea type="text" name="l_dsc" rows="1" cols="60">${description}</textarea><br/>
+                    <label>Lat:&nbsp;</label><input type="text" name="l_lat" id="l_lat" value="${lat}"/>
+                    <label>Long:&nbsp;</label><input type="text" name="l_lon" id="l_lon" value="${long}"/>
+                    <button type="button" onclick="preview_listing_map()">🗘</button><br/>
+                    <div id="map" style="height:25em;width:45em;background:black;">hi</div><br/>
+                    <label>Beds:&nbsp;</label><input type="text" name="l_bed" value="${beds}"/>
+                    <label>Baths:&nbsp;</label><input type="text" name="l_bat" value="${baths}"/>
+                    <label>Square Feet:&nbsp;</label><input type="text" name="l_sft" value="${area}"/><br/>
+                    <label>Price:&nbsp;</label><input type="text" name="l_rnt" value="${price}"/><br/>
+                    <label>Delete?&nbsp;</label>  <input type="checkbox" name="DELETE"/><br/>
+                    <input id="submit" type="submit"/>
+                </form>
+            `
+            if(lat == 0 && long == 0) {map = L.map('map').setView([41.505, -81.605], 14);}
+            else {map = L.map('map').setView([lat, long], 14);}
+            
+            L.tileLayer(
+                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                }
+            ).addTo(map);
+            if(lat != 0 && long != 0) {L.marker([lat, long]).addTo(map)}
+        }
+        function preview_listing_map() {
+            const lat = document.getElementById("l_lat").value
+            const lon = document.getElementById("l_lon").value
+            if(lat != 0 && lon != 0) {
+                map.remove()
+                map = L.map('map').setView([lat, lon], 14);
+                L.tileLayer(
+                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    {
+                        maxZoom: 19,
+                        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    }
+                ).addTo(map);
+                L.marker([lat, lon]).addTo(map)}
+            }
+        function generate_rating_form() {}
+        
+    </script>
+    
+</body>
