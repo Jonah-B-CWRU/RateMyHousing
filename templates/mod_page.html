@@ -26,6 +26,9 @@
         .infoitem {
             margin-right: 1em;
         }
+        .warning {
+            text-decoration: underline solid rgb(255, 115, 0);
+        }
     </style>
 </head>
 <body>
@@ -58,6 +61,7 @@
                     <div class="infoitem"><b>Email:&nbsp;</b>{{record.Email}}</div>
                     <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
                     <div class="infoitem"><b>Moderator?&nbsp;</b>{{record.ismod}}</div>
+                    {% if record.flag %} <div class="infoitem"><b>Flag&nbsp;</b><div class="warning">{{record.Flag}}</div></div> {% endif %}
                 </div>
             {% endif %}
             {% if content_type == "Comments" %}
@@ -70,15 +74,15 @@
             {% endif %}
             {% if content_type == "Listings" %}
                 <div class="infobox">
-                    <div class="infoitem"><b>Username:&nbsp;</b>{{record.Username}}</div>
-                    <div class="infoitem"><b>Email:&nbsp;</b>{{record.Email}}</div>
-                    <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
+                    <div class="infoitem"><b>Listing ID:&nbsp;</b>{{record.ListingID}}</div>
+                    <div class="infoitem"><b>Address:&nbsp;</b>{{record.Address}}</div>
+                    <div class="infoitem"><b>Beds/Baths:&nbsp;</b>{{record.UserID}}</div>
                     <div class="infoitem"><b>Moderator?&nbsp;</b>{{record.ismod}}</div>
                 </div>
             {% endif %}
             {% if content_type == "Ratings" %}
                 <div class="infobox">
-                    <div class="infoitem"><b>UserID:&nbsp;</b>{{record.UserID}}</div>
+                    <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
                     <div class="infoitem"><b>ListingID:&nbsp;</b>{{record.ListingID}}</div>
                     <div class="infoitem"><b>Rating:&nbsp;</b>{{record.Rating}}</div>
                 </div>
