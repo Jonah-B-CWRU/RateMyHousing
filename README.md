@@ -7,7 +7,7 @@ use the following command too start server
 uvicorn web:app --reload
 ```
 
-To test use
+To test backend use
 ```sh
 python -m unittest src/Tests.py
 ```

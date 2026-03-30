@@ -239,7 +239,11 @@ class database_manager:
                     return self._unwrap_query(query)
                     
                 case Landlord():
-                    query = collection.where("LLID", "==", Id_to_look_for)
+                    # unique case: users
+                    if collection_to_search == "Users":
+                        query = collection.where("ConnectedLL", "==", Id_to_look_for)
+                    else:
+                        query = collection.where("LLID", "==", Id_to_look_for)
                     return self._unwrap_query(query)
                     
                 case Comments():
@@ -378,6 +382,13 @@ class database_manager:
                         ratings = self.get_ratings_from_user(deleted_object)
                         for r in ratings:
                             self.recursive_deletion(r)
+                    except:
+                            pass
+                    
+                        # codes
+                    try:
+                        code = self.get_code_from_user(deleted_object)
+                        self.recursive_deletion(code)
                     except:
                             pass
                     return True
@@ -804,7 +815,7 @@ class database_manager:
         if self.connected:
             if user.ConnectedLL ==  "":
                 raise TypeError(f"User has no LLID")
-            Landlord_list = self._get_document_using_id("Lanloards", Landlord(),user.ConnectedLL)
+            Landlord_list = self._get_document_using_id("Landlords", Landlord(),user.ConnectedLL)
             if len(Landlord_list) == 1:
                 l = Landlord_list[0]
                 return Landlord.from_dict(l)
@@ -899,7 +910,7 @@ class database_manager:
     # listing -> Average rating
     def get_landlord_from_Listing(self, listing:Listing) -> Landlord:
         if self.connected:
-            Landlord_list = self._get_document_using_id("Lanloards", Landlord(),listing.LLID)
+            Landlord_list = self._get_document_using_id("Landlords", Landlord(),listing.LLID)
             if len(Landlord_list) == 1:
                 l = Landlord_list[0]
                 return Landlord.from_dict(l)
