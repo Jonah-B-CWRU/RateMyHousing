@@ -294,7 +294,7 @@ def create_listing_form(request: Request):
 @app.post("/create_listing")
 def create_listing(
     request: Request,
-    llid: str = Form(...),
+    #llid: str = Form(...),
     address: str = Form(...),
     beds: int = Form(...),
     baths: int = Form(...),
@@ -312,6 +312,8 @@ def create_listing(
             "redirect.html",
             {"request": request, "message": "You must log in to access the dashboard.", "target_url": "/"}
         )
+    user = known_users[seshid]
+    llid = user.UserID
     data_man.connect_to_database()
     listing_id = secrets.token_hex(8)
     created_at = datetime.now(timezone.utc).isoformat() + "Z"
@@ -543,6 +545,7 @@ def view_one_listing(request: Request, listingid: str):
             listing = data_man._get_document_using_id("Listing", Listing(), listingid)[0]
             listing_object = Listing.from_dict(listing)
             meta_listing, comments_with_users = make_specific_listing_data(listing_object)
+
         # pack into cached data
             data = {"meta_listing":meta_listing,"comments":comments_with_users}
             cache_man.add_to_cache(data,f"listing_{listingid}")
@@ -553,6 +556,15 @@ def view_one_listing(request: Request, listingid: str):
         # pack into cached data
         data = {"meta_listing":meta_listing,"comments":comments_with_users}
         cache_man.add_to_cache(data,f"listing_{listingid}")
+    
+    return templates.TemplateResponse(
+        "listing.html",
+            {
+                "request": request,
+                "listing": meta_listing,
+                "comments": comments_with_users
+            }
+    )
     
         
     return templates.TemplateResponse(
