@@ -33,7 +33,10 @@
 
         .listing-ids { display: flex; gap: 16px; font-size: 13px; color: #999; }
         .description-section { padding: 20px 32px; border-bottom: 2px solid #f0f0f0; color: #555; font-size: 15px; line-height: 1.6; }
-
+        
+        .distance-section { display: flex; padding: 20px 32px; border-bottom: 2px solid #f0f0f0; color: #555; font-size: 15px; line-height: 1.6; }
+        .distance-summary-box { width: 40%; background: linear-gradient(135deg, #f8f8ff 0%, #f0eeff 100%); border: 1px solid #ddd8ff; border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+        
         .rating-section { padding: 24px 32px; border-bottom: 2px solid #f0f0f0; }
         .rating-section h3 { margin: 0 0 16px 0; font-size: 17px; color: #333; }
         .rating-summary-box { background: linear-gradient(135deg, #f8f8ff 0%, #f0eeff 100%); border: 1px solid #ddd8ff; border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
@@ -61,6 +64,14 @@
         .no-comments { text-align: center; color: #bbb; padding: 24px 0; font-size: 15px; }
         .no-listing { max-width: 400px; margin: 80px auto; text-align: center; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
     </style>
+    {% if listing.CoordinateLat and listing.CoordinateLat != 0 %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+    {% endif %}
 </head>
 <body>
 
@@ -88,13 +99,36 @@
         <div class="listing-ids">
             <span>Listing ID: <strong>{{ listing.ListingID }}</strong></span>
             <span>Landlord ID: <strong>{{ listing.LLID }}</strong></span>
+            <div style="display: none;" id="coordinates">{{listing.CoordinateLong}},{{listing.CoordinateLat}}</div>
         </div>
     </div>
 
     {% if listing.Description %}
     <div class="description-section">{{ listing.Description }}</div>
     {% endif %}
-
+    
+    <!-- DIRECTIONS HERE!! -->
+     {% if listing.CoordinateLat and listing.CoordinateLat != 0 %}
+     <div class="distance-section">
+        <div class="distance-summary-box" style="display: initial;">
+            <h4>Walking Times</h4> <br />
+            <div><button onclick="loadRoute(0)">▷</button>Main Quad: <span id="mq_t">...</span> mins</div>
+            <div><button onclick="loadRoute(1)">▷</button>Tinkham Veale: <span id="tv_t">...</span> mins</div>
+            <div><button onclick="loadRoute(2)">▷</button>Mather Quad: <span id="hq_t">...</span> mins</div>
+        </div>
+        <div class="distance-summary-box" style="display: initial;">
+            <h4>Driving Times</h4> <br />
+            <div><button onclick="loadRoute(3)">▷</button>North Garage: <span id="ng_t">...</span> mins</div>
+            <div><button onclick="loadRoute(4)">▷</button>Murray Hill Lot: <span id="mh_t">...</span> mins</div>
+        </div>
+        
+        <div id="map-box"> <!-- KENT, THIS SHOULD BE DISPLAYED BELOW THE BOXES-->
+            <div id="map" style="width: 250px; height: 250px;"></div> <!-- Also, shouldn't appear until a route button is clicked, and should have a close button -->
+        </div>
+        
+     </div>
+     {% endif %}
+    
     <div class="rating-section">
         <h3>⭐ Ratings</h3>
         <div class="rating-summary-box">
@@ -211,6 +245,108 @@
         }
     });
 </script>
+{% if listing.CoordinateLat and listing.CoordinateLat != 0 %}
+<script>
+    
+    const coordinates = document.getElementById("coordinates").textContent
+    const token = "pk.eyJ1Ijoiam9uYWhiLWN3cnUiLCJhIjoiY21ucXVxdGFxMGJnczJyb2Yya25uYTR6byJ9.4hDBihfxlSI3K9UVBCC-qQ"
+    
+    var rte;
+    var rte_s;
+    var rte_e;
+    
+    const map = L.map('map').setView([41.505, -81.605], 14);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+    
+    // Taken from https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+    async function getData() {
+        const url = "https://api.mapbox.com/directions-matrix/v1/";
+        try {
+            const walking_times = await fetch(
+                url+"mapbox/walking/" + `${coordinates};` + "-81.60847,41.50414;-81.60884,41.50758;-81.60721,41.50996"
+                + `?access_token=${token}`
+            );
+            const driving_times = await fetch(
+                url+"mapbox/driving/" + `${coordinates};` + "-81.60260,41.51263;-81.60338,41.50212"
+                + `?access_token=${token}`
+            );
+            
+            if (!walking_times.ok) {
+                throw new Error(`Response (walking) status: ${walking_times.status}`);
+            }
+            if (!driving_times.ok) {
+                throw new Error(`Response (driving) status: ${walking_times.status}`);
+            }
+                
+            const result_w = await walking_times.json();
+            const result_d = await driving_times.json();
+            
+            document.getElementById("mq_t").textContent = Math.round(result_w.durations[0][1]/60)
+            document.getElementById("tv_t").textContent = Math.round(result_w.durations[0][2]/60)
+            document.getElementById("hq_t").textContent = Math.round(result_w.durations[0][3]/60)
+            document.getElementById("ng_t").textContent = Math.round(result_d.durations[0][1]/60)
+            document.getElementById("mh_t").textContent = Math.round(result_d.durations[0][2]/60)
+            
+        } catch (error) {
+            console.error(error.message);
+        }
+    }
+    getData()
+    
+    async function loadRoute(dest_id) {
+        
+        var url = ""
+        switch(dest_id) {
+            case 0: // walk - main quad
+                url = `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinates};-81.60847,41.50414?geometries=geojson&access_token=${token}`
+                break;
+            case 1: // walk - tink
+                url = `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinates};-81.60884,41.50758?geometries=geojson&access_token=${token}`
+                break;
+            case 2: // walk - mather quad
+                url = `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinates};-81.60721,41.50996?geometries=geojson&access_token=${token}`
+                break;
+            case 3: // drive - north garage
+                url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinates};-81.60260,41.51263?geometries=geojson&access_token=${token}`
+                break;
+            case 4: // drive - murray hill surface lot
+                url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinates};-81.60338,41.502124?geometries=geojson&access_token=${token}`
+                break;
+        }
+        
+        try {
+            const route = await fetch(url)
+            if(!route.ok) {throw new Error(`Response status: ${route.status}`)}
+            const result = await route.json()
+            console.log(result)
+            
+            var g_coords = result.routes[0].geometry.coordinates
+            var latlngs = [];
+            for(const i in g_coords) {
+                latlngs.push([g_coords[i][1],g_coords[i][0]])
+            }
+            
+            if(rte != undefined) {
+                map.removeLayer(rte)
+                map.removeLayer(rte_s)
+                map.removeLayer(rte_e)
+            }
+            
+            rte   = L.polyline(latlngs, {"color":"red"}).addTo(map)
+            rte_s = L.marker([result.waypoints[0].location[1],result.waypoints[0].location[0]]).addTo(map)
+            rte_e = L.marker([result.waypoints[1].location[1],result.waypoints[1].location[0]]).addTo(map)
+            
+        } catch (error) {
+            console.error(error.message)
+        }
+        
+    }
+    
+</script>
+{% endif %}
 
 </body>
 </html>
