@@ -286,7 +286,7 @@
                 <option value="">— Select a listing —</option>
                 {% for item in listings %}
                 {% set l = item.listing %}
-                <option value="{{ l.ListingID }}">{{ l.ListingLocation }} · ${{ l.Price }}/mo</option>
+                <option value="{{ l.ListingID }}">{{ l.Address }} · ${{ l.Price }}/mo</option>
                 {% endfor %}
             </select>
 
@@ -296,7 +296,7 @@
                 <option value="">— Select a listing —</option>
                 {% for item in listings %}
                 {% set l = item.listing %}
-                <option value="{{ l.ListingID }}">{{ l.ListingLocation }} · ${{ l.Price }}/mo</option>
+                <option value="{{ l.ListingID }}">{{ l.Address }} · ${{ l.Price }}/mo</option>
                 {% endfor %}
             </select>
         </div>
@@ -309,7 +309,13 @@
     </div>
 
     <script>
-        const allListings = {{ listings | tojson }};
+        
+        </script>
+        <script id="listingsData" type="application/json">{{ listings | tojson }}</script>
+        <script>
+        const allListings = JSON.parse(document.getElementById("listingsData").textContent);
+
+
 
         // Build a lookup by ListingID
         const byId = {};
@@ -353,11 +359,11 @@
                 <div class="compare-header">
                     <div class="compare-header-label">Property</div>
                     <div class="compare-header-prop">
-                        <div class="prop-address">📍 ${a.ListingLocation || "—"}</div>
+                        <div class="prop-address">📍 ${a.Address || "—"}</div>
                         <div class="prop-price">$${a.Price}<span>/mo</span></div>
                     </div>
                     <div class="compare-header-prop">
-                        <div class="prop-address">📍 ${b.ListingLocation || "—"}</div>
+                        <div class="prop-address">📍 ${b.Address || "—"}</div>
                         <div class="prop-price">$${b.Price}<span>/mo</span></div>
                     </div>
                 </div>
