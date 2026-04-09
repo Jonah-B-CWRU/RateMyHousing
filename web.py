@@ -237,6 +237,14 @@ def make_specific_listing_data(listing: Listing) -> tuple[dict[Any, Any], list[A
     meta_listing = listing.as_dict()
     comments = data_man.get_comments_from_listing(listing)
     ar = data_man.get_average_rating_from_listing(listing)
+
+    users = data_man.get_all_from(User())
+    user_by_userid:dict[str, User] = {}
+    for usr in users:
+        if usr.UserID in user_by_userid:
+            continue
+        user_by_userid[usr.UserID] = usr
+
     
     # new variables being sent to website
     meta_listing["avg_rating"] = round(ar.AverageRating, 2)
@@ -255,7 +263,7 @@ def make_specific_listing_data(listing: Listing) -> tuple[dict[Any, Any], list[A
     comments_with_users = []
     for c in comments:
         try:
-            user = data_man.get_user_from_comments(c)
+            user = user_by_userid[c.UserID]
             # Convert comment timestamp to Eastern Time
             if c.CreatedAt:
                 utc_dt = datetime.fromisoformat(c.CreatedAt.replace("Z", "")).replace(tzinfo=timezone.utc)
