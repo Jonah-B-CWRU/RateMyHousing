@@ -349,7 +349,7 @@
                 rte_e = L.marker([result.waypoints[1].location[1], result.waypoints[1].location[0]]).addTo(map);
                 
             
-                map.fitBounds(rte.getBounds(), {padding: [30, 30]});
+                setTimeout(function() {map.fitBounds(rte.getBounds(), {padding: [30, 30]});}, 75)
             } catch (e) { console.error(e); }
         };
 
