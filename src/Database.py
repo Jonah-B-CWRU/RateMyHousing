@@ -56,6 +56,8 @@ class Landlord:
 class Listing:
     ListingID: str = ""
     LLID: str = ""
+    LLName: str = ""
+    LLEmail: str = ""
     Address: str = ""
     Beds: int = 0
     Baths: int = 0

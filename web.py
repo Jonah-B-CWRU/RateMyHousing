@@ -412,7 +412,7 @@ def create_listing_form(request: Request):
 @app.post("/create_listing")
 def create_listing(
     request: Request,
-    llid: str = Form(...),
+    #llid: str = Form(...),
     address: str = Form(...),
     beds: int = Form(...),
     baths: int = Form(...),
@@ -430,6 +430,10 @@ def create_listing(
             "redirect.html",
             {"request": request, "message": "You must log in to access the dashboard.", "target_url": "/"}
         )
+    user = known_users[seshid]
+    llid = user.UserID
+    LLName=user.Username
+    LLEmail=user.Email
     data_man.connect_to_database()
     listing_id = secrets.token_hex(8)
     created_at = datetime.now(timezone.utc).isoformat() + "Z"
@@ -447,6 +451,8 @@ def create_listing(
         new_listing = Listing(
             listing_id,
             llid,
+            LLName,
+            LLEmail,
             address,
             beds,
             baths,
@@ -461,6 +467,8 @@ def create_listing(
         new_listing = Listing(
             listing_id,
             llid,
+            LLName,
+            LLEmail,
             address,
             beds,
             baths,
