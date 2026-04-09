@@ -33,7 +33,36 @@
 
         .listing-ids { display: flex; gap: 16px; font-size: 13px; color: #999; }
         .description-section { padding: 20px 32px; border-bottom: 2px solid #f0f0f0; color: #555; font-size: 15px; line-height: 1.6; }
+        
+        .distance-section {
+            display: flex;
+            flex-direction: column;  /* stack top row and map vertically */
+            gap: 16px;               /* space between top row and map */
+            padding: 20px 32px;
+            border-bottom: 2px solid #f0f0f0;
+            color: #555;
+            font-size: 15px;
+        }
 
+        .distance-box-row {
+            display: flex;
+            justify-content: space-between; /* spread boxes across row */
+            gap: 16px;                      /* space between boxes */
+            width: 100%;
+        }
+
+        .distance-summary-box {
+            flex: 1;                        /* each box takes equal space */
+            background: linear-gradient(135deg, #f8f8ff 0%, #f0eeff 100%);
+            border: 1px solid #ddd8ff;
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;  /* stack button + times vertically */
+            align-items: flex-start;
+        }
+
+        
         .rating-section { padding: 24px 32px; border-bottom: 2px solid #f0f0f0; }
         .rating-section h3 { margin: 0 0 16px 0; font-size: 17px; color: #333; }
         .rating-summary-box { background: linear-gradient(135deg, #f8f8ff 0%, #f0eeff 100%); border: 1px solid #ddd8ff; border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
@@ -61,6 +90,14 @@
         .no-comments { text-align: center; color: #bbb; padding: 24px 0; font-size: 15px; }
         .no-listing { max-width: 400px; margin: 80px auto; text-align: center; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
     </style>
+    {% if listing.CoordinateLat and listing.CoordinateLat != 0 %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+    {% endif %}
 </head>
 <body>
 
@@ -88,13 +125,39 @@
         <div class="listing-ids">
             <span>Listing ID: <strong>{{ listing.ListingID }}</strong></span>
             <span><strong>Landlord Email:</strong> {{ listing.LLEmail }}</span>
+            <span>Landlord ID: <strong>{{ listing.LLID }}</strong></span>
+            <div style="display: none;" id="coordinates">{{listing.CoordinateLong}},{{listing.CoordinateLat}}</div>
         </div>
     </div>
 
     {% if listing.Description %}
     <div class="description-section">{{ listing.Description }}</div>
     {% endif %}
+    
+    <!-- DIRECTIONS HERE!! -->
+        {% if listing.CoordinateLat and listing.CoordinateLat != 0 %}
+        <div class="distance-section">
+            <div class="distance-box-row">
+                <div class="distance-summary-box">
+                    <h4>Walking Times</h4>
+                    <div><button onclick="loadRoute(0)">▷</button> Main Quad: <span id="mq_t">...</span> mins</div>
+                    <div><button onclick="loadRoute(1)">▷</button> Tinkham Veale: <span id="tv_t">...</span> mins</div>
+                    <div><button onclick="loadRoute(2)">▷</button> Mather Quad: <span id="hq_t">...</span> mins</div>
+                </div>
+                <div class="distance-summary-box">
+                    <h4>Driving Times</h4>
+                    <div><button onclick="loadRoute(3)">▷</button> North Garage: <span id="ng_t">...</span> mins</div>
+                    <div><button onclick="loadRoute(4)">▷</button> Murray Hill Lot: <span id="mh_t">...</span> mins</div>
+                </div>
+            </div>
 
+            <div id="map-container" style="display: none; position: relative; margin-top: 10px;">
+                <button onclick="closeMap()" style="position: absolute; right: 10px; top: 10px; z-index: 1000; background: white; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; padding: 2px 8px;">✕ Close Map</button>
+                <div id="map" style="width: 100%; height: 400px; border-radius: 12px; border: 1px solid #ddd8ff;"></div>
+            </div>
+        </div>
+        {% endif %}
+    
     <div class="rating-section">
         <h3>⭐ Ratings</h3>
         <div class="rating-summary-box">
@@ -199,18 +262,95 @@
 {% endif %}
 
 <script>
+    // --- 1. COMMENT TOGGLE LOGIC ---
     const btn = document.getElementById('btn-add-comment');
     const form = document.getElementById('add-comment-form');
-    btn.addEventListener('click', () => {
-        if (form.style.display === 'none') {
-            form.style.display = 'block';
-            btn.textContent = 'Cancel';
-        } else {
-            form.style.display = 'none';
-            btn.textContent = '+ Add Comment';
-        }
-    });
-</script>
+    if (btn && form) {
+        btn.addEventListener('click', () => {
+            if (form.style.display === 'none') {
+                form.style.display = 'block';
+                btn.textContent = 'Cancel';
+            } else {
+                form.style.display = 'none';
+                btn.textContent = '+ Add Comment';
+            }
+        });
+    }
 
+    // --- 2. MAP & ROUTING LOGIC ---
+    // This part only runs if the coordinates exist
+    const coordEl = document.getElementById("coordinates");
+    if (coordEl) {
+        const coordinates = coordEl.textContent;
+        const token = "pk.eyJ1Ijoiam9uYWhiLWN3cnUiLCJhIjoiY21ucXVxdGFxMGJnczJyb2Yya25uYTR6byJ9.4hDBihfxlSI3K9UVBCC-qQ";
+        
+        var rte, rte_s, rte_e;
+
+        // Initialize Map
+        const map = L.map('map').setView([41.505, -81.605], 14);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        // BACK BUTTON FUNCTION
+        window.closeMap = function() {
+            document.getElementById('map-container').style.display = 'none';
+        };
+
+        // LOAD ROUTE FUNCTION
+        window.loadRoute = async function(dest_id) {
+            const container = document.getElementById('map-container');
+            container.style.display = 'block';
+            
+            // Fix Leaflet gray box glitch
+            setTimeout(() => { map.invalidateSize(); }, 100);
+
+            let url = "";
+            switch(dest_id) {
+                case 0: url = `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinates};-81.60847,41.50414?geometries=geojson&access_token=${token}`; break;
+                case 1: url = `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinates};-81.60884,41.50758?geometries=geojson&access_token=${token}`; break;
+                case 2: url = `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinates};-81.60721,41.50996?geometries=geojson&access_token=${token}`; break;
+                case 3: url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinates};-81.60260,41.51263?geometries=geojson&access_token=${token}`; break;
+                case 4: url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinates};-81.60338,41.50212?geometries=geojson&access_token=${token}`; break;
+            }
+
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+                const g_coords = result.routes[0].geometry.coordinates;
+                const latlngs = g_coords.map(c => [c[1], c[0]]);
+
+                if(rte) { map.removeLayer(rte); map.removeLayer(rte_s); map.removeLayer(rte_e); }
+
+                rte = L.polyline(latlngs, {color: "red"}).addTo(map);
+                rte_s = L.marker([result.waypoints[0].location[1], result.waypoints[0].location[0]]).addTo(map);
+                rte_e = L.marker([result.waypoints[1].location[1], result.waypoints[1].location[0]]).addTo(map);
+                
+            
+                map.fitBounds(rte.getBounds(), {padding: [30, 30]});
+            } catch (e) { console.error(e); }
+        };
+
+        // FETCH MATRIX TIMES
+        async function getData() {
+            const url = "https://api.mapbox.com/directions-matrix/v1/";
+            try {
+                const [rw, rd] = await Promise.all([
+                    fetch(`${url}mapbox/walking/${coordinates};-81.60847,41.50414;-81.60884,41.50758;-81.60721,41.50996?access_token=${token}`),
+                    fetch(`${url}mapbox/driving/${coordinates};-81.60260,41.51263;-81.60338,41.50212?access_token=${token}`)
+                ]);
+                const resW = await rw.json();
+                const resD = await rd.json();
+                document.getElementById("mq_t").textContent = Math.round(resW.durations[0][1]/60);
+                document.getElementById("tv_t").textContent = Math.round(resW.durations[0][2]/60);
+                document.getElementById("hq_t").textContent = Math.round(resW.durations[0][3]/60);
+                document.getElementById("ng_t").textContent = Math.round(resD.durations[0][1]/60);
+                document.getElementById("mh_t").textContent = Math.round(resD.durations[0][2]/60);
+            } catch (e) { console.log(e); }
+        }
+        getData();
+    }
+</script>
 </body>
 </html>

@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import FastAPI, Form, Request # type: ignore
 from fastapi.responses import RedirectResponse,FileResponse # type: ignore
 from fastapi.staticfiles import StaticFiles # type: ignore
@@ -44,9 +46,11 @@ def add_user(username: str, password: str) -> tuple[bool, str]:
     """
     adds user to database\n
     **not cached**
+
+    Uses 6 queries. (2 max if not valid)
     """
     if not username.endswith("@case.edu"):
-        return False, "Username must end with @case.edu"
+        return True, "Username must end with @case.edu"
 
     data_man.connect_to_database()
 
@@ -68,7 +72,6 @@ def add_user(username: str, password: str) -> tuple[bool, str]:
 
     # Make code
     code = random.randrange(100000,999999)
-    print(code)
     new_code = Codes(user_id,code)
     data_man.add_object(new_code)
     data_man.send_code(new_user,new_code)
@@ -79,6 +82,8 @@ def verify_login(username: str, password: str) -> bool:
     """
     verifies login by checking for valid user and valid password \n
     **not cached**
+
+    Uses 2 queries.
     """
     data_man.connect_to_database()
     try:
@@ -89,44 +94,156 @@ def verify_login(username: str, password: str) -> bool:
     except TypeError:
         return False
 
-def make_all_listing_data(listings: list[Listing]) -> list:
+def make_all_listing_data(listings: list[Listing]) -> list[dict]:
+    """makes data for all listings
+
+    Args:
+        listings (list[Listing]): all listings we want to get data for
+
+    Returns:
+        list[dict]: all data for the listing
+
+    Uses 3 queries. (assuming no data is cached)
     """
-    uses cached data to make all listing data
-    """
+
+    # get all data required for this (3 queries)
+    users = data_man.get_all_from(User())
+    comments = data_man.get_all_from(Comments())
+    ar = data_man.get_all_from(AverageRating())
+
+    # compute and compress data
+
+    comments_by_listing:dict[str, list[Comments]] = {}
+    for com in comments:
+        if com.ListingID in comments_by_listing:
+            comments_by_listing[com.ListingID].append(com)
+            continue
+        comments_by_listing[com.ListingID] = [com]
+
+    user_by_userid:dict[str, User] = {}
+    for usr in users:
+        if usr.UserID in user_by_userid:
+            continue
+        user_by_userid[usr.UserID] = usr
+
+    average_by_listing:dict[str, AverageRating] = {}
+    for average in ar:
+        if average.ListingID in average_by_listing:
+            continue
+        average_by_listing[average.ListingID] = average
+
+
+    users_by_comments:dict[str, list[User]] = {}
+    for com in comments:
+        if com.UserID in users_by_comments:
+            users_by_comments[com.UserID].append(user_by_userid[com.UserID])
+            continue
+        try:
+            users_by_comments[com.UserID] = [user_by_userid[com.UserID]]
+        except:
+            continue
+
+
     listing_data = []
     for listing in listings:
-        if f"listing_{listing.ListingID}" in cache_man.all_refrences: 
-            cache_data = cache_man.get_cache(f"listing_{listing.ListingID}")
-            if cache_data.cache_max_age > datetime.now():
-                # use cached data
-                raw_data:dict = cache_data.cache_data
-                meta_listing:dict = raw_data["meta_listing"]
-                comments_with_users:list = raw_data["comments"]
-            else:
-                meta_listing, comments_with_users = make_specific_listing_data(listing)
-                # pack into cached data
-                data = {"meta_listing":meta_listing,"comments":comments_with_users}
-                cache_man.add_to_cache(data,f"listing_{listing.ListingID}")
-        else:
-            meta_listing, comments_with_users = make_specific_listing_data(listing)
-            # pack into cached data
-            data = {"meta_listing":meta_listing,"comments":comments_with_users}
-            cache_man.add_to_cache(data,f"listing_{listing.ListingID}")
+        # check for listing in chache
+        try:
+            if f"listing_{listing.ListingID}" in cache_man.all_refrences:
+                cache_data = cache_man.get_cache(f"listing_{listing.ListingID}")
+                if cache_data.cache_max_age > datetime.now():
+                    # use cached data
+                    raw_data:dict = cache_data.cache_data
+                    meta_listing:dict = raw_data["meta_listing"]
+                    comments_with_users:list = raw_data["comments"]
+                    listing_data.append({
+                        "listing": meta_listing,
+                        "comments": comments_with_users
+                    })
+                    continue
+        except:
+            pass
 
+        # meta listing creation
+        meta_listing = listing.as_dict()
+        try:
+            comments = comments_by_listing[listing.ListingID]
+        except:
+            comments = []
+        ar = average_by_listing[listing.ListingID]
+        
+        # new variables being sent to website
+        meta_listing["avg_rating"] = round(ar.AverageRating, 2)
+        meta_listing["review_count"] = ar.NumberOfRatings
+        created_str = ""
+        if listing.CreatedAt:
+            try:
+                utc_dt = datetime.fromisoformat(listing.CreatedAt.replace("Z", "")).replace(tzinfo=timezone.utc)
+                eastern_dt = utc_dt.astimezone(ZoneInfo("America/New_York"))
+                created_str = eastern_dt.strftime("%m/%d/%Y, %I:%M %p")
+            except:
+                created_str = listing.CreatedAt
+        meta_listing["CreatedAt"] = created_str
+
+        # comments
+        comments_with_users = []
+        for c in comments:
+            try:
+                user = data_man.get_user_from_comments(c)
+                # Convert comment timestamp to Eastern Time
+                if c.CreatedAt:
+                    utc_dt = datetime.fromisoformat(c.CreatedAt.replace("Z", "")).replace(tzinfo=timezone.utc)
+                    eastern_dt = utc_dt.astimezone(ZoneInfo("America/New_York"))
+                    created_str = eastern_dt.strftime("%m/%d/%Y, %I:%M %p")
+                else:
+                    created_str = ""
+                comments_with_users.append({
+                    "Content": c.Content,
+                    "Username": user.Username,
+                    "CreatedAt": created_str,
+                    "Tags": c.Tags if c.Tags else []
+                })
+            except TypeError as e:
+                print(f"user failed: {e}")
+                comments_with_users.append({
+                    "Content": c.Content,
+                    "Username": "Unknown",
+                    "CreatedAt": "",
+                    "Tags": c.Tags if c.Tags else []
+                })
+
+        # pack into cached data
+        data = {"meta_listing":meta_listing,"comments":comments_with_users}
+        cache_man.add_to_cache(data,f"listing_{listing.ListingID}")
         listing_data.append({
             "listing": meta_listing,
             "comments": comments_with_users
         })
     return listing_data
+    
 
-def make_specific_listing_data(listing: Listing):
+def make_specific_listing_data(listing: Listing) -> tuple[dict[Any, Any], list[Any]]:
+    """Make the data for any one specific listing
+
+    Args:
+        listing (Listing): the listing you need data for
+
+    Returns:
+        tuple[dict[Any, Any], list[Any]]: the full data output containing a lot of stuff
+
+    Uses 3 queries.
+    """
     # meta listing creation
     meta_listing = listing.as_dict()
-
-    if data_man.check_for_average_rating(listing):
-        data_man.update_average_rating(listing) # makes it
     comments = data_man.get_comments_from_listing(listing)
     ar = data_man.get_average_rating_from_listing(listing)
+
+    users = data_man.get_all_from(User())
+    user_by_userid:dict[str, User] = {}
+    for usr in users:
+        if usr.UserID in user_by_userid:
+            continue
+        user_by_userid[usr.UserID] = usr
+
     
     # new variables being sent to website
     meta_listing["avg_rating"] = round(ar.AverageRating, 2)
@@ -145,7 +262,7 @@ def make_specific_listing_data(listing: Listing):
     comments_with_users = []
     for c in comments:
         try:
-            user = data_man.get_user_from_comments(c)
+            user = user_by_userid[c.UserID]
             # Convert comment timestamp to Eastern Time
             if c.CreatedAt:
                 utc_dt = datetime.fromisoformat(c.CreatedAt.replace("Z", "")).replace(tzinfo=timezone.utc)
@@ -245,12 +362,12 @@ def login_post(request: Request, username: str = Form(...), password: str = Form
 @app.get("/dashboard")
 def dashboard(request: Request):
     seshid = request.cookies.get("session_id")
-    hasmodkey = request.cookies.get("modkey") != None
     if seshid not in known_users:
         return templates.TemplateResponse(
             "redirect.html",
             {"request": request, "message": "You must log in to access the dashboard.", "target_url": "/"}
         )
+    hasmodkey = request.cookies.get("modkey") != None and known_users[seshid].UserID.encode('utf-8').hex() == request.cookies.get("modkey")
     username = known_users[seshid].Username
     return templates.TemplateResponse("dashboard.html", {"request": request, "name": username, "hasmodkey": hasmodkey})
 
@@ -363,6 +480,7 @@ def create_listing(
 
 
     data_man.add_object(new_listing)
+    # average rating dosnt exist yet, make it
     data_man.update_average_rating(Listing(listing_id))
 
     # cache it
@@ -593,24 +711,25 @@ def view_listing_map(request: Request):
 
 @app.get("/mod_page")
 def view_mod_page(request: Request):
-    # to be replaced after merge
-    username = request.cookies.get("username")
-    if not username:
+    seshid = request.cookies.get("session_id")
+
+    # Check if logged in
+    if seshid not in known_users:
         return templates.TemplateResponse(
             "redirect.html",
             {"request": request, "message": "You must log in.", "target_url": "/login"}
         )
-    if request.cookies.get("modkey") != None:
-        data_man.connect_to_database()
-        user = data_man.get_user_with_username(username)
-        if user.UserID.encode('utf-8').hex() == request.cookies.get("modkey"):
-            return templates.TemplateResponse(
-                "mod_page.html",
-                {
-                    "request": request
-                }
-            )
-        print(f"invalid mod key, correct key is {user.UserID.encode('utf-8').hex()}")
+
+    user = known_users[seshid]
+
+    # Check mod permissions
+    modkey = request.cookies.get("modkey")
+    if modkey and user.UserID.encode('utf-8').hex() == modkey:
+        return templates.TemplateResponse(
+            "mod_page.html",
+            {"request": request}
+        )
+
     return RedirectResponse(url="/dashboard")
 @app.post("/mod_page")
 def post_mod_page_search(
@@ -639,15 +758,17 @@ def post_mod_page_search(
 
 ):
     # to be replaced after merge
-    username = request.cookies.get("username")
-    if not username:
+    seshid = request.cookies.get("session_id")
+
+    if seshid not in known_users:
         return RedirectResponse(url="/dashboard")
-    if request.cookies.get("modkey") != None:
+    
+    user = known_users[seshid]
+
+    if request.cookies.get("modkey") is not None:
         data_man.connect_to_database()
-        user = data_man.get_user_with_username(username)
         if user.UserID.encode('utf-8').hex() == request.cookies.get("modkey"):
             if ISPUT:
-                print(DELETE)
                 if not DELETE:
                     match search_type:
                         case "Users":
@@ -705,7 +826,6 @@ def post_mod_page_search(
                             response = data_man.find_orphend_data(Rating())
                     else:
                         response = data_man.get_ratings_from_user(data_man.get_object_by_id(uid_search, User()))
-                        print(data_man.get_object_by_id(uid_search, User()))
                 case _:
                     return templates.TemplateResponse(
                     "mod_page.html",

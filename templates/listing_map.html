@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- Utilizes Leaflet: https://leafletjs.com/ -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -22,231 +21,239 @@
             flex-direction: column;
         }
 
-        /* ── Top bar ── */
         .topbar {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 16px 28px;
+            padding: 14px 24px;
             background: rgba(255,255,255,0.08);
             backdrop-filter: blur(8px);
             border-bottom: 1px solid rgba(255,255,255,0.15);
             flex-shrink: 0;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .topbar-brand {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
             color: white;
             text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
-        .topbar-nav {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .topbar-nav { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
         .nav-btn {
-            padding: 8px 18px;
+            padding: 7px 14px;
             border-radius: 8px;
             font-size: 13px;
             font-weight: 600;
             text-decoration: none;
             border: none;
             cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.15s;
+            transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
         }
 
-        .nav-btn-ghost {
+        .nav-ghost {
             background: rgba(255,255,255,0.15);
             color: white;
             border: 1px solid rgba(255,255,255,0.25);
         }
+        .nav-ghost:hover { background: rgba(255,255,255,0.25); transform: translateY(-1px); }
 
-        .nav-btn-ghost:hover { background: rgba(255,255,255,0.25); transform: translateY(-1px); }
+        .nav-green { background: linear-gradient(135deg, #16a34a, #15803d); color: white; }
+        .nav-green:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(22,163,74,0.4); }
 
-        .nav-btn-green {
-            background: linear-gradient(135deg, #16a34a, #15803d);
-            color: white;
+        /* ── Controls bar ── */
+        .map-controls {
+            display: flex;
+            gap: 12px;
+            padding: 10px 16px;
+            background: rgba(255,255,255,0.06);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            flex-wrap: wrap;
+            align-items: center;
+            flex-shrink: 0;
         }
 
-        .nav-btn-green:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(22,163,74,0.4); }
+        .controls-label {
+            color: rgba(255,255,255,0.6);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
-        /* ── Listing count pill ── */
-        .listing-count {
-            color: rgba(255,255,255,0.75);
+        .toggle-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1.5px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .toggle-btn.active {
+            background: white;
+            color: #16a34a;
+            border-color: white;
+        }
+
+        .price-filter {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .price-filter label {
+            color: rgba(255,255,255,0.8);
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .price-filter input[type=range] {
+            width: 120px;
+            accent-color: white;
+        }
+
+        .price-val {
+            color: white;
             font-size: 13px;
-            font-weight: 500;
+            font-weight: 700;
+            min-width: 64px;
         }
 
         /* ── Main layout ── */
         .main {
             flex: 1;
             display: flex;
-            gap: 0;
             overflow: hidden;
-            height: calc(100vh - 61px);
+            height: calc(100vh - 111px);
         }
 
         /* ── Sidebar ── */
         .sidebar {
-            width: 300px;
+            width: 280px;
             flex-shrink: 0;
             background: rgba(255,255,255,0.06);
             backdrop-filter: blur(6px);
             border-right: 1px solid rgba(255,255,255,0.12);
             overflow-y: auto;
-            padding: 16px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
 
         .sidebar-title {
-            color: rgba(255,255,255,0.6);
+            color: rgba(255,255,255,0.55);
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
             padding: 4px 0 8px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .sidebar-card {
             background: white;
-            border-radius: 12px;
-            padding: 14px 16px;
+            border-radius: 10px;
+            padding: 12px 14px;
             cursor: pointer;
             transition: transform 0.15s, box-shadow 0.15s;
             border: 2px solid transparent;
         }
 
-        .sidebar-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-        }
+        .sidebar-card:hover { transform: translateY(-2px); box-shadow: 0 5px 16px rgba(0,0,0,0.18); }
+        .sidebar-card.active { border-color: #4a5fd9; box-shadow: 0 0 0 3px rgba(74,95,217,0.2); }
 
-        .sidebar-card.active {
-            border-color: #4a5fd9;
-            box-shadow: 0 0 0 3px rgba(74,95,217,0.2);
+        /* Listings with no coordinates are non-interactive */
+        .sidebar-card.no-coords {
+            opacity: 0.45;
+            cursor: default;
+            font-style: italic;
         }
+        .sidebar-card.no-coords:hover { transform: none; box-shadow: none; }
 
-        .sidebar-card-address {
-            font-size: 13px;
+        .sc-address {
+            font-size: 12px;
             font-weight: 700;
             color: #333;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .sidebar-card-meta {
-            display: flex;
-            gap: 10px;
-            font-size: 12px;
-            color: #777;
-        }
+        .sc-meta { display: flex; gap: 8px; font-size: 11px; color: #777; flex-wrap: wrap; }
+        .sc-price { font-size: 12px; font-weight: 700; color: #4a5fd9; }
 
-        .sidebar-card-price {
-            margin-left: auto;
-            font-size: 12px;
-            font-weight: 700;
-            color: #4a5fd9;
-        }
-
-        .no-listings {
-            color: rgba(255,255,255,0.5);
-            font-size: 13px;
-            text-align: center;
-            padding: 20px 0;
+        .no-coords-note {
+            font-size: 10px;
+            color: #bbb;
+            margin-top: 3px;
         }
 
         /* ── Map ── */
-        .map-wrap {
-            flex: 1;
-            position: relative;
-        }
+        .map-wrap { flex: 1; position: relative; }
+        #map { height: 100%; width: 100%; }
 
-        #map {
-            height: 100%;
-            width: 100%;
-        }
-
-        /* ── Custom Leaflet popup styling ── */
+        /* Custom popup */
         .leaflet-popup-content-wrapper {
             border-radius: 12px !important;
             box-shadow: 0 8px 30px rgba(0,0,0,0.2) !important;
             padding: 0 !important;
             overflow: hidden;
         }
+        .leaflet-popup-content { margin: 0 !important; width: 210px !important; }
 
-        .leaflet-popup-content {
-            margin: 0 !important;
-            width: 220px !important;
-        }
-
-        .popup-inner {
-            padding: 14px 16px;
-        }
-
-        .popup-address {
-            font-weight: 700;
-            font-size: 14px;
-            color: #333;
-            margin-bottom: 6px;
-        }
-
-        .popup-meta {
-            font-size: 12px;
-            color: #777;
-            margin-bottom: 10px;
-            display: flex;
-            gap: 8px;
-        }
-
-        .popup-price {
-            font-size: 15px;
-            font-weight: 800;
-            color: #4a5fd9;
-            margin-bottom: 12px;
-        }
-
+        .popup-inner { padding: 12px 14px; }
+        .popup-address { font-weight: 700; font-size: 13px; color: #333; margin-bottom: 5px; }
+        .popup-meta { font-size: 11px; color: #777; margin-bottom: 8px; display: flex; gap: 8px; }
+        .popup-price { font-size: 14px; font-weight: 800; color: #4a5fd9; margin-bottom: 10px; }
         .popup-link {
-            display: block;
-            text-align: center;
+            display: block; text-align: center;
             background: linear-gradient(135deg, #4a5fd9, #5a3d99);
-            color: white;
-            text-decoration: none;
-            padding: 8px;
-            font-size: 13px;
-            font-weight: 600;
+            color: white; text-decoration: none;
+            padding: 7px; font-size: 12px; font-weight: 600;
             border-radius: 0 0 12px 12px;
-            transition: opacity 0.15s;
         }
-
         .popup-link:hover { opacity: 0.9; }
 
-        /* ── Scrollbar ── */
         .sidebar::-webkit-scrollbar { width: 4px; }
-        .sidebar::-webkit-scrollbar-track { background: transparent; }
         .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
     </style>
 </head>
 <body>
 
+    <script id="listingsData" type="application/json">{{ listings | tojson }}</script>
+
     <div class="topbar">
         <a href="/" class="topbar-brand">🏠 Rate My Housing</a>
         <div class="topbar-nav">
-            <span class="listing-count" id="listingCount"></span>
-            <a href="/listings" class="nav-btn nav-btn-ghost">List View</a>
-            <a href="/dashboard" class="nav-btn nav-btn-ghost">← Dashboard</a>
-            <a href="/create_listing" class="nav-btn nav-btn-green">+ New Listing</a>
+            <span id="listingCount" style="color:rgba(255,255,255,0.7);font-size:13px;"></span>
+            <a href="/listings" class="nav-btn nav-ghost">List View</a>
+            <a href="/compare" class="nav-btn nav-ghost">Compare</a>
+            <a href="/dashboard" class="nav-btn nav-ghost">← Dashboard</a>
+            <a href="/create_listing" class="nav-btn nav-green">+ New Listing</a>
+        </div>
+    </div>
+
+    <div class="map-controls"></div>
+        <div class="price-filter">
+            <label>Max Price:</label>
+            <input type="range" id="priceSlider" min="0" max="5000" step="100" value="5000"
+                oninput="filterByPrice(this.value)">
+            <span class="price-val" id="priceVal">Any</span>
         </div>
     </div>
 
@@ -261,94 +268,93 @@
     </div>
 
     <script>
-        const listings = {{ listings | tojson }};
+        const listings = JSON.parse(document.getElementById("listingsData").textContent);
 
-        // Update count pill
-        const mappable = listings.filter(l => "CoordinateLat" in l && "CoordinateLong" in l);
-        document.getElementById("listingCount").textContent =
-            mappable.length + " listing" + (mappable.length !== 1 ? "s" : "") + " on map";
-
-        // Init map centred on CWRU
-        const map = L.map('map').setView([41.505, -81.605], 14);
+        // ── Map init ──
+        const map = L.map('map').setView([41.505, -81.605], 15);
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
 
-        // Custom marker icon using app colours
-        const markerIcon = L.divIcon({
+        // ── Listing marker icon ──
+        const listingIcon = L.divIcon({
             className: '',
-            html: `<div style="
-                width:32px; height:32px; border-radius:50% 50% 50% 0;
-                background:linear-gradient(135deg,#4a5fd9,#5a3d99);
-                transform:rotate(-45deg);
-                border:3px solid white;
-                box-shadow:0 3px 10px rgba(0,0,0,0.3);
-            "></div>`,
-            iconSize: [32, 32],
-            iconAnchor: [16, 32],
-            popupAnchor: [0, -36]
+            html: `<div style="width:28px;height:28px;border-radius:50% 50% 50% 0;background:linear-gradient(135deg,#4a5fd9,#5a3d99);transform:rotate(-45deg);border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.3);"></div>`,
+            iconSize: [28, 28], iconAnchor: [14, 28], popupAnchor: [0, -32]
         });
 
-        const sidebarList = document.getElementById("sidebarList");
-        const markerMap = {};
+        // ── Build listing markers and sidebar ──
+        const sidebarList = document.getElementById('sidebarList');
+        const allMarkers = []; // { listing, marker, card }
 
-        if (listings.length === 0) {
-            sidebarList.innerHTML = '<div class="no-listings">No listings available.</div>';
-        }
+        const mappableCount = listings.filter(l => l.CoordinateLat && l.CoordinateLong).length;
+        document.getElementById('listingCount').textContent =
+            mappableCount + ' listing' + (mappableCount !== 1 ? 's' : '') + ' on map';
 
         for (const listing of listings) {
-            // Sidebar card for every listing
-            const card = document.createElement("div");
-            card.className = "sidebar-card";
+            const hasCoords = !!(listing.CoordinateLat && listing.CoordinateLong);
+            const address = listing.ListingLocation || listing.Address || 'Unknown address';
+
+            // Sidebar card
+            const card = document.createElement('div');
+            card.className = 'sidebar-card' + (hasCoords ? '' : ' no-coords');
             card.innerHTML = `
-                <div class="sidebar-card-address">📍 ${listing.ListingLocation || listing.Address || "Unknown address"}</div>
-                <div class="sidebar-card-meta">
-                    <span>🛏 ${listing.Beds ?? "—"}</span>
-                    <span>🚿 ${listing.Baths ?? "—"}</span>
-                    <span>📐 ${listing.SquareFootage ?? "—"} sqft</span>
-                    <span class="sidebar-card-price">$${listing.Price ?? "—"}/mo</span>
+                <div class="sc-address">📍 ${address}</div>
+                <div class="sc-meta">
+                    <span>🛏 ${listing.Beds ?? '—'}</span>
+                    <span>🚿 ${listing.Baths ?? '—'}</span>
+                    <span>📐 ${listing.SquareFootage ?? '—'} sqft</span>
+                    <span class="sc-price">$${listing.Price ?? '—'}/mo</span>
                 </div>
+                ${!hasCoords ? '<div class="no-coords-note">No map location available</div>' : ''}
             `;
-
-            if ("CoordinateLat" in listing && "CoordinateLong" in listing) {
-                const popupContent = `
-                    <div class="popup-inner">
-                        <div class="popup-address">${listing.ListingLocation || listing.Address}</div>
-                        <div class="popup-meta">
-                            <span>🛏 ${listing.Beds} bed${listing.Beds !== 1 ? "s" : ""}</span>
-                            <span>🚿 ${listing.Baths} bath${listing.Baths !== 1 ? "s" : ""}</span>
-                        </div>
-                        <div class="popup-price">$${listing.Price}/mo</div>
-                    </div>
-                    <a class="popup-link" href="/listing/${listing.ListingID}">View Listing →</a>
-                `;
-
-                const marker = L.marker([listing.CoordinateLat, listing.CoordinateLong], { icon: markerIcon })
-                    .bindPopup(popupContent)
-                    .addTo(map);
-
-                markerMap[listing.ListingID] = marker;
-
-                card.addEventListener("click", () => {
-                    map.flyTo([listing.CoordinateLat, listing.CoordinateLong], 16, { duration: 0.8 });
-                    marker.openPopup();
-                    document.querySelectorAll(".sidebar-card").forEach(c => c.classList.remove("active"));
-                    card.classList.add("active");
-                });
-
-                marker.on("click", () => {
-                    document.querySelectorAll(".sidebar-card").forEach(c => c.classList.remove("active"));
-                    card.classList.add("active");
-                    card.scrollIntoView({ behavior: "smooth", block: "nearest" });
-                });
-            } else {
-                // No coordinates — clicking scrolls map but can't fly
-                card.style.opacity = "0.6";
-                card.title = "No map coordinates for this listing";
-            }
-
             sidebarList.appendChild(card);
+
+            if (!hasCoords) continue; // no marker, just show in sidebar with note
+
+            // Map marker
+            const popup = `
+                <div class="popup-inner">
+                    <div class="popup-address">${address}</div>
+                    <div class="popup-meta">
+                        <span>🛏 ${listing.Beds} bed${listing.Beds !== 1 ? 's' : ''}</span>
+                        <span>🚿 ${listing.Baths} bath${listing.Baths !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div class="popup-price">$${listing.Price}/mo</div>
+                </div>
+                <a class="popup-link" href="/listing/${listing.ListingID}">View Listing →</a>`;
+
+            const marker = L.marker([listing.CoordinateLat, listing.CoordinateLong], { icon: listingIcon })
+                .bindPopup(popup)
+                .addTo(map);
+
+            allMarkers.push({ listing, marker, card });
+
+            card.addEventListener('click', () => {
+                map.flyTo([listing.CoordinateLat, listing.CoordinateLong], 16, { duration: 0.7 });
+                marker.openPopup();
+                document.querySelectorAll('.sidebar-card').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+            });
+
+            marker.on('click', () => {
+                document.querySelectorAll('.sidebar-card').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            });
+        }
+
+        // ── Price filter ──
+        function filterByPrice(val) {
+            const max = parseInt(val);
+            document.getElementById('priceVal').textContent = max >= 5000 ? 'Any' : '$' + max + '/mo';
+            for (const { listing, marker, card } of allMarkers) {
+                const price = parseFloat(listing.Price) || 0;
+                const show = max >= 5000 || price <= max;
+                if (show) { marker.addTo(map); card.style.display = ''; }
+                else { map.removeLayer(marker); card.style.display = 'none'; }
+            }
         }
     </script>
 </body>
