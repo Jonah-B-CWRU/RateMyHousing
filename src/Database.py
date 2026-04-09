@@ -185,6 +185,7 @@ class database_manager:
             firebase_admin.initialize_app(cred)
             self.connected = True
             self.fire_store = firestore.client()
+            self.update_all_average_ratings()
     
     # basic data handeling
     def _get_data(self, col:str) -> list[dict[str,Any]]:
@@ -755,7 +756,10 @@ class database_manager:
             known_averages[avg.ListingID] = avg
         
         for l in listings: # for n listings
-            ratings = ratings_per_listing[l.ListingID]
+            try:
+                ratings = ratings_per_listing[l.ListingID]
+            except:
+                rating = []
 
             sum = 0
             count = len(ratings)
