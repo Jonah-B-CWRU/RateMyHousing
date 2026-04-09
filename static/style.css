@@ -82,3 +82,44 @@ a {
 a:hover {
     text-decoration: underline;
 }
+
+/* --- Top Boxes Row --- */
+.distance-box-row {
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.distance-summary-box {
+    flex: 1 1 48%; /* roughly half of the row */
+    background: linear-gradient(135deg, #f8f8ff 0%, #f0eeff 100%);
+    border: 1px solid #ddd8ff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+/* --- Map Full Width --- */
+#map-box {
+    width: 100%;
+    height: 400px; /* adjust height if needed */
+    margin-bottom: 30px;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+    .distance-box-row {
+        flex-direction: column;
+    }
+    .distance-summary-box {
+        flex: 1 1 100%;
+    }
+}
