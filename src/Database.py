@@ -730,7 +730,8 @@ class database_manager:
         ref = self.get_average_rating_ref(listing) # 1 query
         
         if ref is not None:  
-            collection = self.fire_store.collection("Listing")
+            collection = self.fire_store.collection("AverageRating")
+            print("average rating refrence:",ref.id)
             collection.document(ref.id).update(ar.as_dict()) # 1 query
         else:
             self.add_object(ar)  # 1 query
