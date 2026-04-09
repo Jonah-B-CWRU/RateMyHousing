@@ -72,7 +72,6 @@ def add_user(username: str, password: str) -> tuple[bool, str]:
 
     # Make code
     code = random.randrange(100000,999999)
-    print(code)
     new_code = Codes(user_id,code)
     data_man.add_object(new_code)
     data_man.send_code(new_user,new_code)
@@ -363,12 +362,12 @@ def login_post(request: Request, username: str = Form(...), password: str = Form
 @app.get("/dashboard")
 def dashboard(request: Request):
     seshid = request.cookies.get("session_id")
-    hasmodkey = request.cookies.get("modkey") != None
     if seshid not in known_users:
         return templates.TemplateResponse(
             "redirect.html",
             {"request": request, "message": "You must log in to access the dashboard.", "target_url": "/"}
         )
+    hasmodkey = request.cookies.get("modkey") != None and known_users[seshid].UserID.encode('utf-8').hex() == request.cookies.get("modkey")
     username = known_users[seshid].Username
     return templates.TemplateResponse("dashboard.html", {"request": request, "name": username, "hasmodkey": hasmodkey})
 
@@ -762,7 +761,6 @@ def post_mod_page_search(
         data_man.connect_to_database()
         if user.UserID.encode('utf-8').hex() == request.cookies.get("modkey"):
             if ISPUT:
-                print(DELETE)
                 if not DELETE:
                     match search_type:
                         case "Users":
@@ -820,7 +818,6 @@ def post_mod_page_search(
                             response = data_man.find_orphend_data(Rating())
                     else:
                         response = data_man.get_ratings_from_user(data_man.get_object_by_id(uid_search, User()))
-                        print(data_man.get_object_by_id(uid_search, User()))
                 case _:
                     return templates.TemplateResponse(
                     "mod_page.html",
