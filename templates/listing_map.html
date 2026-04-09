@@ -271,7 +271,7 @@
         const listings = JSON.parse(document.getElementById("listingsData").textContent);
 
         // ── Map init ──
-        const map = L.map('map').setView([41.505, -81.605], 15);
+        const map = L.map('map').setView([41.505, -81.605], 13.5);
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -323,7 +323,7 @@
                     </div>
                     <div class="popup-price">$${listing.Price}/mo</div>
                 </div>
-                <a class="popup-link" href="/listing/${listing.ListingID}">View Listing →</a>`;
+                <a class="popup-link" href="/listing/${listing.ListingID}" style="color:white;">View Listing →</a>`;
 
             const marker = L.marker([listing.CoordinateLat, listing.CoordinateLong], { icon: listingIcon })
                 .bindPopup(popup)
