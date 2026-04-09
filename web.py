@@ -46,7 +46,7 @@ def add_user(username: str, password: str) -> tuple[bool, str]:
     **not cached**
     """
     if not username.endswith("@case.edu"):
-        return False, "Username must end with @case.edu"
+        return True, "Username must end with @case.edu"
 
     data_man.connect_to_database()
 
@@ -93,6 +93,7 @@ def make_all_listing_data(listings: list[Listing]) -> list:
     """
     uses cached data to make all listing data
     """
+    data_man.update_all_average_ratings()
     listing_data = []
     for listing in listings:
         if f"listing_{listing.ListingID}" in cache_man.all_refrences: 
@@ -122,8 +123,6 @@ def make_all_listing_data(listings: list[Listing]) -> list:
 def make_specific_listing_data(listing: Listing):
     # meta listing creation
     meta_listing = listing.as_dict()
-    if data_man.check_for_average_rating(listing):
-        data_man.update_average_rating(listing) # makes it
     comments = data_man.get_comments_from_listing(listing)
     ar = data_man.get_average_rating_from_listing(listing)
     
@@ -354,6 +353,7 @@ def create_listing(
 
 
     data_man.add_object(new_listing)
+    # average rating dosnt exist yet, make it
     data_man.update_average_rating(Listing(listing_id))
 
     # cache it
