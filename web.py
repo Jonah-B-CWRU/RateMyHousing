@@ -584,24 +584,25 @@ def view_listing_map(request: Request):
 
 @app.get("/mod_page")
 def view_mod_page(request: Request):
-    # to be replaced after merge
-    username = request.cookies.get("username")
-    if not username:
+    seshid = request.cookies.get("session_id")
+
+    # Check if logged in
+    if seshid not in known_users:
         return templates.TemplateResponse(
             "redirect.html",
             {"request": request, "message": "You must log in.", "target_url": "/login"}
         )
-    if request.cookies.get("modkey") != None:
-        data_man.connect_to_database()
-        user = data_man.get_user_with_username(username)
-        if user.UserID.encode('utf-8').hex() == request.cookies.get("modkey"):
-            return templates.TemplateResponse(
-                "mod_page.html",
-                {
-                    "request": request
-                }
-            )
-        print(f"invalid mod key, correct key is {user.UserID.encode('utf-8').hex()}")
+
+    user = known_users[seshid]
+
+    # Check mod permissions
+    modkey = request.cookies.get("modkey")
+    if modkey and user.UserID.encode('utf-8').hex() == modkey:
+        return templates.TemplateResponse(
+            "mod_page.html",
+            {"request": request}
+        )
+
     return RedirectResponse(url="/dashboard")
 @app.post("/mod_page")
 def post_mod_page_search(
@@ -630,12 +631,15 @@ def post_mod_page_search(
 
 ):
     # to be replaced after merge
-    username = request.cookies.get("username")
-    if not username:
+    seshid = request.cookies.get("session_id")
+
+    if seshid not in known_users:
         return RedirectResponse(url="/dashboard")
-    if request.cookies.get("modkey") != None:
+    
+    user = known_users[seshid]
+
+    if request.cookies.get("modkey") is not None:
         data_man.connect_to_database()
-        user = data_man.get_user_with_username(username)
         if user.UserID.encode('utf-8').hex() == request.cookies.get("modkey"):
             if ISPUT:
                 print(DELETE)

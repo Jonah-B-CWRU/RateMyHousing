@@ -1,266 +1,695 @@
 <!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Mod Tools</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mod Tools - Rate My Housing</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
     <style>
-        .navbar {
-            top: 0;
-            width: 100%;
-            overflow: auto;
-            position: fixed;
-            border-bottom: 3px solid black;
-            padding-bottom: 8px;
-            background: white;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f8;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-        .content {
-            margin-top: 3em;
-            padding: 16px;
-        }
-        .disabled_text {
-            color: #868686;
-        }
-        .infobox {
-            border-bottom: 1px solid gray;
-            height: 4em;
+
+        /* ── Topbar ── */
+        .topbar {
+            background: linear-gradient(135deg, #4a5fd9 0%, #5a3d99 100%);
+            padding: 0 24px;
+            height: 56px;
             display: flex;
             align-items: center;
-            overflow-x: scroll;
-            transform: translateX(-1em);
-            width: 100%;
+            justify-content: space-between;
+            box-shadow: 0 2px 12px rgba(74,95,217,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            flex-shrink: 0;
         }
-        .infoitem {
-            margin-right: 1em;
+
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+
+        .topbar-brand {
+            color: white;
+            font-weight: 700;
+            font-size: 17px;
+            text-decoration: none;
         }
-        .warning {
-            text-decoration: underline solid rgb(255, 115, 0);
+
+        .mod-badge {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .row {
+
+        .back-btn {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: background 0.15s;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.15); }
+
+        /* ── Search bar ── */
+        .searchbar {
+            background: white;
+            border-bottom: 1px solid #e0e4f0;
+            padding: 12px 24px;
             display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
         }
-        .column {
-            flex: 50%;
-            padding: 4px;
-            max-width: 75%;
+
+        .searchbar label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
         }
-        .commentcontent {
+
+        .searchbar select,
+        .searchbar input[type="text"] {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #333;
+            background: white;
+            transition: border-color 0.2s;
+        }
+
+        .searchbar select:focus,
+        .searchbar input[type="text"]:focus {
+            outline: none;
+            border-color: #4a5fd9;
+        }
+
+        .searchbar select:disabled,
+        .searchbar input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .search-submit {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #4a5fd9, #5a3d99);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .search-submit:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(74,95,217,0.35); }
+        .search-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .orph-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #777;
+        }
+
+        .orph-wrap input[type=checkbox] { accent-color: #4a5fd9; width: 15px; height: 15px; }
+
+        /* ── Main layout ── */
+        .main {
+            display: flex;
+            flex: 1;
             overflow: hidden;
+            height: calc(100vh - 113px);
+        }
+
+        /* ── Records panel ── */
+        .records-panel {
+            width: 55%;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border-right: 1px solid #e0e4f0;
+        }
+
+        .panel-empty {
+            text-align: center;
+            color: #aaa;
+            padding: 48px 20px;
+            font-size: 15px;
+        }
+
+        /* ── Record cards ── */
+        .record-card {
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e8eaf0;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: box-shadow 0.15s, border-color 0.15s;
+            cursor: default;
+        }
+
+        .record-card:hover { box-shadow: 0 3px 12px rgba(74,95,217,0.1); border-color: #c5ccf0; }
+
+        .edit-btn {
+            flex-shrink: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            border: none;
+            background: #f0f2ff;
+            color: #4a5fd9;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+        }
+        .edit-btn:hover { background: #d8dcff; }
+
+        .record-fields {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .field-group { display: flex; flex-direction: column; min-width: 0; }
+
+        .field-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 2px;
+        }
+
+        .field-value {
+            font-size: 13px;
+            color: #333;
+            font-weight: 500;
             white-space: nowrap;
+            overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 10em;
+            max-width: 180px;
         }
-        .commentcontent:hover {
-            text-decoration: underline dotted skyblue;
+
+        .field-value.truncate {
+            max-width: 120px;
+            cursor: help;
+            text-decoration: underline dotted #aaa;
         }
+
+        .flag-badge {
+            display: inline-block;
+            background: #fff3e0;
+            color: #e65100;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            border: 1px solid #ffcc80;
+        }
+
+        /* ── Editor panel ── */
+        .editor-panel {
+            width: 45%;
+            overflow-y: auto;
+            padding: 20px;
+            background: white;
+        }
+
+        .editor-placeholder {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ccc;
+            gap: 12px;
+        }
+
+        .editor-placeholder .icon { font-size: 48px; }
+        .editor-placeholder p { font-size: 15px; }
+
+        .editor-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .editor-form { display: flex; flex-direction: column; gap: 14px; }
+
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .form-group input[type="text"],
+        .form-group textarea {
+            padding: 9px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #333;
+            font-family: inherit;
+            transition: border-color 0.2s;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus { outline: none; border-color: #4a5fd9; }
+
+        .form-group input:disabled,
+        .form-group textarea:disabled { background: #f8f8f8; color: #999; }
+
+        .form-group textarea { resize: vertical; min-height: 70px; }
+
+        .coord-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; }
+
+        .form-actions { display: flex; gap: 10px; margin-top: 8px; }
+
+        .btn-save {
+            flex: 1;
+            padding: 11px;
+            background: linear-gradient(135deg, #4a5fd9, #5a3d99);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .btn-save:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(74,95,217,0.35); }
+
+        .btn-delete {
+            padding: 11px 18px;
+            background: linear-gradient(135deg, #dc2626, #991b1b);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .btn-delete:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(220,38,38,0.35); }
+
+        .map-preview {
+            height: 220px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        #editorMap { height: 100%; width: 100%; }
+
+        .refresh-btn {
+            padding: 9px 12px;
+            background: #f0f2ff;
+            color: #4a5fd9;
+            border: 2px solid #c5ccf0;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .refresh-btn:hover { background: #d8dcff; }
+
+        /* Scrollbars */
+        .records-panel::-webkit-scrollbar,
+        .editor-panel::-webkit-scrollbar { width: 5px; }
+        .records-panel::-webkit-scrollbar-thumb,
+        .editor-panel::-webkit-scrollbar-thumb { background: #d0d4e8; border-radius: 4px; }
     </style>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""></script>
 </head>
 <body>
-    <div class="navbar">
-        <b>Mod Tools</b>
-        <form action="/mod_page" method="POST">
-            Search: <select id="search_type" onchange="check_content_search_valid(this)" style="margin-right:15px" name="search_type">
-                <option></option>
-                <option>Users</option>
-                <option>Comments</option>
-                <option>Listings</option>
-                <!-- <option>Ratings</option> -->
-            </select>
-            <label stlye="display:inline" class="disabled_text" title="For Listings, this is the address" id="orph_label">
-                Orphaned Data?
-            </label>
-            <input type="checkbox" id="get_orphaned" disabled onchange="check_content_search_valid(document.getElementById('search_type'))" name="get_orphaned"/>
-            <input id="uid_search" placeholder="User ID" name="uid_search" disabled/>
-            <!-- Unhide lines when content search implemented -->
-            <input id="content_search" placeholder="Content" name="content_search" style="display:none;" disabled/>
-                <label style="display:inline;cursor:help; display:none; " class="disabled_text" title="For Listings, this is the address&#010For Ratings, this is ListingID" id="help_label">(?)</label>
-            <input style="margin-left:25px" id="submit" type="submit" disabled/>
-        </form>
+
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="/" class="topbar-brand">🏠 Rate My Housing</a>
+            <span class="mod-badge">⚙ Mod Tools</span>
+        </div>
+        <a href="/dashboard" class="back-btn">← Dashboard</a>
     </div>
-    <div class="content">
-        <div class="row">
-            <div class="column">
-                {% if content %}
+
+    <!-- Search bar -->
+    <form class="searchbar" action="/mod_page" method="POST">
+        <label>Search:</label>
+        <select id="search_type" name="search_type" onchange="onTypeChange(this)">
+            <option value="">— Select type —</option>
+            <option>Users</option>
+            <option>Comments</option>
+            <option>Listings</option>
+        </select>
+
+        <input id="uid_search" type="text" name="uid_search" placeholder="User ID" disabled>
+        <input id="content_search" type="text" name="content_search" placeholder="Content / Address" disabled style="display:none;">
+
+        <span class="orph-wrap">
+            <input type="checkbox" id="get_orphaned" name="get_orphaned" disabled onchange="onTypeChange(document.getElementById('search_type'))">
+            <label for="get_orphaned" id="orph_label" style="opacity:0.4;">Orphaned only?</label>
+        </span>
+
+        <button type="submit" id="submit" class="search-submit" disabled>Search</button>
+    </form>
+
+    <div class="main">
+        <!-- Records list -->
+        <div class="records-panel">
+            {% if content %}
                 {% for record in content %}
-                    {% if content_type == "Users" %}
-                        <div class="infobox">
-                            <button type="button" onclick="generate_user_form('{{record.UserID}}','{{record.Username}}','{{record.Email}}','{{record.ismod}}','{{record.flag}}')">✎</button>
-                            <div class="infoitem"><b>Username:&nbsp;</b>{{record.Username}}</div>
-                            <div class="infoitem"><b>Email:&nbsp;</b>{{record.Email}}</div>
-                            <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
-                            <div class="infoitem"><b>Moderator?&nbsp;</b>{{record.ismod}}</div>
-                            {% if record.flag %} <div class="infoitem"><b>Flag&nbsp;</b><div class="warning">{{record.flag}}</div></div> {% endif %}
+
+                {% if content_type == "Users" %}
+                <div class="record-card">
+                    <button class="edit-btn" title="Edit" onclick="openUserEditor('{{record.UserID}}','{{record.Username}}','{{record.Email}}','{{record.ismod}}','{{record.flag}}')">✎</button>
+                    <div class="record-fields">
+                        <div class="field-group">
+                            <span class="field-label">Username</span>
+                            <span class="field-value">{{record.Username}}</span>
+                        </div>
+                        <div class="field-group">
+                            <span class="field-label">Email</span>
+                            <span class="field-value">{{record.Email}}</span>
+                        </div>
+                        <div class="field-group">
+                            <span class="field-label">User ID</span>
+                            <span class="field-value" style="font-size:11px;color:#999;">{{record.UserID}}</span>
+                        </div>
+                        <div class="field-group">
+                            <span class="field-label">Mod?</span>
+                            <span class="field-value">{{record.ismod}}</span>
+                        </div>
+                        {% if record.flag %}
+                        <div class="field-group">
+                            <span class="field-label">Flag</span>
+                            <span class="flag-badge">{{record.flag}}</span>
                         </div>
                         {% endif %}
-                        {% if content_type == "Comments" %}
-                        <div class="infobox" style="max-height: 10em;">
-                            <button type="button" onclick="generate_comment_form('{{record.CommentId}}', '{{record.ListingID}}', '{{record.UserID}}', '{{record.Content}}')">✎</button>
-                            <div class="infoitem"><b>Comment ID:&nbsp;</b>{{record.CommentId}}</div>
-                            <div class="infoitem"><b>Listing ID:&nbsp;</b>{{record.ListingID}}</div>
-                            <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
-                            <div class="infoitem"><b>Content:&nbsp;</b>
-                                <div class="commentcontent" title="{{record.Content}}"> {{record.Content}} </div>
-                            </div>
-                            <div class="infoitem"><b>Created At:&nbsp;</b>{{record.CreatedAt}}</div>
-                        </div>
-                        {% endif %}
-                        {% if content_type == "Listings" %}
-                        <div class="infobox">
-                            <button
-                                type="button"
-                                onclick="generate_listing_form('{{record.ListingID}}','{{record.LLID}}','{{record.Address}}','{{record.Description}}','{{record.CoordinateLat}}','{{record.CoordinateLong}}','{{record.Beds}}','{{record.Baths}}','{{record.SquareFootage}}','{{record.Price}}')"
-                            > ✎ </button>
-                            <div class="infoitem"><b>Listing ID:&nbsp;</b>{{record.ListingID}}</div>
-                            <div class="infoitem"><b>Landlord:&nbsp;</b>{{record.LLID}}</div>
-                            <div class="infoitem"><b>Address:&nbsp;</b>{{record.Address}}</div>
-                            <!-- <div class="infoitem"><b>Beds/Baths:&nbsp;</b>{{record.UserID}}</div> -->
-                        </div>
-                    {% endif %}
-                    {% if content_type == "Ratings" %}
-                    <div class="infobox">
-                            <button type="button" onclick="">✎</button>
-                            <div class="infoitem"><b>User ID:&nbsp;</b>{{record.UserID}}</div>
-                            <div class="infoitem"><b>ListingID:&nbsp;</b>{{record.ListingID}}</div>
-                            <div class="infoitem"><b>Rating:&nbsp;</b>{{record.Rating}}</div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-                {% else %}
-                {% if content_type %} No matching records found. {% endif %} Input a search to view records
+                    </div>
+                </div>
                 {% endif %}
+
+                {% if content_type == "Comments" %}
+                <div class="record-card">
+                    <button class="edit-btn" title="Edit" onclick="openCommentEditor('{{record.CommentId}}','{{record.ListingID}}','{{record.UserID}}','{{record.Content}}')">✎</button>
+                    <div class="record-fields">
+                        <div class="field-group">
+                            <span class="field-label">Comment ID</span>
+                            <span class="field-value" style="font-size:11px;color:#999;">{{record.CommentId}}</span>
+                        </div>
+                        <div class="field-group">
+                            <span class="field-label">User ID</span>
+                            <span class="field-value" style="font-size:11px;color:#999;">{{record.UserID}}</span>
+                        </div>
+                        <div class="field-group">
+                            <span class="field-label">Content</span>
+                            <span class="field-value truncate" title="{{record.Content}}">{{record.Content}}</span>
+                        </div>
+                        <div class="field-group">
+                            <span class="field-label">Created</span>
+                            <span class="field-value">{{record.CreatedAt}}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if content_type == "Listings" %}
+                <div class="record-card">
+                    <button class="edit-btn" title="Edit" onclick="openListingEditor('{{record.ListingID}}','{{record.LLID}}','{{record.Address}}','{{record.Description}}','{{record.CoordinateLat}}','{{record.CoordinateLong}}','{{record.Beds}}','{{record.Baths}}','{{record.SquareFootage}}','{{record.Price}}')">✎</button>
+                    <div class="record-fields">
+                        <div class="field-group">
+                            <span class="field-label">Listing ID</span>
+                            <span class="field-value" style="font-size:11px;color:#999;">{{record.ListingID}}</span>
+                        </div>
+                        <div class="field-group">
+                            <span class="field-label">Address</span>
+                            <span class="field-value">{{record.Address}}</span>
+                        </div>
+                        <div class="field-group">
+                            <span class="field-label">Landlord</span>
+                            <span class="field-value">{{record.LLID}}</span>
+                        </div>
+                        <div class="field-group">
+                            <span class="field-label">Price</span>
+                            <span class="field-value">${{record.Price}}/mo</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% endfor %}
+            {% else %}
+                <div class="panel-empty">
+                    {% if content_type %}
+                        No matching records found.
+                    {% else %}
+                        Use the search bar above to find records.
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Editor panel -->
+        <div class="editor-panel">
+            <div class="editor-placeholder" id="editorPlaceholder">
+                <div class="icon">✎</div>
+                <p>Select a record to edit</p>
             </div>
-            <div class="column" style="background-color: whitesmoke; height: 80vh; position: sticky; top:4em;">
-                <div id="modify_record" style="place-items: center;"><h2 style="text-align: center;">Select a record to view actions</h2></div>
-            </div>
+            <div id="editorContent" style="display:none;"></div>
         </div>
     </div>
-    
+
     <script>
-        var map = null;
-        function check_content_search_valid(dropdown) {
-            const uid_search = document.getElementById("uid_search");
-            const content_search = document.getElementById("content_search");
-            const get_orphaned = document.getElementById("get_orphaned");
-            const submit = document.getElementById("submit");
-            const help_label = document.getElementById("help_label");
-            const orph_label = document.getElementById("orph_label");
-            if(dropdown.value === "") {
-                submit.disabled = true;
+        var editorMap = null;
+
+        // ── Search bar logic ──
+        function onTypeChange(dropdown) {
+            const uid = document.getElementById('uid_search');
+            const content = document.getElementById('content_search');
+            const orph = document.getElementById('get_orphaned');
+            const orphLabel = document.getElementById('orph_label');
+            const submit = document.getElementById('submit');
+            const val = dropdown.value;
+
+            submit.disabled = !val;
+
+            if (orph.checked) {
+                uid.disabled = true;
+                content.disabled = true;
+                return;
+            }
+
+            if (val === 'Users') {
+                uid.disabled = false;
+                content.disabled = true; content.style.display = 'none';
+                orph.disabled = true; orphLabel.style.opacity = 0.4;
+            } else if (val === 'Listings') {
+                uid.disabled = false;
+                content.disabled = false; content.style.display = '';
+                orph.disabled = true; orphLabel.style.opacity = 0.4;
+            } else if (val === 'Comments') {
+                uid.disabled = false;
+                content.disabled = false; content.style.display = '';
+                orph.disabled = false; orphLabel.style.opacity = 1;
             } else {
-                submit.disabled = false;
-            }
-            if(!get_orphaned.checked){
-                if(dropdown.value === "Users") {
-                    uid_search.disabled = false;
-                    content_search.disabled = true;
-                    get_orphaned.disabled = true;
-                    orph_label.classList.add("disabled_text")
-                    help_label.classList.add("disabled_text")
-                } else if(dropdown.value === "Listings") {
-                    uid_search.disabled = false;
-                    content_search.disabled = false;
-                    get_orphaned.disabled = true;
-                    orph_label.classList.add("disabled_text")
-                    help_label.classList.remove("disabled_text")
-                } else {
-                    uid_search.disabled = false;
-                    content_search.disabled = false;
-                    get_orphaned.disabled = false;
-                    orph_label.classList.remove("disabled_text")
-                    help_label.classList.remove("disabled_text")
-                }
-            } else {
-                uid_search.disabled = true;
-                content_search.disabled = true;
-                help_label.classList.add("disabled_text")
+                uid.disabled = true;
+                content.disabled = true;
+                orph.disabled = true; orphLabel.style.opacity = 0.4;
             }
         }
-        
-        function generate_user_form(userid, username, email, ismod, flag) {
-            document.getElementById("modify_record").innerHTML = /*html*/`
-                <form action="/mod_page" method="POST">
-                    <input type="hidden" id="ISPUT" name="ISPUT" value="True">
-                    <input type="hidden" id="search_type" name="search_type" value="Users">
-                    <input type="hidden" name="u_uid" value="${userid}"/>
-                    <input type="hidden" name="u_usn" value="${username}"/>
-                    <label>User ID:&nbsp;</label> <input type="text" value="${userid}" disabled/><br/>
-                    <label>Username:&nbsp;</label><input type="text" value="${username}" disabled/><br/>
-                    <label>Email:&nbsp;</label>   <input type="text" name="u_eml" value="${email}"/><br/>
-                    <label>Flag:&nbsp;</label>    <input type="text" name="u_flg" value="${flag}"/><br/>
-                    <label>Delete?&nbsp;</label>  <input type="checkbox" name="DELETE"/><br/>
-                    <input type="submit"/>
-                </form>
-            `
+
+        function showEditor(html) {
+            document.getElementById('editorPlaceholder').style.display = 'none';
+            const ec = document.getElementById('editorContent');
+            ec.style.display = 'block';
+            ec.innerHTML = html;
         }
-        function generate_comment_form(commentid, listingid, userid, content) {
-            document.getElementById("modify_record").innerHTML = /*html*/`
-                <form action="/mod_page" method="POST">
-                    <input type="hidden" id="ISPUT" name="ISPUT" value="True">
-                    <input type="hidden" id="search_type" name="search_type" value="Comments">
-                    <input type="hidden" name="c_cid" value="${commentid}"/>
-                    <label>Comment ID:&nbsp;</label><input type="text" id="c_cid" value="${commentid}" disabled/><br/>
-                    <label>Listing ID:&nbsp;</label><input type="text" id="c_lid" value="${listingid}" disabled/><br/>
-                    <label>User ID:&nbsp;</label>   <input type="text" id="c_uid" value="${userid}" disabled/><br/>
-                    <label>Content:&nbsp;</label> <textarea rows="5" cols="40" id="c_cnt" disabled>${content}</textarea><br/>
-                    <label>Delete?&nbsp;</label>  <input type="checkbox" name="DELETE"/><br/>
-                    <input id="submit" type="submit"/>
+
+        // ── User editor ──
+        function openUserEditor(userid, username, email, ismod, flag) {
+            showEditor(`
+                <div class="editor-title">✎ Edit User</div>
+                <form class="editor-form" action="/mod_page" method="POST">
+                    <input type="hidden" name="ISPUT" value="True">
+                    <input type="hidden" name="search_type" value="Users">
+                    <input type="hidden" name="u_uid" value="${userid}">
+                    <input type="hidden" name="u_usn" value="${username}">
+                    <div class="form-group">
+                        <label>User ID</label>
+                        <input type="text" value="${userid}" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" value="${username}" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="text" name="u_eml" value="${email}">
+                    </div>
+                    <div class="form-group">
+                        <label>Flag</label>
+                        <input type="text" name="u_flg" value="${flag}" placeholder="Leave blank to clear">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-save">Save Changes</button>
+                        <button type="submit" name="DELETE" value="on" class="btn-delete" onclick="return confirm('Delete this user?')">Delete</button>
+                    </div>
                 </form>
-            `
+            `);
         }
-        function generate_listing_form(listingid,llid,address,description,lat,long,beds,baths,area,price) {
-            document.getElementById("modify_record").innerHTML = /*html*/`
-                <form action="/mod_page" method="POST">
-                    <input type="hidden" id="ISPUT" name="ISPUT" value="True">
-                    <input type="hidden" id="search_type" name="search_type" value="Listings">
-                    <input type="hidden" name="l_lid" value="${listingid}"/>
-                    <label>Listing ID:&nbsp;</label><input type="text" id="l_lid" value="${listingid}" disabled/><br/>
-                    <label>Landlord ID:&nbsp;</label><input type="text" id="l_lld" value="${llid}"/><br/>
-                    <label>Address&nbsp;</label><textarea type="text" name="l_adr" rows="1" cols="60">${address}</textarea><br/>
-                    <label>Description&nbsp;</label><textarea type="text" name="l_dsc" rows="1" cols="60">${description}</textarea><br/>
-                    <label>Lat:&nbsp;</label><input type="text" name="l_lat" id="l_lat" value="${lat}"/>
-                    <label>Long:&nbsp;</label><input type="text" name="l_lon" id="l_lon" value="${long}"/>
-                    <button type="button" onclick="preview_listing_map()">🗘</button><br/>
-                    <div id="map" style="height:25em;width:45em;background:black;">hi</div><br/>
-                    <label>Beds:&nbsp;</label><input type="text" name="l_bed" value="${beds}"/>
-                    <label>Baths:&nbsp;</label><input type="text" name="l_bat" value="${baths}"/>
-                    <label>Square Feet:&nbsp;</label><input type="text" name="l_sft" value="${area}"/><br/>
-                    <label>Price:&nbsp;</label><input type="text" name="l_rnt" value="${price}"/><br/>
-                    <label>Delete?&nbsp;</label>  <input type="checkbox" name="DELETE"/><br/>
-                    <input id="submit" type="submit"/>
+
+        // ── Comment editor ──
+        function openCommentEditor(commentid, listingid, userid, content) {
+            showEditor(`
+                <div class="editor-title">✎ Edit Comment</div>
+                <form class="editor-form" action="/mod_page" method="POST">
+                    <input type="hidden" name="ISPUT" value="True">
+                    <input type="hidden" name="search_type" value="Comments">
+                    <input type="hidden" name="c_cid" value="${commentid}">
+                    <div class="form-group">
+                        <label>Comment ID</label>
+                        <input type="text" value="${commentid}" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Listing ID</label>
+                        <input type="text" value="${listingid}" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>User ID</label>
+                        <input type="text" value="${userid}" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Content</label>
+                        <textarea disabled>${content}</textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" name="DELETE" value="on" class="btn-delete" onclick="return confirm('Delete this comment?')">Delete Comment</button>
+                    </div>
                 </form>
-            `
-            if(lat == 0 && long == 0) {map = L.map('map').setView([41.505, -81.605], 14);}
-            else {map = L.map('map').setView([lat, long], 14);}
-            
-            L.tileLayer(
-                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                {
-                    maxZoom: 19,
-                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                }
-            ).addTo(map);
-            if(lat != 0 && long != 0) {L.marker([lat, long]).addTo(map)}
+            `);
         }
-        function preview_listing_map() {
-            const lat = document.getElementById("l_lat").value
-            const lon = document.getElementById("l_lon").value
-            if(lat != 0 && lon != 0) {
-                map.remove()
-                map = L.map('map').setView([lat, lon], 14);
-                L.tileLayer(
-                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    {
-                        maxZoom: 19,
-                        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    }
-                ).addTo(map);
-                L.marker([lat, lon]).addTo(map)}
+
+        // ── Listing editor ──
+        function openListingEditor(listingid, llid, address, description, lat, lon, beds, baths, sqft, price) {
+            showEditor(`
+                <div class="editor-title">✎ Edit Listing</div>
+                <form class="editor-form" action="/mod_page" method="POST">
+                    <input type="hidden" name="ISPUT" value="True">
+                    <input type="hidden" name="search_type" value="Listings">
+                    <input type="hidden" name="l_lid" value="${listingid}">
+                    <div class="form-group">
+                        <label>Listing ID</label>
+                        <input type="text" value="${listingid}" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Landlord ID</label>
+                        <input type="text" name="l_lld" value="${llid}">
+                    </div>
+                    <div class="form-group">
+                        <label>Address</label>
+                        <textarea name="l_adr" rows="2">${address}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="l_dsc" rows="3">${description}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Coordinates</label>
+                        <div class="coord-row">
+                            <input type="text" name="l_lat" id="l_lat" value="${lat}" placeholder="Latitude">
+                            <input type="text" name="l_lon" id="l_lon" value="${lon}" placeholder="Longitude">
+                            <button type="button" class="refresh-btn" onclick="refreshEditorMap()" title="Preview coordinates">🗘</button>
+                        </div>
+                    </div>
+                    <div class="map-preview">
+                        <div id="editorMap"></div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+                        <div class="form-group">
+                            <label>Beds</label>
+                            <input type="text" name="l_bed" value="${beds}">
+                        </div>
+                        <div class="form-group">
+                            <label>Baths</label>
+                            <input type="text" name="l_bat" value="${baths}">
+                        </div>
+                        <div class="form-group">
+                            <label>Sq Ft</label>
+                            <input type="text" name="l_sft" value="${sqft}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Price / Month ($)</label>
+                        <input type="text" name="l_rnt" value="${price}">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-save">Save Changes</button>
+                        <button type="submit" name="DELETE" value="on" class="btn-delete" onclick="return confirm('Delete this listing?')">Delete</button>
+                    </div>
+                </form>
+            `);
+
+            // init map
+            if (editorMap) { editorMap.remove(); editorMap = null; }
+            const initLat = parseFloat(lat) || 41.505;
+            const initLon = parseFloat(lon) || -81.605;
+            editorMap = L.map('editorMap').setView([initLat, initLon], 15);
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(editorMap);
+            if (parseFloat(lat) && parseFloat(lon)) {
+                L.marker([parseFloat(lat), parseFloat(lon)]).addTo(editorMap);
             }
-        function generate_rating_form() {}
-        
+        }
+
+        function refreshEditorMap() {
+            const lat = parseFloat(document.getElementById('l_lat').value);
+            const lon = parseFloat(document.getElementById('l_lon').value);
+            if (!lat || !lon) return;
+            if (editorMap) { editorMap.remove(); editorMap = null; }
+            editorMap = L.map('editorMap').setView([lat, lon], 15);
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(editorMap);
+            L.marker([lat, lon]).addTo(editorMap);
+        }
     </script>
-    
 </body>
+</html>
