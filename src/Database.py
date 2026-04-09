@@ -736,7 +736,7 @@ class database_manager:
     def update_all_average_ratings(self):
         """Updates the average rating of all listings
 
-        Uses 3+L queries.
+        Uses 3 queries. + up to L updates
         """
         # i can do this in 3
         ratings = self.get_all_from(Rating())
@@ -767,7 +767,8 @@ class database_manager:
                 sum += rating.Rating
             average = sum/count if count != 0 else 0
             if l.ListingID in known_averages:
-                self.update_object(AverageRating(l.ListingID, average, count))
+                if average != known_averages[l.ListingID].AverageRating:
+                    self.update_object(AverageRating(l.ListingID, average, count))
             else:
                 self.add_object(AverageRating(l.ListingID, average, count))
             
