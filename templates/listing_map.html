@@ -14,7 +14,9 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            min-height: 100vh;
+            height: 100vh;             
+            overflow: hidden;          
+
             background: linear-gradient(135deg, #4a5fd9 0%, #5a3d99 100%);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -135,8 +137,7 @@
         .main {
             flex: 1;
             display: flex;
-            overflow: hidden;
-            height: calc(100vh - 111px);
+            overflow: hidden;   /* keeps map + sidebar contained */
         }
 
         /* ── Sidebar ── */
@@ -146,7 +147,10 @@
             background: rgba(255,255,255,0.06);
             backdrop-filter: blur(6px);
             border-right: 1px solid rgba(255,255,255,0.12);
+
             overflow-y: auto;
+            height: 100%;
+
             padding: 12px;
             display: flex;
             flex-direction: column;
@@ -248,7 +252,7 @@
         </div>
     </div>
 
-    <div class="map-controls"></div>
+    <div class="map-controls">
         <div class="price-filter">
             <label>Max Price:</label>
             <input type="range" id="priceSlider" min="0" max="5000" step="100" value="5000"
