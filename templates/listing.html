@@ -111,7 +111,7 @@
 <div class="main-card">
     <div class="card-top">
         <div class="listing-title-row">
-            <div class="listing-address">📍 {{ listing.ListingLocation }}</div>
+            <div class="listing-address">🏠 {{ listing.Address }}</div>
             <span class="price-badge">${{ listing.Price }}/mo</span>
         </div>
 
@@ -124,6 +124,7 @@
 
         <div class="listing-ids">
             <span>Listing ID: <strong>{{ listing.ListingID }}</strong></span>
+            <span><strong>Landlord Email:</strong> {{ listing.LLEmail }}</span>
             <span>Landlord ID: <strong>{{ listing.LLID }}</strong></span>
             <div style="display: none;" id="coordinates">{{listing.CoordinateLong}},{{listing.CoordinateLat}}</div>
         </div>
