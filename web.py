@@ -122,6 +122,7 @@ def make_all_listing_data(listings: list[Listing]) -> list:
 def make_specific_listing_data(listing: Listing):
     # meta listing creation
     meta_listing = listing.as_dict()
+
     if data_man.check_for_average_rating(listing):
         data_man.update_average_rating(listing) # makes it
     comments = data_man.get_comments_from_listing(listing)
@@ -314,6 +315,8 @@ def create_listing(
         )
     user = known_users[seshid]
     llid = user.UserID
+    LLName=user.Username
+    LLEmail=user.Email
     data_man.connect_to_database()
     listing_id = secrets.token_hex(8)
     created_at = datetime.now(timezone.utc).isoformat() + "Z"
@@ -331,6 +334,8 @@ def create_listing(
         new_listing = Listing(
             listing_id,
             llid,
+            LLName,
+            LLEmail,
             address,
             beds,
             baths,
@@ -345,6 +350,8 @@ def create_listing(
         new_listing = Listing(
             listing_id,
             llid,
+            LLName,
+            LLEmail,
             address,
             beds,
             baths,
@@ -545,7 +552,6 @@ def view_one_listing(request: Request, listingid: str):
             listing = data_man._get_document_using_id("Listing", Listing(), listingid)[0]
             listing_object = Listing.from_dict(listing)
             meta_listing, comments_with_users = make_specific_listing_data(listing_object)
-
         # pack into cached data
             data = {"meta_listing":meta_listing,"comments":comments_with_users}
             cache_man.add_to_cache(data,f"listing_{listingid}")
@@ -556,15 +562,6 @@ def view_one_listing(request: Request, listingid: str):
         # pack into cached data
         data = {"meta_listing":meta_listing,"comments":comments_with_users}
         cache_man.add_to_cache(data,f"listing_{listingid}")
-    
-    return templates.TemplateResponse(
-        "listing.html",
-            {
-                "request": request,
-                "listing": meta_listing,
-                "comments": comments_with_users
-            }
-    )
     
         
     return templates.TemplateResponse(
