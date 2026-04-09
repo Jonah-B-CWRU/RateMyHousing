@@ -89,6 +89,27 @@
         .timestamp { font-size: 0.8em; color: #666; margin-top: 2px; }
         .no-comments { text-align: center; color: #bbb; padding: 24px 0; font-size: 15px; }
         .no-listing { max-width: 400px; margin: 80px auto; text-align: center; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+        .route-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #4a5fd9 0%, #5a3d99 100%);
+            color: white;
+            font-size: 11px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            flex-shrink: 0;
+            padding-left: 6px; /* optically centers the triangle */
+        }
+        .route-btn:hover {
+            transform: scale(1.12);
+            box-shadow: 0 3px 10px rgba(74, 95, 217, 0.45);
+        }
+        
     </style>
     {% if listing.CoordinateLat and listing.CoordinateLat != 0 %}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -140,14 +161,14 @@
             <div class="distance-box-row">
                 <div class="distance-summary-box">
                     <h4>Walking Times</h4>
-                    <div><button onclick="loadRoute(0)">▷</button> Main Quad: <span id="mq_t">...</span> mins</div>
-                    <div><button onclick="loadRoute(1)">▷</button> Tinkham Veale: <span id="tv_t">...</span> mins</div>
-                    <div><button onclick="loadRoute(2)">▷</button> Mather Quad: <span id="hq_t">...</span> mins</div>
+                    <div><button class="route-btn" onclick="loadRoute(0)">▷</button> Main Quad: <span id="mq_t">...</span> mins</div>
+                    <div><button class="route-btn" onclick="loadRoute(1)">▷</button> Tinkham Veale: <span id="tv_t">...</span> mins</div>
+                    <div><button class="route-btn" onclick="loadRoute(2)">▷</button> Mather Quad: <span id="hq_t">...</span> mins</div>
                 </div>
                 <div class="distance-summary-box">
                     <h4>Driving Times</h4>
-                    <div><button onclick="loadRoute(3)">▷</button> North Garage: <span id="ng_t">...</span> mins</div>
-                    <div><button onclick="loadRoute(4)">▷</button> Murray Hill Lot: <span id="mh_t">...</span> mins</div>
+                    <div><button class="route-btn" onclick="loadRoute(3)">▷</button> North Garage: <span id="ng_t">...</span> mins</div>
+                    <div><button class="route-btn" onclick="loadRoute(4)">▷</button> Murray Hill Lot: <span id="mh_t">...</span> mins</div>
                 </div>
             </div>
 
