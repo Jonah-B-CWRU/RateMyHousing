@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rate My Housing - Home</title>
@@ -106,16 +107,16 @@
         <p class="welcome-message">Welcome! Please login or create an account to get started.</p>
         
         <div class="nav-links">
-            <a href="/login">Login</a>
-            <a href="/create">Create Account</a>
+            <a href="/node/classct015/8000/login">Login</a>
+            <a href="/node/classct015/8000/create">Create Account</a>
         </div>
         
         {% else %}
         <p class="welcome-message">Welcome back, <strong>{{ name }}</strong>!</p>
         
         <div class="nav-links">
-            <a href="/dashboard" class="dashboard-link">Go to Dashboard</a>
-            <a href="/logout" class="logout-link">Logout</a>
+            <a href="/node/classct015/8000/dashboard" class="dashboard-link">Go to Dashboard</a>
+            <a href="/node/classct015/8000/logout" class="logout-link">Logout</a>
         </div>
         
         {% endif %}

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Listings - Rate My Housing</title>
@@ -223,8 +224,8 @@
     </div>
 
     <div class="top-nav">
-        <a href="/dashboard" class="nav-btn nav-btn-light">← Dashboard</a>
-        <a href="/create_listing" class="nav-btn nav-btn-green">+ New Listing</a>
+        <a href="/node/classct015/8000/dashboard" class="nav-btn nav-btn-light">← Dashboard</a>
+        <a href="/node/classct015/8000/create_listing" class="nav-btn nav-btn-green">+ New Listing</a>
     </div>
 
     {% if listings %}
@@ -268,7 +269,7 @@
                         </select>
                         <button type="submit" class="btn-rate">Submit</button>
                     </form>
-                    <a href="/listing/{{ listing.ListingID }}" class="btn-more">More Info →</a>
+                    <a href="/node/classct015/8000/listing/{{ listing.ListingID }}" class="btn-more">More Info →</a>
                 </div>
             </div>
         {% endfor %}
@@ -277,7 +278,7 @@
     {% else %}
     <div class="empty-state">
         <p>No listings available yet.</p>
-        <a href="/create_listing" class="nav-btn nav-btn-green" style="display:inline-block; margin-top:12px;">+ Add the first listing</a>
+        <a href="/node/classct015/8000/create_listing" class="nav-btn nav-btn-green" style="display:inline-block; margin-top:12px;">+ Add the first listing</a>
     </div>
     {% endif %}
 

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Listing Map - Rate My Housing</title>
@@ -242,13 +243,13 @@
     <script id="listingsData" type="application/json">{{ listings | tojson }}</script>
 
     <div class="topbar">
-        <a href="/" class="topbar-brand">🏠 Rate My Housing</a>
+        <a href="/node/classct015/8000/" class="topbar-brand">🏠 Rate My Housing</a>
         <div class="topbar-nav">
             <span id="listingCount" style="color:rgba(255,255,255,0.7);font-size:13px;"></span>
-            <a href="/listings" class="nav-btn nav-ghost">List View</a>
-            <a href="/compare" class="nav-btn nav-ghost">Compare</a>
-            <a href="/dashboard" class="nav-btn nav-ghost">← Dashboard</a>
-            <a href="/create_listing" class="nav-btn nav-green">+ New Listing</a>
+            <a href="/node/classct015/8000/listings" class="nav-btn nav-ghost">List View</a>
+            <a href="/node/classct015/8000/compare" class="nav-btn nav-ghost">Compare</a>
+            <a href="/node/classct015/8000/dashboard" class="nav-btn nav-ghost">← Dashboard</a>
+            <a href="/node/classct015/8000/create_listing" class="nav-btn nav-green">+ New Listing</a>
         </div>
     </div>
 
@@ -327,7 +328,7 @@
                     </div>
                     <div class="popup-price">$${listing.Price}/mo</div>
                 </div>
-                <a class="popup-link" href="/listing/${listing.ListingID}" style="color:white;">View Listing →</a>`;
+                <a class="popup-link" href="/node/classct015/8000/listing/${listing.ListingID}" style="color:white;">View Listing →</a>`;
 
             const marker = L.marker([listing.CoordinateLat, listing.CoordinateLong], { icon: listingIcon })
                 .bindPopup(popup)

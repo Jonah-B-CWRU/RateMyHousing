@@ -17,7 +17,7 @@ from src.Database import database_manager, User, Password, Comments, Listing, La
 from src.LoginProcessor import PasswordAttempt, get_known_users, update_known_users
 from src.Caching import cache_manager
 import random
-
+import os
 
 
 TAG_GROUPS = {
@@ -27,7 +27,9 @@ TAG_GROUPS = {
     "landlord": ["Responsive Landlord", "Unresponsive Landlord"]
 }
 
-app = FastAPI()
+
+root_path="/node/classct015/8000"
+app = FastAPI(root_path=root_path)
 data_man = database_manager()
 cache_man = cache_manager()
 
@@ -36,9 +38,16 @@ known_users:dict[str,User] = get_known_users()
 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
 
-@app.get('/favicon.ico', include_in_schema=False)
+
+current_file_path = os.path.abspath(__file__)
+project_root = os.path.dirname(current_file_path)
+print(project_root)
+templates_path = os.path.join(project_root, "templates")
+
+templates = Jinja2Templates(directory=templates_path)
+
+@app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     return FileResponse("output.ico")
 
@@ -350,7 +359,7 @@ def login_post(request: Request, username: str = Form(...), password: str = Form
         seshid = secrets.token_hex(16) # massive sesh id for security
         known_users[seshid] = data_man.get_user_with_username(username)
         # injecty into webpage
-        response = RedirectResponse(url="/dashboard", status_code=302)
+        response = RedirectResponse(url="/node/classct015/8000/dashboard", status_code=302)
         response.set_cookie(key="session_id", value=seshid, max_age=86400, httponly=True, samesite="lax") # max age 1 day
         update_known_users(known_users,cache_man)
         usr = data_man.get_user_with_username(username)
@@ -373,7 +382,7 @@ def dashboard(request: Request):
 
 @app.get("/logout")
 def logout(request: Request):
-    response = RedirectResponse(url="/")
+    response = RedirectResponse(url="/node/classct015/8000/")
     seshid = request.cookies.get("session_id")
     if seshid in known_users:
         del known_users[seshid]
@@ -574,7 +583,7 @@ def add_review(
     ref = cache_man.update_cache(data, ref)
     cache_man.all_refrences[f"listing_{listing_id}"] = ref
 
-    return RedirectResponse(url=f"/listing/{listing_id}", status_code=303)
+    return RedirectResponse(url=f"/node/classct015/8000/listing/{listing_id}", status_code=303)
 
 
 @app.post("/add_comment")
@@ -642,7 +651,7 @@ def add_comment(
     ref = cache_man.update_cache(data, ref)
     cache_man.all_refrences[f"listing_{listing_id}"] = ref
 
-    return RedirectResponse(url=f"/listing/{listing_id}", status_code=303)
+    return RedirectResponse(url=f"/node/classct015/8000/listing/{listing_id}", status_code=303)
 
 @app.get("/listing/{listingid}")
 def view_one_listing(request: Request, listingid: str):
@@ -730,7 +739,7 @@ def view_mod_page(request: Request):
             {"request": request}
         )
 
-    return RedirectResponse(url="/dashboard")
+    return RedirectResponse(url="/node/classct015/8000/dashboard")
 @app.post("/mod_page")
 def post_mod_page_search(
     request: Request,
@@ -761,7 +770,7 @@ def post_mod_page_search(
     seshid = request.cookies.get("session_id")
 
     if seshid not in known_users:
-        return RedirectResponse(url="/dashboard")
+        return RedirectResponse(url="/node/classct015/8000/dashboard")
     
     user = known_users[seshid]
 
@@ -843,7 +852,7 @@ def post_mod_page_search(
                     "content": response
                 }
             )
-    return RedirectResponse(url="/dashboard")
+    return RedirectResponse(url="/node/classct015/8000/dashboard")
   
 def validate_tags(selected_tags: list[str]) -> tuple[bool, str]:
     if len(selected_tags) > 4:
