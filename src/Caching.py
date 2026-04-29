@@ -105,6 +105,8 @@ class cache_manager:
             
         
     def add_to_cache(self,data:Any, name:str, timeout_seconds: float = 600.0) -> cache_refrence:
+        """Adds to cache.
+        """
         now = datetime.now()
         timeout = now + timedelta(0,timeout_seconds)
         location = self.cache_location+name
