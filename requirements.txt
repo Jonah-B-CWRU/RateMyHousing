@@ -8,3 +8,4 @@ protobuf
 tzdata
 pytest
 coverage
+pdoc

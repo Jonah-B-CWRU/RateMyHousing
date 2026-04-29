@@ -27,6 +27,7 @@
         # testing
         pytest
         coverage
+        pdoc
       ];
 
       # Create a custom Python environment
