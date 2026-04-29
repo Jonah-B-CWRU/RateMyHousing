@@ -98,7 +98,7 @@ Andew Stappenbeck: Backend, Testing, User Groups
 
 ## Lessons Learned
 
-nothin
+Learned how to collaborate within a group, integrate different languages into a full project. Learned how to use external APIs in the map feature.
 
 ## Auto API Documentation
 
