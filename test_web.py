@@ -128,7 +128,6 @@ def test_view_listings():
 
     with patch.object(web.data_man, "get_all_from", return_value=[mock_listing]), \
          patch.object(web.data_man, "get_comments_from_listing", return_value=[]), \
-         patch.object(web.data_man, "check_for_average_rating", return_value=True), \
          patch.object(web.data_man, "update_average_rating"), \
          patch.object(web.data_man, "get_average_rating_from_listing", return_value=mock_ar):
 
