@@ -1,6 +1,12 @@
 # RateMyHousing
 Created by Jonah Barnett, Aaron Brey, Kent Manion, and Andew Stappenbeck
 
+# Online Hosting
+
+https://ondemand-markov.case.edu/rnode/classct004/46541/proxy/8000
+
+This should stay up until sometime May 2nd
+
 ## Description
 This system is a piece of software that manages Case Western Reserve University housing information and interactions with that information from the landlord and student point of view. Its primary purpose is to connect CWRU students with good housing options by providing key information about each housing option from both an objective and subjective point of view. Combining key base information like amenities and location with student provided experience via comments and individual ratings, the system will compile all the information on a plethora of housing options across the campus. Additionally, landlords can augment this housing basis in order to put their property into the system too. From there, this information will be sorted by the system and presented to users in an effective way that allows them to see and interact with housing options across CWRU, gaining information and insight into housing options and making the CWRU housing process more smooth and efficient for students.
 
