@@ -9,6 +9,7 @@ This system is a piece of software that manages Case Western Reserve University 
 
 ![Component Diagram](Component_Diagram.png)
 
+![Database Diagram](Database_Diagram.png)
 
 ## Tech stack
 
