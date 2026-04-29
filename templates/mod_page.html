@@ -513,7 +513,8 @@
                 content.disabled = true;
                 return;
             }
-
+            
+            // Blanks out search fields that are not applicable to the entry type
             if (val === 'Users') {
                 uid.disabled = false;
                 content.disabled = true; content.style.display = 'none';
@@ -664,7 +665,7 @@
                 </form>
             `);
 
-            // init map
+            // Initialize the preview map for editing listings
             if (editorMap) { editorMap.remove(); editorMap = null; }
             const initLat = parseFloat(lat) || 41.505;
             const initLon = parseFloat(lon) || -81.605;
@@ -677,7 +678,8 @@
                 L.marker([parseFloat(lat), parseFloat(lon)]).addTo(editorMap);
             }
         }
-
+        
+        // Function to refresh the map preview for an edited listing entry
         function refreshEditorMap() {
             const lat = parseFloat(document.getElementById('l_lat').value);
             const lon = parseFloat(document.getElementById('l_lon').value);
