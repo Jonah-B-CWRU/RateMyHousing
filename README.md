@@ -37,6 +37,8 @@ make the file with the following outline
     
 }
 
+Additionally, replace the key on line 307 of `listing.html` with your own MapBox API key
+
 1. Set up python venv and activate it
 
 '''sh
