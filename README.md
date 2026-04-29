@@ -100,6 +100,10 @@ Andew Stappenbeck: Backend, Testing, User Groups
 
 nothin
 
+## Auto API Documentation
+
+Used `pdoc`. Look in docs folder. i.e. run `open -a "Google Chrome" docs/index.html` to see it.
+
 
 ## AI usage:
 
