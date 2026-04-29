@@ -1,7 +1,7 @@
 # RateMyHousing
 Created by Jonah Barnett, Aaron Brey, Kent Manion, and Andew Stappenbeck
 
-## Discription
+## Description
 This system is a piece of software that manages Case Western Reserve University housing information and interactions with that information from the landlord and student point of view. Its primary purpose is to connect CWRU students with good housing options by providing key information about each housing option from both an objective and subjective point of view. Combining key base information like amenities and location with student provided experience via comments and individual ratings, the system will compile all the information on a plethora of housing options across the campus. Additionally, landlords can augment this housing basis in order to put their property into the system too. From there, this information will be sorted by the system and presented to users in an effective way that allows them to see and interact with housing options across CWRU, gaining information and insight into housing options and making the CWRU housing process more smooth and efficient for students.
 
 
@@ -19,7 +19,7 @@ And we use the following python libraries to run our entire project:
 
 fastapi, uvicorn, python-multipart, jinja2, firebase-admin, google-cloud-firestore, protobuf, tzdata, pytest, coverage
 
-## Instelation 
+## Installation 
 
 0. Set up Secrets.json and Secrets2.json 
 
@@ -41,16 +41,16 @@ Additionally, replace the key on line 307 of `listing.html` with your own MapBox
 
 1. Set up python venv and activate it
 
-'''sh
+```sh
 python -m venv .venv
 source .venv/bin/activate
-'''
+```
 
-2. Download all libraries
+1. Download all libraries
 
-'''sh
+```sh
 pip install -r requirements.txt
-'''
+```
 
 3. Start the server
 
@@ -66,23 +66,23 @@ The user interacts with the machine (re-write this)
 
 ## Repository structure
 
-/src
+`/src`
 
 Holds all of the non-active python source code.
 
-/static
+`/static`
 
 Holds the universal style file for the front end
 
-/templates
+`/templates`
 
 Holds every single html file
 
-web.py
+`web.py`
 
 All of the logic that directly interacts with the website
 
-test_web.py
+`test_web.py`
 
 Tests the web.py function using mock objects
 
