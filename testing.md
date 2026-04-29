@@ -6,3 +6,5 @@ We have two files with tests of our code
 - `src/Tests.py`: tests functionality of functions in `Database.py`. Uses Python's `unittest` module. In order to run this, run the following command: `python -m unittest src/Tests.py`.
 
 Note that we have both mock object testing in `test_web.py` and fuzz testing in the `src/Tests.py`, so advacned testing approaches are used.
+
+Coverage here is the two main backend files, `web.py`, `Database.py`. This is where all of our project's functionality comes from. Limitations: mock objects that add junk data to our actual database can cause problems! SO mock objects that put correct data work, struggles with junk.
