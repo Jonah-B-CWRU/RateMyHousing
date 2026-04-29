@@ -1,3 +1,26 @@
+"""Database access layer for the Rate My Housing application.
+
+This module defines the data models used throughout the application and provides
+the ``database_manager`` class for all Firestore database interactions, including
+creating, reading, updating, and deleting records.
+
+Data Models:
+    User: Represents a registered user of the platform.
+    Landlord: Represents a landlord who owns listings.
+    Listing: Represents a housing listing posted by a landlord.
+    Rating: Represents a user's numeric rating of a listing.
+    AverageRating: Stores the pre-computed average rating for a listing.
+    Comments: Represents a user comment on a listing.
+    Password: Stores hashed password credentials for a user.
+    Codes: Stores verification codes tied to a user.
+
+Typical usage::
+
+    db = database_manager()
+    db.connect_to_database()
+    users = db.get_all_from(User())
+"""
+
 from dataclasses import dataclass, asdict, fields,field
 from typing import Any, TypeAlias, TypeVar, cast
 from firebase_admin import firestore, credentials
@@ -15,6 +38,21 @@ import smtplib
 
 @dataclass
 class Comments:
+
+    """Represents a user comment on a housing listing.
+
+    Can also represent a reply to another comment via ConnectedCommentID.
+
+    Attributes:
+        CommentId: Unique identifier for this comment.
+        ConnectedCommentID: ID of the parent comment if this is a reply, empty string otherwise.
+        ListingID: ID of the listing this comment belongs to.
+        UserID: ID of the user who wrote this comment.
+        Content: The text body of the comment.
+        CreatedAt: Timestamp string of when the comment was created.
+        Tags: List of tag strings attached to this comment.
+    """
+
     CommentId: str = ""
     ConnectedCommentID: str = ""
     ListingID: str = ""
@@ -23,12 +61,31 @@ class Comments:
     CreatedAt: str = ""
     Tags: list[str] = field(default_factory=list)
     def as_dict(self) -> dict:
+        """Converts this dataclass instance into a plain dictionary.
+
+        Ensures the Tags field is always a list rather than None before
+        returning, so Firestore writes are always valid.
+
+        Returns:
+            A dictionary representation suitable for writing to Firestore.
+        """
         data = asdict(self)
         if data["Tags"] is None:
             data["Tags"] = []
         return data
     @classmethod
     def from_dict(cls, dict: dict[str,Any]) -> "Comments":
+        """Constructs an instance from a Firestore document dictionary.
+
+        Only fields that exist in the dataclass and are present in the
+        dictionary are populated; missing keys are safely ignored.
+
+        Args:
+            dict: A raw dictionary from a Firestore document snapshot.
+
+        Returns:
+            A new instance populated with values from the dictionary.
+        """
         sanitized = {}
         for field in fields(cls):
             val = dict.get(field.name)
@@ -38,13 +95,36 @@ class Comments:
 
 @dataclass
 class Landlord:
+    """Represents a landlord user on the application.
+
+    Attributes:
+        LLID: A unique identifier for each landlord
+        Name: The name of the landlord
+        Email: The email of the landlord
+    """
     LLID: str = ""
     Name: str = ""
     Email: str = ""
     def as_dict(self) -> dict:
+        """Converts this dataclass instance into a plain dictionary.
+        
+        Returns:
+            A dictionary representation suitable for writing to Firestore.
+        """
         return asdict(self)
     @classmethod
     def from_dict(cls, dict: dict[str,Any]) -> "Landlord":
+        """Constructs an instance from a Firestore document dictionary.
+
+        Only fields that exist in the dataclass and are present in the
+        dictionary are populated; missing keys are safely ignored.
+
+        Args:
+            dict: A raw dictionary from a Firestore document snapshot.
+
+        Returns:
+            A new instance populated with values from the dictionary.
+        """
         sanitized = {}
         for field in fields(cls):
             val = dict.get(field.name)
@@ -54,6 +134,23 @@ class Landlord:
 
 @dataclass
 class Listing:
+    """Represents a housing listing on the applicaiton.
+
+    Attributes:
+        ListingID: A unique indentifier for each listing
+        LLID: The unique identifier for the landlord corresponding to the listing
+        LLName: The name of the landlord corresponding to the listing
+        LLEmail: The email of the landlord corresponding to the listing
+        Address: The address of the listing
+        Beds: The number of beds at each listing
+        Baths: The number of baths at each listing
+        SquareFootage: The square footage of the listing
+        Price: The price of the listing
+        Description: A short textual description of the listing property
+        CreatedAt: The time that the listing was created 
+        CoodinateLat: The latitudinal coordinate for the listing
+        CoordinateLong: The longitunal coordinate for the listing
+    """
     ListingID: str = ""
     LLID: str = ""
     LLName: str = ""
@@ -68,9 +165,25 @@ class Listing:
     CoordinateLat: float = 0.0
     CoordinateLong: float = 0.0
     def as_dict(self) -> dict:
+        """Converts this dataclass instance into a plain dictionary.
+
+        Returns:
+            A dictionary representation suitable for writing to Firestore.
+        """
         return asdict(self)
     @classmethod
     def from_dict(cls, dict: dict[str,Any]) -> "Listing":
+        """Constructs an instance from a Firestore document dictionary.
+
+        Only fields that exist in the dataclass and are present in the
+        dictionary are populated; missing keys are safely ignored.
+
+        Args:
+            dict: A raw dictionary from a Firestore document snapshot.
+
+        Returns:
+            A new instance populated with values from the dictionary.
+        """
         sanitized = {}
         for field in fields(cls):
             val = dict.get(field.name)
@@ -80,6 +193,14 @@ class Listing:
 
 @dataclass
 class Rating:
+    """Represents a numerical rating left on a given property
+    
+    Attributes:
+        RatingID: A unique identifier for each rating
+        UserID: A unique identifier for the user corresponding to the rating
+        ListingID: A unique identifier for the listing that the rating corresponds to
+        Rating: A numerical value (integer between 1 and 5) representing the rating that has been left
+    """
     RatingID: str = ""
     UserID: str = ""
     ListingID: str = ""
@@ -87,12 +208,28 @@ class Rating:
     #Tags: list[str] = None
 
     def as_dict(self) -> dict:
+        """Converts this dataclass instance into a plain dictionary.
+
+        Returns:
+            A dictionary representation suitable for writing to Firestore.
+        """
         data = asdict(self)
         #if data["Tags"] is None:
         #    data["Tags"] = []
         return data
     @classmethod
     def from_dict(cls,dict: dict[str,Any]) -> "Rating":
+        """Constructs an instance from a Firestore document dictionary.
+
+        Only fields that exist in the dataclass and are present in the
+        dictionary are populated; missing keys are safely ignored.
+
+        Args:
+            dict: A raw dictionary from a Firestore document snapshot.
+
+        Returns:
+            A new instance populated with values from the dictionary.
+        """
         sanitized = {}
         for field in fields(cls):
             val = dict.get(field.name)
@@ -102,13 +239,36 @@ class Rating:
 
 @dataclass
 class Password:
+    """Represents the password for a user of the application
+    
+    Attributes:
+        Hash: a string that is hashed onto the password 
+        Salt: a string that salts a given hash
+        UserID: a unique user identifier that corresponds to the password
+    """
     Hash: str = ""
     Salt: str = ""
     UserID: str = ""
     def as_dict(self) -> dict:
+        """Converts this dataclass instance into a plain dictionary.
+
+        Returns:
+            A dictionary representation suitable for writing to Firestore.
+        """
         return asdict(self)
     @classmethod
     def from_dict(cls, dict: dict[str,Any]) -> "Password":
+        """Constructs an instance from a Firestore document dictionary.
+
+        Only fields that exist in the dataclass and are present in the
+        dictionary are populated; missing keys are safely ignored.
+
+        Args:
+            dict: A raw dictionary from a Firestore document snapshot.
+
+        Returns:
+            A new instance populated with values from the dictionary.
+        """
         sanitized = {}
         for field in fields(cls):
             val = dict.get(field.name)
@@ -118,6 +278,17 @@ class Password:
     
 @dataclass
 class User:
+    """Represents a user of the application
+    
+    Attributes:
+        UserID: a unique user identifier corresponding to the user
+        Username: the username of the user
+        ConnectedLL: a connected landlord corresponding to the user
+        Email: the email for the user
+        ismod: a boolean value representing whether or not the user is a mod
+        Activated: a boolean value representing whether or not the user's account has been activated via email verification
+        flag: a string that represents any flags given to a user
+    """
     UserID: str = ""
     Username: str = ""
     ConnectedLL: str = ""
@@ -126,9 +297,25 @@ class User:
     Activated:bool = False
     flag:str = ""
     def as_dict(self) -> dict:
+        """Converts this dataclass instance into a plain dictionary.
+
+        Returns:
+            A dictionary representation suitable for writing to Firestore.
+        """
         return asdict(self)
     @classmethod
     def from_dict(cls, dict: dict[str,Any]) -> "User":
+        """Constructs an instance from a Firestore document dictionary.
+
+        Only fields that exist in the dataclass and are present in the
+        dictionary are populated; missing keys are safely ignored.
+
+        Args:
+            dict: A raw dictionary from a Firestore document snapshot.
+
+        Returns:
+            A new instance populated with values from the dictionary.
+        """
         sanitized = {}
         for field in fields(cls):
             val = dict.get(field.name)
@@ -138,12 +325,34 @@ class User:
 
 @dataclass
 class Codes:
+    """Represents a code sent to each user to verify their account via email
+    
+    Attributes:
+        UserID: a unique user identifier corresponding to the account that the code is sent to
+        Code: a unique code sent to each user's email that is used for email verification to activate an account
+    """
     UserID: str = ""
     Code: int = 0
     def as_dict(self) -> dict:
+        """Converts this dataclass instance into a plain dictionary.
+
+        Returns:
+            A dictionary representation suitable for writing to Firestore.
+        """
         return asdict(self)
     @classmethod
     def from_dict(cls,dict: dict[str,Any]) -> "Codes":
+        """Constructs an instance from a Firestore document dictionary.
+
+        Only fields that exist in the dataclass and are present in the
+        dictionary are populated; missing keys are safely ignored.
+
+        Args:
+            dict: A raw dictionary from a Firestore document snapshot.
+
+        Returns:
+            A new instance populated with values from the dictionary.
+        """
         sanitized = {}
         for field in fields(cls):
             val = dict.get(field.name)
@@ -153,13 +362,36 @@ class Codes:
 
 @dataclass
 class AverageRating:
+    """Represents the average rating for a given listing
+    
+    Attributes:
+        LisingID: A unique identifier that corresponds to the listing for which the averge rating describes
+        AvergeRating: A numerical value representing the average rating for a listing
+        NumberOfRatings: A numerical value representing the number of ratings listed for a listing
+    """
     ListingID: str = ""
     AverageRating: float = 0.0
     NumberOfRatings: int = 0
     def as_dict(self) -> dict:
+        """Converts this dataclass instance into a plain dictionary.
+
+        Returns:
+            A dictionary representation suitable for writing to Firestore.
+        """
         return asdict(self)
     @classmethod
     def from_dict(cls, dict: dict[str,Any]) -> "AverageRating":
+        """Constructs an instance from a Firestore document dictionary.
+
+        Only fields that exist in the dataclass and are present in the
+        dictionary are populated; missing keys are safely ignored.
+
+        Args:
+            dict: A raw dictionary from a Firestore document snapshot.
+
+        Returns:
+            A new instance populated with values from the dictionary.
+        """
         sanitized = {}
         for field in fields(cls):
             val = dict.get(field.name)
@@ -168,11 +400,33 @@ class AverageRating:
         return cls(**sanitized)
 
 
-# super type alias
+#: Union type alias representing any valid database model object.
+#: Used throughout ``database_manager`` to write generic methods
+#: that accept any of the eight data model types.
+DataObject: TypeAlias = User | Rating | Landlord | Password | Comments | Listing | Codes | AverageRating
 DataObject: TypeAlias = User | Rating | Landlord | Password | Comments | Listing | Codes | AverageRating
 
 T = TypeVar("T", bound=DataObject)
 class database_manager:
+    """Manages all interactions with the Firebase Firestore database.
+
+    This class is the single access point for reading, writing, updating,
+    and deleting all data model objects. It also handles higher-level
+    operations such as relationship traversal (e.g. getting all ratings
+    for a listing) and cascading deletion.
+
+    Must call ``connect_to_database()`` before any other method.
+
+    Attributes:
+        connected: Whether the manager has successfully connected to Firestore.
+        fire_store: The active Firestore client instance.
+
+    Example::
+
+        db = database_manager()
+        db.connect_to_database()
+        listing = db.get_object_by_id("abc123", Listing())
+    """    
     connected: bool = False
     fire_store: FirestoreClient
 
@@ -235,7 +489,7 @@ class database_manager:
             col (str): what collection it should go to
 
         Returns:
-            tuple[timestamp_pb2.Timestamp,DocumentReference]: a typle containing when it was pushed and where it was pushed to
+            tuple[timestamp_pb2.Timestamp,DocumentReference]: a tuple containing when it was pushed and where it was pushed to
         """
         collection = self.fire_store.collection(col)
         return collection.add(data)
@@ -400,9 +654,9 @@ class database_manager:
         raise IOError("Not Connected to Database")
 
     def recursive_deletion(self, deleted_object:DataObject) -> bool:
-        """Recursivly removes all objects connected to the deleated object. including the origional object
+        """Recursivly removes all objects connected to the deleted object. including the origional object
 
-        Uses 1 query per object deleated.
+        Uses 1 query per object deleted.
 
         Args:
             deleted_object (DataObject): any data object
@@ -412,7 +666,7 @@ class database_manager:
             IOError: not connected
 
         Returns:
-            bool: weather deleation was sucessfull or not 
+            bool: weather deletion was successful or not 
         """
         # recursive so it actually implements castcading removal.
         if self.connected:
@@ -569,8 +823,7 @@ class database_manager:
             data_class (T): Any of the valid datatypes. dont use a real object just make a new constructor
 
         Raises:
-            IOError: _description_
-
+            IOError: IOError: If not connected to the database.
         Returns:
             list[T]: list of the same type as inputed
         """
@@ -608,7 +861,7 @@ class database_manager:
             object (DataObject): any dataobject
 
         Raises:
-            IOError: not connected to the database
+            IOError: If not connected to the database
         """
         collection = ""
         match object:
@@ -642,7 +895,7 @@ class database_manager:
             object (DataObject): object to update.
 
         Raises:
-            TypeError: Object does not exsist in the database. Invalid id
+            TypeError: Object does not exist in the database. Invalid id
             IOError: not connected to the database
 
         Returns:
@@ -1157,7 +1410,7 @@ class database_manager:
             user (User): user to get code from
 
         Raises:
-            TypeError: code does not exsist
+            TypeError: code does not exist
             IOError: if not connected to that database
 
         Returns:
@@ -1281,7 +1534,7 @@ class database_manager:
         """get the listing the comment is on
 
         Args:
-            comment (Comments): comment to invistigate
+            comment (Comments): comment to investigate
 
         Raises:
             TypeError: listing is not real
@@ -1376,7 +1629,7 @@ class database_manager:
             listing (Listing): listing to calculate
 
         Raises:
-            TypeError: non exsistent average rating
+            TypeError: non existent average rating
             IOError: if nor connected to database
 
         Returns:
@@ -1425,7 +1678,7 @@ class database_manager:
             IOError: if not connected to database
 
         Returns:
-            list[Listing]: all listings conneceted to landlord
+            list[Listing]: all listings connected to landlord
 
         Uses 1 query.
         """

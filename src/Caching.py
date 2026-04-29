@@ -8,15 +8,29 @@ import pickle
 
 @dataclass
 class cache_data:
+    """A class representing the contents of a file in the cache
+    """
     cache_name:str
     cache_start_time:datetime
     cache_max_age:datetime
     cache_location:str
     cache_data:Any
     def as_dict(self) -> dict:
+        """
+        Returns:
+            dict: A representation of the contents of a cache entry
+        """
         return asdict(self)
     @classmethod
     def from_dict(cls, dict: dict[str,Any]) -> "cache_data":
+        """Generates a new instance of `cache_data` from a given dictionary
+
+        Args:
+            dict (dict[str,Any]): The dictionary to be used
+
+        Returns:
+            cache_data: A new instance of `cache_data`
+        """
         sanitized = {}
         for field in fields(cls):
             val = dict.get(field.name)
@@ -24,15 +38,30 @@ class cache_data:
                 sanitized[field.name] = val
         return cls(**sanitized)
     def as_refrence(self) -> "cache_refrence":
+        """Returns this entry as a reference to a file in the cache
+
+        Returns:
+            cache_refrence: The `cache_reference` for the file
+        """
         return cache_refrence.from_cache_data(self)
 
 @dataclass
 class cache_refrence:
+    """A class representing a pointer to an entry in the cache
+    """
     cache_name:str
     cache_location:str
     cache_max_age:datetime
     @classmethod
     def from_dict(cls, dict: dict[str,Any]) -> "cache_refrence":
+        """Generates a new `cache_reference` from a provided dictionary
+
+        Args:
+            dict (dict[str,Any]): The dictionary in questions
+
+        Returns:
+            cache_refrence: A new instance of `cache_reference`
+        """
         sanitized = {}
         for field in fields(cls):
             val = dict.get(field.name)
@@ -41,6 +70,14 @@ class cache_refrence:
         return cls(**sanitized)
     @classmethod
     def from_cache_data(cls,data:cache_data)-> "cache_refrence":
+        """Generates a new `cache_reference` from a `cache_data` instance representing the informnation to be referenced
+
+        Args:
+            data (cache_data): The `cache_data` instance to be referenced
+
+        Returns:
+            cache_refrence: A reference to the provided `cache_data` instance
+        """
         return cls(data.cache_name,data.cache_location,data.cache_max_age)
 
 
@@ -68,6 +105,8 @@ class cache_manager:
             
         
     def add_to_cache(self,data:Any, name:str, timeout_seconds: float = 600.0) -> cache_refrence:
+        """Adds to cache.
+        """
         now = datetime.now()
         timeout = now + timedelta(0,timeout_seconds)
         location = self.cache_location+name
