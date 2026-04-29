@@ -40,6 +40,8 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get('/favicon.ico', include_in_schema=False)
 async def favicon():
+    """allows for our icon to be seen.
+    """
     return FileResponse("output.ico")
 
 def add_user(username: str, password: str) -> tuple[bool, str]:
@@ -288,6 +290,8 @@ def make_specific_listing_data(listing: Listing) -> tuple[dict[Any, Any], list[A
 
 @app.get("/")
 def index(request: Request):
+    """Gets index page for the application.
+    """
     seshid = request.cookies.get("session_id")
     username = "Guest"
     if seshid in known_users:
@@ -301,6 +305,8 @@ def index(request: Request):
 
 @app.get("/create")
 def create_user_form(request: Request):
+    """Allows user creation.
+    """
     return templates.TemplateResponse("create.html", {"request": request, "error": None, "success": None})
 
 @app.post("/create")
@@ -317,6 +323,8 @@ def create_user_post(request: Request, username: str = Form(...), password: str 
 
 @app.get("/code")
 def get_code_form(request: Request):
+    """Gets login code.
+    """
     return templates.TemplateResponse("code_input.html", {"request": request, "error": None, "success": None})
 
 @app.post("/code")
@@ -361,6 +369,8 @@ def login_post(request: Request, username: str = Form(...), password: str = Form
 
 @app.get("/dashboard")
 def dashboard(request: Request):
+    """Gets dashboard page (main one users see).
+    """
     seshid = request.cookies.get("session_id")
     if seshid not in known_users:
         return templates.TemplateResponse(
@@ -373,6 +383,8 @@ def dashboard(request: Request):
 
 @app.get("/logout")
 def logout(request: Request):
+    """Logout page so users can logout.
+    """
     response = RedirectResponse(url="/")
     seshid = request.cookies.get("session_id")
     if seshid in known_users:
@@ -382,6 +394,8 @@ def logout(request: Request):
 
 @app.get("/comment")
 def comment(request: Request):
+    """Defines behavior for seeing comments.
+    """
     seshid = request.cookies.get("session_id")
     if seshid not in known_users:
         return templates.TemplateResponse(
@@ -400,6 +414,8 @@ def comment(request: Request):
 
 @app.get("/create_listing")
 def create_listing_form(request: Request):
+    """Defines behavior for creating a listing.
+    """
     seshid = request.cookies.get("session_id")
     if seshid not in known_users:
         return templates.TemplateResponse(
@@ -518,6 +534,8 @@ def view_listings(request: Request):
 
 @app.get("/compare")
 def compare(request: Request):
+    """Behavior for compare listing functionality.
+    """
     data_man.connect_to_database()
     listings: list[Listing] = data_man.get_all_from(Listing())
     listing_data = []
@@ -693,6 +711,8 @@ def view_one_listing(request: Request, listingid: str):
 
 @app.get("/map")
 def view_listing_map(request: Request):
+    """Defines behavior for viewing the map feature.
+    """
     seshid = request.cookies.get("session_id")
     if seshid not in known_users:
         return templates.TemplateResponse(
@@ -711,6 +731,8 @@ def view_listing_map(request: Request):
 
 @app.get("/mod_page")
 def view_mod_page(request: Request):
+    """Defines behavior for viewing the moderator tool page.
+    """
     seshid = request.cookies.get("session_id")
 
     # Check if logged in
@@ -757,6 +779,8 @@ def post_mod_page_search(
     l_rnt: float = Form(None),
 
 ):
+    """Defines behavior for mod changes.
+    """
     # to be replaced after merge
     seshid = request.cookies.get("session_id")
 
@@ -846,6 +870,8 @@ def post_mod_page_search(
     return RedirectResponse(url="/dashboard")
   
 def validate_tags(selected_tags: list[str]) -> tuple[bool, str]:
+    """Defines behavior for making sure tags on a listing are valid.
+    """
     if len(selected_tags) > 4:
         return False, "You can select up to 4 tags."
 

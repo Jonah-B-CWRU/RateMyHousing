@@ -303,6 +303,7 @@
     const coordEl = document.getElementById("coordinates");
     if (coordEl) {
         const coordinates = coordEl.textContent;
+        // Replace following line with your own public mapbox key
         const token = "pk.eyJ1Ijoiam9uYWhiLWN3cnUiLCJhIjoiY21ucXVxdGFxMGJnczJyb2Yya25uYTR6byJ9.4hDBihfxlSI3K9UVBCC-qQ";
         
         var rte, rte_s, rte_e;
@@ -328,7 +329,7 @@
             setTimeout(() => { map.invalidateSize(); }, 100);
 
             let url = "";
-            switch(dest_id) {
+            switch(dest_id) { // Represents different target locations
                 case 0: url = `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinates};-81.60847,41.50414?geometries=geojson&access_token=${token}`; break;
                 case 1: url = `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinates};-81.60884,41.50758?geometries=geojson&access_token=${token}`; break;
                 case 2: url = `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinates};-81.60721,41.50996?geometries=geojson&access_token=${token}`; break;
@@ -336,7 +337,7 @@
                 case 4: url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinates};-81.60338,41.50212?geometries=geojson&access_token=${token}`; break;
             }
 
-            try {
+            try { // Handles fetching from the API
                 const response = await fetch(url);
                 const result = await response.json();
                 const g_coords = result.routes[0].geometry.coordinates;
@@ -344,25 +345,25 @@
 
                 if(rte) { map.removeLayer(rte); map.removeLayer(rte_s); map.removeLayer(rte_e); }
 
-                rte = L.polyline(latlngs, {color: "red"}).addTo(map);
-                rte_s = L.marker([result.waypoints[0].location[1], result.waypoints[0].location[0]]).addTo(map);
-                rte_e = L.marker([result.waypoints[1].location[1], result.waypoints[1].location[0]]).addTo(map);
+                rte = L.polyline(latlngs, {color: "red"}).addTo(map); // Polyline representing the route
+                rte_s = L.marker([result.waypoints[0].location[1], result.waypoints[0].location[0]]).addTo(map); // Marker representing the start of the route
+                rte_e = L.marker([result.waypoints[1].location[1], result.waypoints[1].location[0]]).addTo(map); // Marker representing the destination of the route
                 
             
-                map.fitBounds(rte.getBounds(), {padding: [30, 30]});
+                setTimeout(function() {map.fitBounds(rte.getBounds(), {padding: [30, 30]});}, 75) // Adds a slight delay as the map does not just its bounds correctly if it is adjusted immediately after points are added
             } catch (e) { console.error(e); }
         };
 
         // FETCH MATRIX TIMES
-        async function getData() {
+        async function getData() { // Processes the output times from seconds into minutes (rounded)
             const url = "https://api.mapbox.com/directions-matrix/v1/";
             try {
-                const [rw, rd] = await Promise.all([
+                const [rw, rd] = await Promise.all([ // Combines fetching the times for each method of transportation
                     fetch(`${url}mapbox/walking/${coordinates};-81.60847,41.50414;-81.60884,41.50758;-81.60721,41.50996?access_token=${token}`),
                     fetch(`${url}mapbox/driving/${coordinates};-81.60260,41.51263;-81.60338,41.50212?access_token=${token}`)
                 ]);
-                const resW = await rw.json();
-                const resD = await rd.json();
+                const resW = await rw.json(); // Results for walking
+                const resD = await rd.json(); // Results for driving
                 document.getElementById("mq_t").textContent = Math.round(resW.durations[0][1]/60);
                 document.getElementById("tv_t").textContent = Math.round(resW.durations[0][2]/60);
                 document.getElementById("hq_t").textContent = Math.round(resW.durations[0][3]/60);
