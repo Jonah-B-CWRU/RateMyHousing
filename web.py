@@ -40,6 +40,8 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get('/favicon.ico', include_in_schema=False)
 async def favicon():
+    """allows for our icon to be seen.
+    """
     return FileResponse("output.ico")
 
 def add_user(username: str, password: str) -> tuple[bool, str]:
